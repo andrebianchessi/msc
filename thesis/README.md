@@ -1,8 +1,8 @@
 # Requirements
 Recommended: Use homebrew/linuxbrew to install requirements 
 * [pandoc](https://pandoc.org/)
-* [pandoc-include](https://github.com/DCsunset/pandoc-include)
 * [pandoc-crossref](https://github.com/lierdakil/pandoc-crossref)
+* [Eisvogel Template Installed](https://github.com/Wandmalfarbe/pandoc-latex-template)
 
 # Recommended Work Setup
 * VS Code

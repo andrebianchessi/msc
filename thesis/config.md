@@ -1,8 +1,7 @@
 ---
-bibliography: ["bibliography.bib"]
-link-citations: true
-nocite: |
-  @*
-numbersections: true
-autoEqnLabels: true
+title: "The Document Title"
+author: [Example Author, Another Author]
+date: "2017-02-20"
+keywords: [Markdown, Example]
+titlepage: true
 ---
