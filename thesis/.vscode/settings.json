@@ -2,5 +2,8 @@
     "cSpell.words": [
         "crossref",
         "numbersections"
+    ],
+    "cSpell.ignorePaths": [
+        "eisvogel.latex"
     ]
 }
