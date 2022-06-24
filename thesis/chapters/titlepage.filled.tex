@@ -1,0 +1,82 @@
+
+%------------------------------------- Custom Title Page ---------------------------
+\renewcommand{\maketitle}{
+\thispagestyle{empty}
+
+\parindent=0pt
+\begin{center}
+    \Large
+    \textsc{
+        Fachhochschule Bielefeld\\
+        Fachbereich Campus Minden\\
+        \vspace{\baselineskip}\noindent
+        Studiengang Informatik
+    }
+\end{center}
+
+\vspace{20mm}
+\hrule
+\vspace{5mm}
+
+\begin{center}
+    \LARGE
+    \textbf{\textsc{ Title of my Thesis }}
+\end{center}
+
+\vspace{5mm}
+\hrule
+\vspace{10mm}
+
+
+\vfill
+
+\vspace{\baselineskip}\noindent
+\large
+\begin{tabular}{lp{\textwidth}}
+    vorgelegt von: & \texttt{Surname Name}\\
+    Matrikelnummer: & \texttt{12345678} \\
+    &\\[12pt]
+    Abgabe am: & \texttt{20. Juli 2019}\\
+    &\\[24pt]
+    Erstprüfer/in: & \texttt{XXX, FH Bielefeld}\\
+    Zweitprüfer/in: & \texttt{XXX, Wuppie GmbH}
+\end{tabular}
+}
+%------------------------------------- Custom Title Page ---------------------------
+
+
+
+%------------------------------------- Custom Title (Back) Page --------------------
+\newcommand\customtitlebackpage{
+\thispagestyle{empty}
+\hfill
+\vfill
+\textbf{Surname Name} (12345678) \\
+\textit{Title of my Thesis} \\
+20. Juli 2019 \\[12pt]
+Erstprüfer/in: XXX, FH Bielefeld \\
+Zweitprüfer/in: XXX, Wuppie GmbH
+}
+%------------------------------------- Custom Title (Back) Page --------------------
+
+
+
+%------------------------------------- Patch Eisvogel's frontmatter ----------------
+%% Eisvogel template uses `\frontmatter` directly *after* `\maketitle`, thus there is
+%% a `\doubleclearpage` after the titlepage, which prevents our title-back-page to be
+%% positioned on the backside of the titlepage ...
+%% (Pandocs default template uses `\frontmatter` *before* `\maketitle`)
+%------------------------------------- Patch Eisvogel's frontmatter ----------------
+
+
+
+%------------------------------------- Workaround for CleanStyle -------------------
+%% cleanthesis.sty *will* check the bibfile, even if `configurebiblatex=false` ...
+%% So we need to set it appropriately using our metadata variable "cleanthesisbibfile"
+\PassOptionsToPackage{
+    figuresep=colon,
+    configurelistings=true,
+    configurebiblatex=false,
+    bibfile=references
+}{cleanthesis}
+%------------------------------------- Workaround for CleanStyle -------------------

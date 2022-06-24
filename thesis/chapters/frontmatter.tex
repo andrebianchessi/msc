@@ -1,0 +1,72 @@
+
+%------------------------------------- Custom Title (Back) Page --------------------
+$if(cleanthesis)$
+\clearpage
+\customtitlebackpage
+$endif$
+%------------------------------------- Custom Title (Back) Page --------------------
+
+
+
+%------------------------------------- Custom Abstract Page ------------------------
+$if(abstract-de)$
+\cleardoublepage
+\begin{minipage}{\linewidth}
+
+\chapter*{Zusammenfassung}
+%\addcontentsline{toc}{chapter}{Zusammenfassung}
+$abstract-de$
+
+$if(abstract-en)$
+\chapter*{Abstract}
+%\addcontentsline{toc}{chapter}{Abstract}
+$abstract-en$
+$endif$
+
+\end{minipage}
+\cleardoublepage
+$endif$
+%------------------------------------- Custom Abstract Page ------------------------
+
+
+
+%------------------------------------- Acknowledgements Page -----------------------
+$if(acknowledgements)$
+\chapter*{Danksagung}
+%\addcontentsline{toc}{chapter}{Danksagung}
+$acknowledgements$
+$endif$
+%------------------------------------- Acknowledgements Page -----------------------
+
+
+
+%------------------------------------- Restriction Note Page -----------------------
+$if(restrictionnote)$
+\chapter*{Sperrvermerk}
+$restrictionnote$
+$endif$
+%------------------------------------- Restriction Note Page -----------------------
+
+
+
+%------------------------------------- Clear page before TOC -----------------------
+\cleardoublepage
+%------------------------------------- Clear page before TOC -----------------------
+
+
+
+%------------------------------------- Use Eisvogel Header/Footer ------------------
+$if(eisvogel)$
+$if(headeralternative)$
+    \newpairofpagestyles{headeralternative}{
+        \clearpairofpagestyles
+        \automark[section]{chapter}
+        \ihead[\headmark]{}
+        \ohead[]{\headmark}
+        \ifoot[\pagemark]{$author$}
+        \ofoot[$author$]{\pagemark}
+    }
+    \pagestyle{headeralternative}
+$endif$
+$endif$
+%------------------------------------- Use Eisvogel Header/Footer ------------------
