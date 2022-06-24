@@ -242,9 +242,9 @@ TSWLatexianTemp*
 *.spl
 
 # generated titlepage, frontmatter and backmatter
-__titlepage.filled.tex
-__frontmatter.filled.tex
-__backmatter.filled.tex
+titlepage.filled.tex
+frontmatter.filled.tex
+backmatter.filled.tex
 
 .DS_Store
 

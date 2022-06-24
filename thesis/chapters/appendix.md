@@ -19,4 +19,4 @@ fluppie?
 
 foo! bar!
 
-# Wuppie
+# Appendix 2: Another appendix
