@@ -7,15 +7,15 @@
 \begin{center}
     \Large
     \textsc{
-        Universidade de São Paulo\\
-        Escola Politécnica\\
+        $university$\\
+        $college$\\
         \vspace{\baselineskip}\noindent
-        Programa de Pós-Graduação em Engenharia Mecânica
+        $program_name$
     }
 \end{center}
 
 \vspace{20mm}
-\hrule
+{\color{ctcolormain}\hrule}
 \vspace{5mm}
 
 \begin{center}
@@ -24,7 +24,7 @@
 \end{center}
 
 \vspace{5mm}
-\hrule
+{\color{ctcolormain}\hrule}
 \vspace{10mm}
 
 $if(subtitle)$
@@ -40,12 +40,13 @@ $endif$
 \large
 \begin{tabular}{lp{\textwidth}}
     Author: & \texttt{$for(author)$$author$$sep$ \and $endfor$}\\
-    USP Number: & \texttt{$studentnumber$} \\
+    Advisor: & \texttt{$advisor$}\\
     &\\[12pt]
     Delivery date: & \texttt{$date$}\\
     &\\[24pt]
     First Reviewer: & \texttt{$reviewer1$}\\
-    Second Reviewer: & \texttt{$reviewer2$}
+    Second Reviewer: & \texttt{$reviewer2$}\\
+    Author's Student Number: & \texttt{$studentnumber$} \\
 \end{tabular}
 }
 %------------------------------------- Custom Title Page ---------------------------
@@ -58,6 +59,7 @@ $endif$
 \hfill
 \vfill
 \textbf{$author$} ($studentnumber$) \\
+\textbf{$advisor$}\\
 \textit{$title$} \\
 $date$ \\[12pt]
 First Reviewer: $reviewer1$ \\

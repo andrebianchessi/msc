@@ -6,11 +6,14 @@
 
 META = metadata.yaml
 
-SRC  = chapters/introduction.md
-SCR += chapters/relatedwork.md 
-SCR += chapters/concept.md     
-SCR += chapters/realisation.md 
-SCR += chapters/conclusion.md
+## Add chapters here inh the order they appear with
+## SRC += chapters/XX_chapter.md
+SRC  = chapters/01_introduction.md
+SRC += chapters/02_objectives.md
+SRC += chapters/03_literature_review.md
+SRC += chapters/04_methods.md
+SRC += chapters/05_results.md
+SRC += chapters/06_discussion.md
 
 BIBFILE = references.bib
 

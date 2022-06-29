@@ -3,8 +3,12 @@
 title: "Title of my Thesis"
 #subtitle: "From Markdown to LaTeX to PDF"
 author: "André Bianchessi"
+advisor: "Marcilio Alves"
 keywords: [Markdown, Example]
 city: "São Paulo"
+university: Universidade de São Paulo
+college: Escola Politécnica
+program_name: Programa de Pós-Graduação em Engenharia Mecâninca
 
 ### really long titles may require (multiple) line break(s) in page headers when using Eisvogel
 ### activate (i.e. uncomment the next line) "header-left" to define a shortened single-line version of your long title to be used in page headers
@@ -39,6 +43,10 @@ acknowledgements: |
 ## optional
 restrictionnote: |
   Restriction note
+
+## show all bibliography
+nocite: |
+  @*
 
 
 ## mandatory
