@@ -16,6 +16,7 @@ SRC += chapters/05_results.md
 SRC += chapters/06_discussion.md
 
 BIBFILE = references.bib
+CSL_FILE = ieee.csl
 
 APPENDIX = chapters/appendix.md
 
@@ -128,7 +129,7 @@ clean:
 
 ## Build thesis
 ${TARGET}: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
-	pandoc ${OPTIONS} -o $@ $(SRC) $(REFERENCES) $(APPENDIX)
+	pandoc ${OPTIONS} -o $@ $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
 
 
 ## Build auxiliary files (title page, frontmatter, backmatter, references)
