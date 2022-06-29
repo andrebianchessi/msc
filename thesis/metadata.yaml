@@ -2,7 +2,7 @@
 ## mandatory (subtitle and header-left are optional)
 title: "Title of my Thesis"
 #subtitle: "From Markdown to LaTeX to PDF"
-author: "Surname Name"
+author: "André Bianchessi"
 keywords: [Markdown, Example]
 city: "São Paulo"
 
@@ -14,7 +14,7 @@ city: "São Paulo"
 ### activate (i.e. uncomment the next line) "headeralternative" to use chapter/section in header instead of title
 headeralternative: true
 
-studentnumber: "12345678"
+studentnumber: "9345450"
 date: "20. June 2019"
 
 reviewer1:  "XXX, FH Bielefeld"
@@ -33,17 +33,12 @@ abstract-en: |
 
 ## optional
 acknowledgements: |
-  Hier kommt die Danksagung hin.
+  Here come the acknowledgements
 
 
 ## optional
 restrictionnote: |
-  Die vorliegende Arbeit enthält vertrauliche Daten der Firma XYZ. Veröffentlichungen
-  oder Vervielfältigungen der Arbeit -- auch nur auszugsweise -- sind ohne ausdrückliche
-  Genehmigung des beteiligten Unternehmens nicht gestattet.
-
-  Die Arbeit ist nur den Prüfern bzw. den Korrektoren sowie den Mitgliedern des
-  Prüfungsausschusses bzw. der oder dem Prüfungsbeauftragten zugänglich zu machen.
+  Restriction note
 
 
 ## mandatory
