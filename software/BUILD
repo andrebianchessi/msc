@@ -1,6 +1,12 @@
 cc_test(
-  name = "mass_test",
+  name = "problem_test",
   size = "small",
-  srcs = ["mass_test.cc"],
+  srcs = [
+    "problem_test.cc",
+    "problem.cc",
+    "problem.h",
+    "mass.h",
+    "maybe.h"
+    ],
   deps = ["@com_google_googletest//:gtest_main"],
 )
