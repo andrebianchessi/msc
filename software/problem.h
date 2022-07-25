@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <set>
+#include <tuple>
 #include "mass.h"
 #include "maybe.h"
 
@@ -9,15 +10,16 @@ class Problem{
     public:
         // Masses in the problem
         std::vector<Mass> masses;
-        // x_0 of all masses in the problem.
-        // Note that two masses can't be created with the same x_0
-        std::set<float> massesX_0;
+        
+        // Initial position (x,y) of all masses in the problem.
+        // Note that two masses can't be created at the same initial position.
+        std::set<std::tuple<double,double>> initialPositions;
 
-        // Returns true if system has mass with x_0 = x
-        bool HasMassAtX(float x) const;
+        // Returns true if system has a mass with initial position (x,y)
+        bool HasMassAt(double x, double y) const;
 
         // Add a Mass object to the problem
-        Maybe<Void> AddMass(double m, double x_0);
+        Maybe<Void> AddMass(double m, double x, double y);
 
         // Returns degrees of freedom
         int GetDof() const;
