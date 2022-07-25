@@ -18,8 +18,11 @@ class Problem{
         // Returns true if system has a mass with initial position (x,y)
         bool HasMassAt(double x, double y) const;
 
-        // Add a Mass object to the problem
-        Maybe<Void> AddMass(double m, double x, double y);
+        // Add a Mass object to the problem and returns its id
+        Maybe<int> AddMass(double m, double x, double y);
+
+        // Returns mass by id
+        Maybe<Mass*> GetMass(int id);
 
         // Returns degrees of freedom
         int GetDof() const;

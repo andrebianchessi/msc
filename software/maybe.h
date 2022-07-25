@@ -11,7 +11,7 @@ typedef void* Void;
 
 template <class c>
 struct Maybe {
-    c* val;
+    c val;
     bool isError = false;
     std::string errMsg = "";
 };
