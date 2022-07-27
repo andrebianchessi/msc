@@ -1,7 +1,9 @@
 {
     "cSpell.words": [
         "crossref",
-        "numbersections"
+        "metamodel",
+        "numbersections",
+        "PINN"
     ],
     "cSpell.ignorePaths": [
         "eisvogel.latex"
