@@ -142,3 +142,15 @@ Maybe<Void> Problem::SetInitialXDot(int massId, double value){
     this->XDot[xIndex] = value;
     return r;
 }
+
+void Problem::SetInitialX(double value){
+    for (int i = 0; i<this->X.size(); i++){
+        this->X[i] = value;
+    }
+}
+
+void Problem::SetInitialXDot(double value){
+    for (int i = 0; i<this->XDot.size(); i++){
+        this->XDot[i] = value;
+    }
+}

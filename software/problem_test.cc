@@ -78,7 +78,6 @@ TEST(ProblemTest, SimpleBuildTest) {
   EXPECT_EQ(p.X.size(), 2);
   EXPECT_DOUBLE_EQ(p.X(0), 0.0);
   EXPECT_DOUBLE_EQ(p.X(1), 0.0);
-
   EXPECT_EQ(p.XDot.size(), 2);
   EXPECT_DOUBLE_EQ(p.XDot(0), 0.0);
   EXPECT_DOUBLE_EQ(p.XDot(1), 0.0);
@@ -87,12 +86,19 @@ TEST(ProblemTest, SimpleBuildTest) {
   p.SetInitialXDot(0,99.1);
   p.SetInitialX(1,9.2);
   p.SetInitialXDot(1,99.2);
-
   EXPECT_EQ(p.X.size(), 2);
   EXPECT_DOUBLE_EQ(p.X(0), 9.1);
   EXPECT_DOUBLE_EQ(p.X(1), 9.2);
-
   EXPECT_EQ(p.XDot.size(), 2);
   EXPECT_DOUBLE_EQ(p.XDot(0), 99.1);
   EXPECT_DOUBLE_EQ(p.XDot(1), 99.2);
+
+  p.SetInitialX(7.0);
+  p.SetInitialXDot(8.0);
+  EXPECT_EQ(p.X.size(), 2);
+  EXPECT_DOUBLE_EQ(p.X(0), 7.0);
+  EXPECT_DOUBLE_EQ(p.X(1), 7.0);
+  EXPECT_EQ(p.XDot.size(), 2);
+  EXPECT_DOUBLE_EQ(p.XDot(0), 8.0);
+  EXPECT_DOUBLE_EQ(p.XDot(1), 8.0);
 }

@@ -48,9 +48,13 @@ class Problem{
         // Returns mass by id
         Maybe<Spring*> GetSpring(int id);
 
-        // Set initial displacement and velocities
+        // Set initial displacement and velocities by massId
         Maybe<Void> SetInitialX(int massId, double value);
         Maybe<Void> SetInitialXDot(int massId, double value);
+
+        // Set initial displacement and velocities for all masses
+        void SetInitialX(double value);
+        void SetInitialXDot(double value);
 
         // Builds MInv, K
         // Creates X and XDot with zero values
