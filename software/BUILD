@@ -10,3 +10,12 @@ cc_test(
     ],
   deps = ["@com_google_googletest//:gtest_main"],
 )
+
+cc_test(
+  name = "boost_test",
+  size = "small",
+  srcs = [
+    "boost_test.cc",
+    ],
+  deps = ["@boost//:array"],
+)

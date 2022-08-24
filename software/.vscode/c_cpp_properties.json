@@ -4,7 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/home/andre/.cache/bazel/_bazel_andre/c50ae8b3414f468700204e9baee2d6ea/external/com_google_googletest/googletest/include"
+                "/home/andre/.cache/bazel/_bazel_andre/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
