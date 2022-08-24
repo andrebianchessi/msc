@@ -81,6 +81,15 @@ TEST(ProblemTest, SimpleBuildTest) {
   EXPECT_EQ(p.XDot.size(), 2);
   EXPECT_DOUBLE_EQ(p.XDot(0), 0.0);
   EXPECT_DOUBLE_EQ(p.XDot(1), 0.0);
+}
+
+TEST(ProblemTest, InitialConditionsTest) {
+  Problem p = Problem();
+
+  p.AddMass(1.0,0.0,0.0);
+  p.AddMass(2.0,1.0,1.0);
+  p.AddSpring(0,1,9.0);
+  p.Build();
 
   p.SetInitialX(0,9.1);
   p.SetInitialXDot(0,99.1);
