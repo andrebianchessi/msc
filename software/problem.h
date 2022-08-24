@@ -28,6 +28,12 @@ class Problem{
         // Stiffness Matrix
         mapped_matrix<double> K;
 
+        // Vector of positions
+        vector<double> X;
+
+        // Vector of speeds
+        vector<double> XDot;
+
         // Returns true if system has a mass with initial position (x,y)
         bool HasMassAt(double x, double y) const;
 
@@ -46,6 +52,7 @@ class Problem{
         // Returns mass by id
         Maybe<Spring*> GetSpring(int id);
 
-        // Builds MInv and K
+        // Builds MInv, K
+        // Creates X and XDot with zero values
         void Build();
 };

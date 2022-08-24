@@ -57,6 +57,7 @@ TEST(ProblemTest, SimpleBuildTest) {
   p.AddMass(2.0,1.0,1.0);
   p.AddSpring(0,1,9.0);
   p.Build();
+  p.Build(); // Calling again to make sure matrices are reset
 
   auto MInv = p.MInv;
   EXPECT_EQ(MInv.size1(), 2);
@@ -73,4 +74,14 @@ TEST(ProblemTest, SimpleBuildTest) {
   EXPECT_DOUBLE_EQ(K(0,1), 9.0);
   EXPECT_DOUBLE_EQ(K(1,0), 9.0);
   EXPECT_DOUBLE_EQ(K(1,1), -9.0);
+
+  auto X = p.X;
+  EXPECT_EQ(X.size(), 2);
+  EXPECT_DOUBLE_EQ(X(0), 0.0);
+  EXPECT_DOUBLE_EQ(X(1), 0.0);
+
+  auto XDot = p.XDot;
+  EXPECT_EQ(XDot.size(), 2);
+  EXPECT_DOUBLE_EQ(XDot(0), 0.0);
+  EXPECT_DOUBLE_EQ(XDot(1), 0.0);
 }

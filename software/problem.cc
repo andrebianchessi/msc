@@ -87,8 +87,7 @@ Maybe<Spring*> Problem::GetSpring(int id){
 
 void Problem::Build(){
     int dof = this->GetDof();
-    this->MInv.clear();
-    this->K.clear();
+
     this->MInv.resize(dof,dof,false);
     this->K.resize(dof,dof,false);
 
@@ -103,4 +102,7 @@ void Problem::Build(){
         this->K(s.m1->xIndex, s.m0->xIndex) = localK(1,0);
         this->K(s.m1->xIndex, s.m1->xIndex) = localK(1,1);
     }
+
+    this->X = zero_vector<double>(dof);
+    this->XDot = zero_vector<double>(dof);
 }
