@@ -17,5 +17,7 @@ cc_test(
   srcs = [
     "boost_test.cc",
     ],
-  deps = ["@boost//:array"],
+  deps = [
+    "@boost//:numeric_ublas",
+    "@com_google_googletest//:gtest_main"],
 )
