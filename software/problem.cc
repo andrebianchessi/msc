@@ -5,7 +5,7 @@
 #include <string>
 
 int Problem::GetDof() const{
-    return this->masses.size()*2;
+    return this->masses.size();
 }
 
 bool Problem::HasMassAt(double x, double y) const{
@@ -21,10 +21,9 @@ Maybe<int> Problem::AddMass(double m, double x, double y){
             std::to_string(x)+","+std::to_string(y)+")";
         return r;
     }
-    int massId = static_cast<int>(this->masses.size());
-    r.val = massId;
     int dof = this->GetDof();
-    this->masses.push_back(Mass(m, x, y, massId, dof, dof+1));
+    r.val = dof;
+    this->masses.push_back(Mass(m, x, y, dof));
     this->initialPositions.insert(std::tuple<double, double>(x,y));
     return r;
 }
