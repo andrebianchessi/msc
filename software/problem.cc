@@ -106,3 +106,39 @@ void Problem::Build(){
     this->X = zero_vector<double>(dof);
     this->XDot = zero_vector<double>(dof);
 }
+
+Maybe<Void> Problem::SetInitialX(int massId, double value){
+    Maybe<Void> r;
+    auto e = this->GetMass(massId);
+    if (e.isError){
+        r.isError = true;
+        r.errMsg = "Invalid massId";
+        return r;
+    }
+    int xIndex = e.val->xIndex;
+    if(xIndex >= this->X.size()){
+        r.isError = true;
+        r.errMsg = "Invalid xIndex. Build() has probably not been called yet.";
+        return r;
+    }
+    this->X[xIndex] = value;
+    return r;
+}
+
+Maybe<Void> Problem::SetInitialXDot(int massId, double value){
+    Maybe<Void> r;
+    auto e = this->GetMass(massId);
+    if (e.isError){
+        r.isError = true;
+        r.errMsg = "Invalid massId";
+        return r;
+    }
+    int xIndex = e.val->xIndex;
+    if(xIndex >= this->XDot.size()){
+        r.isError = true;
+        r.errMsg = "Invalid xIndex. Build() has probably not been called yet.";
+        return r;
+    }
+    this->XDot[xIndex] = value;
+    return r;
+}

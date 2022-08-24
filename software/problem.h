@@ -17,10 +17,6 @@ class Problem{
 
         // Springs in the problem
         std::vector<Spring> springs;
-        
-        // Initial position (x,y) of all masses in the problem.
-        // Note that two masses can't be created at the same initial position.
-        std::set<std::tuple<double,double>> initialPositions;
 
         // Inverse of Mass Matrix
         mapped_matrix<double> MInv;
@@ -52,7 +48,15 @@ class Problem{
         // Returns mass by id
         Maybe<Spring*> GetSpring(int id);
 
+        // Set initial displacement and velocities
+        Maybe<Void> SetInitialX(int massId, double value);
+        Maybe<Void> SetInitialXDot(int massId, double value);
+
         // Builds MInv, K
         // Creates X and XDot with zero values
         void Build();
+    private:
+        // Initial position (x,y) of all masses in the problem.
+        // Note that two masses can't be created at the same initial position.
+        std::set<std::tuple<double,double>> initialPositions;
 };
