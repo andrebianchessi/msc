@@ -49,3 +49,28 @@ TEST(ProblemTest, GetMassTest) {
   e = p->GetMass(3);
   EXPECT_TRUE(e.isError);
 }
+
+TEST(ProblemTest, SimpleBuildTest) {
+  Problem p = Problem();
+
+  p.AddMass(1.0,0.0,0.0);
+  p.AddMass(2.0,1.0,1.0);
+  p.AddSpring(0,1,9.0);
+  p.Build();
+
+  auto MInv = p.MInv;
+  EXPECT_EQ(MInv.size1(), 2);
+  EXPECT_EQ(MInv.size2(), 2);
+  EXPECT_DOUBLE_EQ(MInv(0,0), 1.0);
+  EXPECT_DOUBLE_EQ(MInv(0,1), 0.0);
+  EXPECT_DOUBLE_EQ(MInv(1,0), 0.0);
+  EXPECT_DOUBLE_EQ(MInv(1,1), 0.5);
+
+  auto K = p.K;
+  EXPECT_EQ(K.size1(), 2);
+  EXPECT_EQ(K.size2(), 2);
+  EXPECT_DOUBLE_EQ(K(0,0), -9.0);
+  EXPECT_DOUBLE_EQ(K(0,1), 9.0);
+  EXPECT_DOUBLE_EQ(K(1,0), 9.0);
+  EXPECT_DOUBLE_EQ(K(1,1), -9.0);
+}

@@ -3,6 +3,9 @@
 #include "mass.h"
 #include <tuple>
 #include <string>
+#include <boost/numeric/ublas/matrix_sparse.hpp>
+
+using namespace boost::numeric::ublas;
 
 int Problem::GetDof() const{
     return this->masses.size();
@@ -80,4 +83,24 @@ Maybe<Spring*> Problem::GetSpring(int id){
     }
     r.val = &(this->springs[id]);
     return r;
+}
+
+void Problem::Build(){
+    int dof = this->GetDof();
+    this->MInv.clear();
+    this->K.clear();
+    this->MInv.resize(dof,dof,false);
+    this->K.resize(dof,dof,false);
+
+    for (Mass mass : this->masses){
+        MInv(mass.xIndex,mass.xIndex) = 1/mass.m;
+    }
+
+    for (Spring s : this->springs){
+        auto localK = s.GetK();
+        this->K(s.m0->xIndex, s.m0->xIndex) = localK(0,0);
+        this->K(s.m0->xIndex, s.m1->xIndex) = localK(0,1);
+        this->K(s.m1->xIndex, s.m0->xIndex) = localK(1,0);
+        this->K(s.m1->xIndex, s.m1->xIndex) = localK(1,1);
+    }
 }

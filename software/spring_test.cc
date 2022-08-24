@@ -22,8 +22,8 @@ TEST(SpringTest, SimpleTest) {
     ASSERT_DOUBLE_EQ(M(1,1),20.0);
 
     auto K = s->GetK();
-    ASSERT_DOUBLE_EQ(K(0,0),30.0);
-    ASSERT_DOUBLE_EQ(K(0,1),0.0);
-    ASSERT_DOUBLE_EQ(K(1,0),0.0);
-    ASSERT_DOUBLE_EQ(K(1,1),30.0);
+    ASSERT_DOUBLE_EQ(K(0,0),-30.0);
+    ASSERT_DOUBLE_EQ(K(0,1),30.0);
+    ASSERT_DOUBLE_EQ(K(1,0),30.0);
+    ASSERT_DOUBLE_EQ(K(1,1),-30.0);
 }

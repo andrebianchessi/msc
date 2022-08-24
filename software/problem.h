@@ -5,6 +5,9 @@
 #include "mass.h"
 #include "spring.h"
 #include "maybe.h"
+#include <boost/numeric/ublas/matrix_sparse.hpp>
+
+using namespace boost::numeric::ublas;
 
 // Represents a 1D system of masses, springs and dampers
 class Problem{
@@ -18,6 +21,12 @@ class Problem{
         // Initial position (x,y) of all masses in the problem.
         // Note that two masses can't be created at the same initial position.
         std::set<std::tuple<double,double>> initialPositions;
+
+        // Inverse of Mass Matrix
+        mapped_matrix<double> MInv;
+
+        // Stiffness Matrix
+        mapped_matrix<double> K;
 
         // Returns true if system has a mass with initial position (x,y)
         bool HasMassAt(double x, double y) const;
@@ -36,4 +45,7 @@ class Problem{
 
         // Returns mass by id
         Maybe<Spring*> GetSpring(int id);
+
+        // Builds MInv and K
+        void Build();
 };

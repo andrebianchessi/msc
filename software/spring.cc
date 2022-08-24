@@ -26,9 +26,9 @@ const bounded_matrix<float,2,2> Spring::GetM(){
 };
 const bounded_matrix<float,2,2> Spring::GetK(){
     bounded_matrix<float,2,2> m;
-    m(0,0) = this->k;
-    m(0,1) = 0.0;
-    m(1,0) = 0.0;
-    m(1,1) = this->k;
+    m(0,0) = -this->k;
+    m(0,1) = this->k;
+    m(1,0) = this->k;
+    m(1,1) = -this->k;
     return m;
 };

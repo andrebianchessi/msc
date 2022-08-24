@@ -44,10 +44,10 @@ cc_library(
     "problem.h",
   ],
   deps = [
-    "@com_google_googletest//:gtest_main",
     ":mass",
     ":spring",
-    ":maybe"
+    ":maybe",
+    "@boost//:numeric_ublas"
   ]
 )
 
@@ -58,7 +58,8 @@ cc_test(
     "problem_test.cc",
     ],
   deps = [
-    ":problem"
+    ":problem",
+    "@com_google_googletest//:gtest_main",
     ],
 )
 
