@@ -4,6 +4,7 @@
 #include <tuple>
 #include <string>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
+#include <boost/numeric/ublas/operations.hpp>
 
 using namespace boost::numeric::ublas;
 
@@ -14,6 +15,14 @@ int Problem::GetDof() const{
 bool Problem::HasMassAt(double px, double py) const{
     auto position = std::tuple<double, double>(px,py);
     return (this->initialPositions.find(position) != this->initialPositions.end());
+}
+
+bool Problem::massIsFixed(int massId){
+    auto e = this->GetMass(massId);
+    if (e.isError){
+        return false;
+    }
+    return (this->fixedMasses.find(e.val) != this->fixedMasses.end());
 }
 
 Maybe<int> Problem::AddMass(double m, double px, double py){
@@ -110,8 +119,11 @@ void Problem::Build(){
 int Problem::xDotIndex(Mass m){
     return this->GetDof()+m.xIndex;
 }
+int Problem::xDotIndex(int xIndex){
+    return this->GetDof()+xIndex;
+}
 
-Maybe<Void> Problem::SetInitialX(int massId, double value){
+Maybe<Void> Problem::SetInitialDisp(int massId, double value){
     Maybe<Void> r;
     auto e = this->GetMass(massId);
     if (e.isError){
@@ -134,8 +146,13 @@ Maybe<Void> Problem::SetInitialX(int massId, double value){
     return r;
 }
 
-Maybe<Void> Problem::SetInitialXDot(int massId, double value){
+Maybe<Void> Problem::SetInitialVel(int massId, double value){
     Maybe<Void> r;
+    if (this->massIsFixed(massId)){
+        r.isError = true;
+        r.errMsg = "Mass is fixed";
+        return r;
+    }
     auto e = this->GetMass(massId);
     if (e.isError){
         r.isError = true;
@@ -157,13 +174,13 @@ Maybe<Void> Problem::SetInitialXDot(int massId, double value){
     return r;
 }
 
-void Problem::SetInitialX(double value){
+void Problem::SetInitialDisp(double value){
     for (int i = 0; i < int(this->X.size()); i++){
         this->X[i] = value;
     }
 }
 
-void Problem::SetInitialXDot(double value){
+void Problem::SetInitialVel(double value){
     for (Mass m : this->masses){
         this->X[this->xDotIndex(m)] = value;
     }
@@ -178,4 +195,50 @@ Maybe<Void> Problem::FixMass(int massId){
         return r;
     }
     this->fixedMasses.insert(e.val);
+    return r;
+}
+
+matrix<double> Problem::getDisp(){
+    matrix<double> s = matrix<double>(this->GetDof(),1);
+    for (int i = 0; i < this->GetDof(); i++){
+        s(i,0) = this->X[i];
+    }
+    return s;
+}
+
+matrix<double> Problem::getVel(){
+    matrix<double> v = matrix<double>(this->GetDof(),1);
+    for (int i = 0; i < this->GetDof(); i++){
+        v(i,0) = this->X[this->xDotIndex(i)];
+    }
+    return v;
+}
+
+vector<double> Problem::XDot(){
+    // [x0Dot, x1Dot, ... , x0DotDot, x1DotDot, ...]
+    vector<double> XDot = vector<double>(this->X.size());
+
+    // Set first half of XDot
+    for (int i = 0; i < this->GetDof(); i++){
+        XDot[i] = this->X[this->xDotIndex(i)];
+    }
+
+    // 1D matrix with the second derivatives
+    // calculating with discrete element method
+    // [x0DotDot, x1DotDot, ...]
+    matrix<double> KDisp = prod(this->K, this->getDisp());
+    matrix<double> xDotDot = prod(this->MInv,KDisp);
+
+    // Set second half of XDot
+    for (int i = 0; i < this->GetDof(); i++){
+        XDot[this->xDotIndex(i)] = xDotDot(i,0);
+    }
+
+    // Apply fixed conditions
+    for(auto m : this->fixedMasses) {
+        XDot[m->xIndex] = 0;
+        XDot[this->xDotIndex(m->xIndex)] = 0;
+    }
+
+    return XDot;
 }

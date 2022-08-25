@@ -53,14 +53,16 @@ class Problem{
         Maybe<Spring*> GetSpring(int id);
 
         // Set initial displacement and velocities by massId
-        Maybe<Void> SetInitialX(int massId, double value);
-        Maybe<Void> SetInitialXDot(int massId, double value);
+        Maybe<Void> SetInitialDisp(int massId, double value);
+        Maybe<Void> SetInitialVel(int massId, double value);
 
         // Set initial displacement and velocities for all masses
-        void SetInitialX(double value);
-        void SetInitialXDot(double value);
+        void SetInitialDisp(double value);
+        void SetInitialVel(double value);
 
         // Set mass with id massId as fixed, i.e. always zero speed
+        // Not that this takes precedence over setting initial velocity
+        // explicitly with SetInitialVel.
         Maybe<Void> FixMass(int massId);
 
         // Builds MInv, K
@@ -75,8 +77,23 @@ class Problem{
         std::set<Mass*> fixedMasses;
         FRIEND_TEST(ProblemTest, FixMassTest);
 
+        bool massIsFixed(int massId);
+
         bool isBuilt;
-        
+
         // Returns the index of the speed of the mass in the state vector (X)
         int xDotIndex(Mass m);
+        int xDotIndex(int xIndex);
+        
+        // Returns row matrix of displacements
+        //  [[x0],
+        //   [x1],
+        //   ... ]
+        matrix<double> getDisp();
+        // Returns row matrix of Velocities
+        //  [[x0Dot],
+        //   [x1Dot],
+        //      ... ]
+        matrix<double> getVel();
+        FRIEND_TEST(ProblemTest, GetDispAndVelTest);
 };
