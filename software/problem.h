@@ -24,11 +24,14 @@ class Problem{
         // Stiffness Matrix
         mapped_matrix<double> K;
 
-        // Vector of positions
+        // State Vector
+        // Contains all displacements, followed by all velocities
+        // X = [x0, x1,... xN, xDot0, xDot1, ..., xDotN]
         vector<double> X;
 
-        // Vector of speeds
-        vector<double> XDot;
+        // Returns time derivative of state vector
+        // XDot = [xDot0, xDot1, ..., xDotN, xDotDot0, ..., xDotDotN]
+        vector<double> XDot();
 
         // Returns true if system has a mass with initial position (x,y)
         bool HasMassAt(double x, double y) const;
@@ -63,4 +66,9 @@ class Problem{
         // Initial position (x,y) of all masses in the problem.
         // Note that two masses can't be created at the same initial position.
         std::set<std::tuple<double,double>> initialPositions;
+        
+        bool isBuilt;
+        
+        // Returns the index of the speed of the mass in the state vector (X)
+        int xDotIndex(Mass m);
 };

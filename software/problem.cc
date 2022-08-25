@@ -103,8 +103,12 @@ void Problem::Build(){
         this->K(s.m1->xIndex, s.m1->xIndex) = localK(1,1);
     }
 
-    this->X = zero_vector<double>(dof);
-    this->XDot = zero_vector<double>(dof);
+    this->X = zero_vector<double>(dof*2);
+    this->isBuilt = true;
+}
+
+int Problem::xDotIndex(Mass m){
+    return this->GetDof()+m.xIndex;
 }
 
 Maybe<Void> Problem::SetInitialX(int massId, double value){
@@ -115,10 +119,15 @@ Maybe<Void> Problem::SetInitialX(int massId, double value){
         r.errMsg = "Invalid massId";
         return r;
     }
-    int xIndex = e.val->xIndex;
-    if(xIndex >= this->X.size()){
+    if (!this->isBuilt){
         r.isError = true;
-        r.errMsg = "Invalid xIndex. Build() has probably not been called yet.";
+        r.errMsg = "Problem not built. First call Build().";
+        return r;
+    }
+    int xIndex = e.val->xIndex;
+    if(xIndex >= int(this->X.size())){
+        r.isError = true;
+        r.errMsg = "Invalid xIndex";
         return r;
     }
     this->X[xIndex] = value;
@@ -133,24 +142,29 @@ Maybe<Void> Problem::SetInitialXDot(int massId, double value){
         r.errMsg = "Invalid massId";
         return r;
     }
-    int xIndex = e.val->xIndex;
-    if(xIndex >= this->XDot.size()){
+    if (!this->isBuilt){
         r.isError = true;
-        r.errMsg = "Invalid xIndex. Build() has probably not been called yet.";
+        r.errMsg = "Problem not built. First call Build().";
         return r;
     }
-    this->XDot[xIndex] = value;
+    int xDotIndex = this->xDotIndex(*e.val);
+    if(xDotIndex >= int(this->X.size())){
+        r.isError = true;
+        r.errMsg = "Invalid xDotIndex.";
+        return r;
+    }
+    this->X[xDotIndex] = value;
     return r;
 }
 
 void Problem::SetInitialX(double value){
-    for (int i = 0; i<this->X.size(); i++){
+    for (int i = 0; i < int(this->X.size()); i++){
         this->X[i] = value;
     }
 }
 
 void Problem::SetInitialXDot(double value){
-    for (int i = 0; i<this->XDot.size(); i++){
-        this->XDot[i] = value;
+    for (Mass m : this->masses){
+        this->X[this->xDotIndex(m)] = value;
     }
 }
