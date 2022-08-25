@@ -47,7 +47,8 @@ cc_library(
     ":mass",
     ":spring",
     ":maybe",
-    "@boost//:numeric_ublas"
+    "@boost//:numeric_ublas",
+    "@com_google_googletest//:gtest_main",
   ]
 )
 

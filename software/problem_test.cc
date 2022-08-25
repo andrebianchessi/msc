@@ -107,3 +107,23 @@ TEST(ProblemTest, InitialConditionsTest) {
   EXPECT_DOUBLE_EQ(p.X(2), 8.0);
   EXPECT_DOUBLE_EQ(p.X(3), 8.0);
 }
+
+TEST(ProblemTest, FixMassTest) {
+  Problem p = Problem();
+
+  p.AddMass(1.0,0.0,0.0);
+  p.AddMass(2.0,1.0,1.0);
+  
+  Maybe<Void> e = p.FixMass(0);
+  EXPECT_FALSE(e.isError);
+
+  e = p.FixMass(1);
+  EXPECT_FALSE(e.isError);
+
+  EXPECT_EQ(p.fixedMasses.size(),2);
+  EXPECT_TRUE(p.fixedMasses.find(p.GetMass(0).val) != p.fixedMasses.end());
+  EXPECT_TRUE(p.fixedMasses.find(p.GetMass(1).val) != p.fixedMasses.end());
+
+  e = p.FixMass(2);
+  EXPECT_TRUE(e.isError);
+}

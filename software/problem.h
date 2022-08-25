@@ -6,6 +6,7 @@
 #include "spring.h"
 #include "maybe.h"
 #include <boost/numeric/ublas/matrix_sparse.hpp>
+#include <gtest/gtest.h>
 
 using namespace boost::numeric::ublas;
 
@@ -59,6 +60,9 @@ class Problem{
         void SetInitialX(double value);
         void SetInitialXDot(double value);
 
+        // Set mass with id massId as fixed, i.e. always zero speed
+        Maybe<Void> FixMass(int massId);
+
         // Builds MInv, K
         // Creates X and XDot with zero values
         void Build();
@@ -67,6 +71,10 @@ class Problem{
         // Note that two masses can't be created at the same initial position.
         std::set<std::tuple<double,double>> initialPositions;
         
+        // Masses that are fixed, i.e. have always zero velocity
+        std::set<Mass*> fixedMasses;
+        FRIEND_TEST(ProblemTest, FixMassTest);
+
         bool isBuilt;
         
         // Returns the index of the speed of the mass in the state vector (X)

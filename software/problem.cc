@@ -168,3 +168,14 @@ void Problem::SetInitialXDot(double value){
         this->X[this->xDotIndex(m)] = value;
     }
 }
+
+Maybe<Void> Problem::FixMass(int massId){
+    Maybe<Void> r;
+    auto e = this->GetMass(massId);
+    if (e.isError){
+        r.isError = true;
+        r.errMsg = "Invalid massId";
+        return r;
+    }
+    this->fixedMasses.insert(e.val);
+}
