@@ -5,16 +5,16 @@ class Mass {
 
     public:
         double m; // mass value
-        double x; // horizontal position
-        double y; // vertical position
+        double px; // horizontal position
+        double py; // vertical position
         int xIndex; // global index of horizontal degree of freedom
 
     private:
         // Mass instances can only be constructed by Problem instances
-        Mass(double m, double x, double y, int xIndex){
+        Mass(double m, double px, double py, int xIndex){
             this->m = m;
-            this->x = x;
-            this->y = y;
+            this->px = px;
+            this->py = py;
             this->xIndex = xIndex;
         }
 };

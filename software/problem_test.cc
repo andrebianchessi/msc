@@ -36,15 +36,15 @@ TEST(ProblemTest, GetMassTest) {
   EXPECT_FALSE(e.isError);
   auto m = e.val;
   EXPECT_TRUE(m->xIndex == 0);
-  EXPECT_TRUE(m->x == 0.0);
-  EXPECT_TRUE(m->y == 0.1);
+  EXPECT_TRUE(m->px == 0.0);
+  EXPECT_TRUE(m->py == 0.1);
 
   e = p->GetMass(2);
   EXPECT_FALSE(e.isError);
   m = e.val;
   EXPECT_TRUE(m->xIndex == 2);
-  EXPECT_TRUE(m->x == 2.0);
-  EXPECT_TRUE(m->y == 2.1);
+  EXPECT_TRUE(m->px == 2.0);
+  EXPECT_TRUE(m->py == 2.1);
 
   e = p->GetMass(3);
   EXPECT_TRUE(e.isError);

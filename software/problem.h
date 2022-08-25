@@ -33,11 +33,11 @@ class Problem{
         // XDot = [xDot0, xDot1, ..., xDotN, xDotDot0, ..., xDotDotN]
         vector<double> XDot();
 
-        // Returns true if system has a mass with initial position (x,y)
-        bool HasMassAt(double x, double y) const;
+        // Returns true if system has a mass with initial position (px,py)
+        bool HasMassAt(double px, double py) const;
 
         // Add a Mass object to the problem and returns its id
-        Maybe<int> AddMass(double m, double x, double y);
+        Maybe<int> AddMass(double m, double px, double py);
 
         // Returns mass by id
         Maybe<Mass*> GetMass(int id);
@@ -63,7 +63,7 @@ class Problem{
         // Creates X and XDot with zero values
         void Build();
     private:
-        // Initial position (x,y) of all masses in the problem.
+        // Initial position (px,py) of all masses in the problem.
         // Note that two masses can't be created at the same initial position.
         std::set<std::tuple<double,double>> initialPositions;
         

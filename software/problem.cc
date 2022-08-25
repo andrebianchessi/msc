@@ -11,23 +11,23 @@ int Problem::GetDof() const{
     return this->masses.size();
 }
 
-bool Problem::HasMassAt(double x, double y) const{
-    auto position = std::tuple<double, double>(x,y);
+bool Problem::HasMassAt(double px, double py) const{
+    auto position = std::tuple<double, double>(px,py);
     return (this->initialPositions.find(position) != this->initialPositions.end());
 }
 
-Maybe<int> Problem::AddMass(double m, double x, double y){
+Maybe<int> Problem::AddMass(double m, double px, double py){
     Maybe<int> r;
-    if (this->HasMassAt(x, y)){
+    if (this->HasMassAt(px, py)){
         r.isError = true;
         r.errMsg = "Mass already present at (" +
-            std::to_string(x)+","+std::to_string(y)+")";
+            std::to_string(px)+","+std::to_string(py)+")";
         return r;
     }
     int dof = this->GetDof();
     r.val = dof;
-    this->masses.push_back(Mass(m, x, y, dof));
-    this->initialPositions.insert(std::tuple<double, double>(x,y));
+    this->masses.push_back(Mass(m, px, py, dof));
+    this->initialPositions.insert(std::tuple<double, double>(px,py));
     return r;
 }
 
