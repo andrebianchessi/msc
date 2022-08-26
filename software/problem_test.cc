@@ -288,7 +288,7 @@ TEST(ProblemTest, XDotInitialDisplacementAndVelocityWithFixedMassTest) {
   p.Build();
 
   p.FixMass(0);
-  p.SetInitialVel(0,99.0); // FixMas should take precedence over SetInitialVel
+  p.SetInitialVel(0,99.0); // FixMass should take precedence over SetInitialVel
 
   p.SetInitialDisp(1,x1);
   p.SetInitialVel(1,x1Dot);
