@@ -338,8 +338,8 @@ TEST(ProblemTest,IntegrateTest) {
 
   Problem p = Problem();
   p.AddMass(1.0,0.0,0.0);
-  p.AddMass(1.0,1.0,1.0);
-  p.AddSpring(0,1,1.0);
+  p.AddMass(5.0,1.0,1.0);
+  p.AddSpring(0,1,5.0);
   p.Build();
   p.FixMass(0);
   p.SetInitialDisp(1, 0.1);
