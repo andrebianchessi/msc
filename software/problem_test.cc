@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "problem.h"
 #include <iostream>
+#include <boost/numeric/odeint.hpp>
 
 TEST(ProblemTest, MassCreationTest) {
   Problem* p = new Problem();
@@ -163,9 +164,11 @@ TEST(ProblemTest, XDotSimpleTest) {
   p.AddSpring(0,1,1.0);
   p.Build();
 
+  vector<double> XDot = vector<double>(p.X.size());
+  p.SetXDot(p.X, XDot, 0.0);
+
   // Zero initial displacements and velocities:
   // Initial XDot is zero.
-  auto XDot = p.XDot();
   EXPECT_EQ(XDot.size(), 4);
   EXPECT_DOUBLE_EQ(XDot(0), 0.0);
   EXPECT_DOUBLE_EQ(XDot(1), 0.0);
@@ -185,9 +188,11 @@ TEST(ProblemTest, XDotInitialVelocityTest) {
   p.SetInitialVel(0,x0Dot);
   p.SetInitialVel(1,x1Dot);
 
+  vector<double> XDot = vector<double>(p.X.size());
+  p.SetXDot(p.X, XDot, 0.0);
+  
   // Zero initial displacements and non-zero Initial velocities:
   //    Initial accelerations are zero.
-  auto XDot = p.XDot();
   EXPECT_EQ(XDot.size(), 4);
   EXPECT_DOUBLE_EQ(XDot(0), x0Dot);
   EXPECT_DOUBLE_EQ(XDot(1), x1Dot);
@@ -210,12 +215,14 @@ TEST(ProblemTest, XDotInitialDisplacementTest) {
   p.SetInitialDisp(0,x0);
   p.SetInitialDisp(1,x1);
 
+  vector<double> XDot = vector<double>(p.X.size());
+  p.SetXDot(p.X, XDot, 0.0);
+
   // |x0DotDot| = |1/m0 0   | * |-k k| * |x0|
   // |x1DotDot|   |0    1/m1|   |k -k|   |x1|
 
   // Non-zero initial displacements and zero Initial velocities:
   //    Initial accelerations are non-zero.
-  auto XDot = p.XDot();
   EXPECT_EQ(XDot.size(), 4);
   EXPECT_DOUBLE_EQ(XDot(0), 0.0);
   EXPECT_DOUBLE_EQ(XDot(1), 0.0);
@@ -243,7 +250,9 @@ TEST(ProblemTest, XDotInitialDisplacementAndVelocityTest) {
   p.SetInitialVel(0,x0Dot);
   p.SetInitialVel(1,x1Dot);
 
-  auto XDot = p.XDot();
+  vector<double> XDot = vector<double>(p.X.size());
+  p.SetXDot(p.X, XDot, 0.0);
+
   EXPECT_EQ(XDot.size(), 4);
   EXPECT_DOUBLE_EQ(XDot(0), x0Dot);
   EXPECT_DOUBLE_EQ(XDot(1), x1Dot);
@@ -269,10 +278,25 @@ TEST(ProblemTest, XDotInitialDisplacementAndVelocityWithFixedMassTest) {
   p.SetInitialDisp(1,x1);
   p.SetInitialVel(1,x1Dot);
 
-  auto XDot = p.XDot();
+  vector<double> XDot = vector<double>(p.X.size());
+  p.SetXDot(p.X, XDot, 0.0);
+
   EXPECT_EQ(XDot.size(), 4);
   EXPECT_DOUBLE_EQ(XDot(0), 0.0);
   EXPECT_DOUBLE_EQ(XDot(1), x1Dot);
   EXPECT_DOUBLE_EQ(XDot(2), 0.0);
   EXPECT_DOUBLE_EQ(XDot(3), 1/m1*(k*0-k*x1));
+}
+
+TEST(ProblemTest,IntegrateTest) {
+  Problem p = Problem();
+  p.AddMass(1.0,0.0,0.0);
+  p.AddMass(2.0,1.0,1.0);
+  p.AddSpring(0,1,1.0);
+  p.Build();
+
+  p.FixMass(0);
+  p.SetInitialDisp(1,10.0);
+
+  p.Integrate(0.0, 5.0, 0.01);
 }

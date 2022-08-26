@@ -48,6 +48,7 @@ cc_library(
     ":spring",
     ":maybe",
     "@boost//:numeric_ublas",
+    "@boost//:numeric_odeint",
     "@com_google_googletest//:gtest_main",
   ]
 )

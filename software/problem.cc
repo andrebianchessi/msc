@@ -5,8 +5,10 @@
 #include <string>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/operations.hpp>
+#include <boost/numeric/odeint.hpp>
 
 using namespace boost::numeric::ublas;
+using namespace boost::numeric::odeint;
 
 int Problem::GetDof() const{
     return this->masses.size();
@@ -214,13 +216,10 @@ matrix<double> Problem::getVel(){
     return v;
 }
 
-vector<double> Problem::XDot(){
-    // [x0Dot, x1Dot, ... , x0DotDot, x1DotDot, ...]
-    vector<double> XDot = vector<double>(this->X.size());
-
+void Problem::SetXDot(const vector<double> &X, vector<double> &XDot, double t){
     // Set first half of XDot
     for (int i = 0; i < this->GetDof(); i++){
-        XDot[i] = this->X[this->xDotIndex(i)];
+        XDot[i] = X[this->xDotIndex(i)];
     }
 
     // 1D matrix with the second derivatives
@@ -240,5 +239,27 @@ vector<double> Problem::XDot(){
         XDot[this->xDotIndex(m->xIndex)] = 0;
     }
 
-    return XDot;
+}
+
+void Problem::write(const vector<double> &X, double t){
+    using namespace std;
+    cout.precision(3);
+    cout << "t: "<< t << '\t';
+    for (int i = 0; i < this->GetDof(); i++){
+        cout << "x"<< i << ": " << X[i] << '\t';
+    }
+    for (int i = this->GetDof(); i < 2*this->GetDof(); i++){
+        cout << "x"<< i - this->GetDof() << "Dot:" << " " << X[i] << '\t';
+    }
+    cout << endl;
+}
+
+void Problem::Integrate(double t0, double t1, double timestep){
+    auto setXDot = [this](vector<double> const& X, vector<double> &XDot , double t ) {
+        this->SetXDot(X, XDot, t);
+    };
+    auto write = [this](const vector<double> &X, double t) {
+        this->write(X,t);
+    };
+    integrate( setXDot, this->X, t0, t1, timestep, write);
 }
