@@ -26,6 +26,21 @@ TEST(ProblemTest, MassCreationTest) {
   EXPECT_TRUE(p->GetDof() == 3);
 }
 
+TEST(ProblemTest, GetMassDispAndVelTest) {
+  auto p = Problem();
+
+  p.AddMass(0.0,0.0,0.0);
+  p.AddMass(1.0,1.0,1.0);
+  p.AddMass(2.0,2.0,2.0);
+
+  EXPECT_EQ(p.GetMassDispIndex(0),0);
+  EXPECT_EQ(p.GetMassDispIndex(1),1);
+  EXPECT_EQ(p.GetMassDispIndex(2),2);
+  EXPECT_EQ(p.GetMassVelIndex(0),3);
+  EXPECT_EQ(p.GetMassVelIndex(1),4);
+  EXPECT_EQ(p.GetMassVelIndex(2),5);
+}
+
 TEST(ProblemTest, GetMassTest) {
   Problem* p = new Problem();
 
@@ -288,7 +303,7 @@ TEST(ProblemTest, XDotInitialDisplacementAndVelocityWithFixedMassTest) {
   EXPECT_DOUBLE_EQ(XDot(3), 1/m1*(k*0-k*x1));
 }
 
-TEST(ProblemTest,IntegrateTest) {
+TEST(ProblemTest,IntegrateStationaryTest) {
   Problem p = Problem();
   p.AddMass(1.0,0.0,0.0);
   p.AddMass(2.0,1.0,1.0);
@@ -296,7 +311,31 @@ TEST(ProblemTest,IntegrateTest) {
   p.Build();
 
   p.FixMass(0);
-  p.SetInitialDisp(1,10.0);
+  p.FixMass(1);
 
-  p.Integrate(0.0, 5.0, 0.01);
+  p.Integrate(0.0, 1.0, 0.02);
+  for (int i = 0; i < int(p.XHistory.size()); i++){
+    ASSERT_DOUBLE_EQ(p.XHistory[i][p.GetMassDispIndex(0)],0.0);
+    ASSERT_DOUBLE_EQ(p.XHistory[i][p.GetMassDispIndex(1)],0.0);
+    ASSERT_DOUBLE_EQ(p.XHistory[i][p.GetMassVelIndex(0)],0.0);
+    ASSERT_DOUBLE_EQ(p.XHistory[i][p.GetMassVelIndex(1)],0.0);
+  }
+}
+
+TEST(ProblemTest,IntegrateTest) {
+  Problem p = Problem();
+  p.AddMass(1.0,0.0,0.0);
+  p.AddMass(1.0,1.0,1.0);
+  p.AddSpring(0,1,1.0);
+  p.Build();
+
+  p.FixMass(0);
+  p.SetInitialDisp(1, 1.0);
+
+  p.Integrate(0.0, 10.0, 0.02);
+  for (int i = 0; i < int(p.XHistory.size()); i++){
+    ASSERT_DOUBLE_EQ(p.XHistory[i][p.GetMassDispIndex(0)],0.0);
+    ASSERT_DOUBLE_EQ(p.XHistory[i][p.GetMassVelIndex(0)],0.0);
+  }
+  p.PrintMassTimeHistory(1);
 }

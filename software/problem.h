@@ -29,6 +29,10 @@ public:
     // Contains all displacements, followed by all velocities
     // X = [x0, x1,... xN, xDot0, xDot1, ..., xDotN]
     vector<double> X;
+    
+    // Saves the time series of X
+    std::vector<double> t;
+    std::vector<vector<double>> XHistory;
 
     // Sets in XDot the values of the derivatives of the state vector,
     // i.e after calling this function:
@@ -75,7 +79,19 @@ public:
     // Creates X and XDot with zero values
     void Build();
 
+    // Integrates the system and saves the state vectors at t and XHistory
     void Integrate(double t0, double t1, double timestep);
+
+    // Prints the time history of mass by id
+    void PrintMassTimeHistory(int massId);
+
+    // Returns the index of the displacement of the mass in the state vector (X)
+    int GetMassDispIndex(Mass m);
+    int GetMassDispIndex(int xIndex);
+
+    // Returns the index of the velocity of the mass in the state vector (X)
+    int GetMassVelIndex(Mass m);
+    int GetMassVelIndex(int xIndex);
 
 private:
     // Initial position (px,py) of all masses in the problem.
@@ -90,10 +106,6 @@ private:
 
     bool isBuilt;
 
-    // Returns the index of the speed of the mass in the state vector (X)
-    int xDotIndex(Mass m);
-    int xDotIndex(int xIndex);
-
     // Returns row matrix of displacements
     //  [[x0],
     //   [x1],
@@ -106,6 +118,6 @@ private:
     matrix<double> getVel();
     FRIEND_TEST(ProblemTest, GetDispAndVelTest);
 
-    // Write the time series
-    void write(const vector<double> &X, double t);
+    // Save current state vector
+    void save(const vector<double> &X, double t);
 };

@@ -118,11 +118,17 @@ void Problem::Build(){
     this->isBuilt = true;
 }
 
-int Problem::xDotIndex(Mass m){
+int Problem::GetMassVelIndex(Mass m){
     return this->GetDof()+m.xIndex;
 }
-int Problem::xDotIndex(int xIndex){
+int Problem::GetMassVelIndex(int xIndex){
     return this->GetDof()+xIndex;
+}
+int Problem::GetMassDispIndex(Mass m){
+    return m.xIndex;
+}
+int Problem::GetMassDispIndex(int xIndex){
+    return xIndex;
 }
 
 Maybe<Void> Problem::SetInitialDisp(int massId, double value){
@@ -166,7 +172,7 @@ Maybe<Void> Problem::SetInitialVel(int massId, double value){
         r.errMsg = "Problem not built. First call Build().";
         return r;
     }
-    int xDotIndex = this->xDotIndex(*e.val);
+    int xDotIndex = this->GetMassVelIndex(*e.val);
     if(xDotIndex >= int(this->X.size())){
         r.isError = true;
         r.errMsg = "Invalid xDotIndex.";
@@ -184,7 +190,7 @@ void Problem::SetInitialDisp(double value){
 
 void Problem::SetInitialVel(double value){
     for (Mass m : this->masses){
-        this->X[this->xDotIndex(m)] = value;
+        this->X[this->GetMassVelIndex(m)] = value;
     }
 }
 
@@ -211,7 +217,7 @@ matrix<double> Problem::getDisp(){
 matrix<double> Problem::getVel(){
     matrix<double> v = matrix<double>(this->GetDof(),1);
     for (int i = 0; i < this->GetDof(); i++){
-        v(i,0) = this->X[this->xDotIndex(i)];
+        v(i,0) = this->X[this->GetMassVelIndex(i)];
     }
     return v;
 }
@@ -219,7 +225,7 @@ matrix<double> Problem::getVel(){
 void Problem::SetXDot(const vector<double> &X, vector<double> &XDot, double t){
     // Set first half of XDot
     for (int i = 0; i < this->GetDof(); i++){
-        XDot[i] = X[this->xDotIndex(i)];
+        XDot[i] = X[this->GetMassVelIndex(i)];
     }
 
     // 1D matrix with the second derivatives
@@ -230,36 +236,46 @@ void Problem::SetXDot(const vector<double> &X, vector<double> &XDot, double t){
 
     // Set second half of XDot
     for (int i = 0; i < this->GetDof(); i++){
-        XDot[this->xDotIndex(i)] = xDotDot(i,0);
+        XDot[this->GetMassVelIndex(i)] = xDotDot(i,0);
     }
 
     // Apply fixed conditions
     for(auto m : this->fixedMasses) {
         XDot[m->xIndex] = 0;
-        XDot[this->xDotIndex(m->xIndex)] = 0;
+        XDot[this->GetMassVelIndex(m->xIndex)] = 0;
     }
 
 }
 
-void Problem::write(const vector<double> &X, double t){
-    using namespace std;
-    cout.precision(3);
-    cout << "t: "<< t << '\t';
-    for (int i = 0; i < this->GetDof(); i++){
-        cout << "x"<< i << ": " << X[i] << '\t';
-    }
-    for (int i = this->GetDof(); i < 2*this->GetDof(); i++){
-        cout << "x"<< i - this->GetDof() << "Dot:" << " " << X[i] << '\t';
-    }
-    cout << endl;
+void Problem::save(const vector<double> &X, double t){
+    this->t.push_back(t);
+    vector<double> xNow  = vector<double>(int(X.size()));
+    std::copy(X.begin() , X.end(), xNow.begin());
+    this->XHistory.push_back(xNow);
 }
 
 void Problem::Integrate(double t0, double t1, double timestep){
     auto setXDot = [this](vector<double> const& X, vector<double> &XDot , double t ) {
         this->SetXDot(X, XDot, t);
     };
-    auto write = [this](const vector<double> &X, double t) {
-        this->write(X,t);
+    auto save = [this](const vector<double> &X, double t) {
+        this->save(X,t);
     };
-    integrate( setXDot, this->X, t0, t1, timestep, write);
+    integrate( setXDot, this->X, t0, t1, timestep, save);
+}
+
+void Problem::PrintMassTimeHistory(int massId){
+    using namespace std;
+    auto e = this->GetMass(massId);
+    if (e.isError){
+        cout << "Invalid massId" << endl;
+        return;
+    }
+    auto m = *e.val;
+    cout << "t,x,xDot" << endl;
+    for (int i = 0; i < int(this->t.size()); i++){
+        cout << this->t[i] << ",";
+        cout << this->XHistory[i][m.xIndex] << ",";
+        cout << this->XHistory[i][this->GetMassVelIndex(m)] << endl;
+    }
 }
