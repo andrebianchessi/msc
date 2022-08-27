@@ -35,6 +35,22 @@ cc_library(
 )
 
 cc_library(
+  name = "damper",
+  srcs = [
+    "damper.h",
+    "damper.cc",
+    "problem.h",
+  ],
+  hdrs = [
+    "damper.h"
+  ],
+  deps = [
+    ":mass",
+    "@boost//:numeric_ublas"
+  ]
+)
+
+cc_library(
   name = "problem",
   srcs = [
     "problem.h",
@@ -46,6 +62,7 @@ cc_library(
   deps = [
     ":mass",
     ":spring",
+    ":damper",
     ":maybe",
     "@boost//:numeric_ublas",
     "@boost//:numeric_odeint",
@@ -82,6 +99,18 @@ cc_test(
   size = "small",
   srcs = [
     "spring_test.cc"
+    ],
+  deps = [
+    "@com_google_googletest//:gtest_main",
+    ":problem",
+    ],
+)
+
+cc_test(
+  name = "damper_test",
+  size = "small",
+  srcs = [
+    "damper_test.cc"
     ],
   deps = [
     "@com_google_googletest//:gtest_main",

@@ -4,6 +4,7 @@
 #include <tuple>
 #include "mass.h"
 #include "spring.h"
+#include "damper.h"
 #include "maybe.h"
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <gtest/gtest.h>
@@ -19,11 +20,17 @@ public:
     // Springs in the problem
     std::vector<Spring> springs;
 
+    // Dampers in the problem
+    std::vector<Damper> dampers;
+
     // Inverse of Mass Matrix
     mapped_matrix<double> MInv;
 
     // Stiffness Matrix
     mapped_matrix<double> K;
+
+    // Damping Matrix
+    mapped_matrix<double> C;
 
     // State Vector
     // Contains all displacements, followed by all velocities
@@ -59,8 +66,14 @@ public:
     // Add a Spring object to the problem and returns its id
     Maybe<int> AddSpring(int m0, int m1, double k);
 
+    // Add a Damper object to the problem and returns its id
+    Maybe<int> AddDamper(int m0, int m1, double c);
+
     // Returns mass by id
     Maybe<Spring *> GetSpring(int id);
+
+    // Returns damper by id
+    Maybe<Damper *> GetDamper(int id);
 
     // Set initial displacement and velocities by massId
     Maybe<Void> SetInitialDisp(int massId, double value);

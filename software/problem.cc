@@ -85,6 +85,38 @@ Maybe<int> Problem::AddSpring(int m0, int m1, double k){
     return r;
 }
 
+Maybe<int> Problem::AddDamper(int m0, int m1, double c){
+    Maybe<int> r;
+
+    if (m0 == m1){
+        r.isError = true;
+        r.errMsg = "m0 and m1 must be different";
+        return r;  
+    }
+
+    auto e = this->GetMass(m0);
+    if (e.isError){
+        r.isError = true;
+        r.errMsg = "Invalid m0";
+        return r;
+    }
+    auto M0 = e.val;
+
+    e = this->GetMass(m1);
+    if (e.isError){
+        r.isError = true;
+        r.errMsg = "Invalid m1";
+        return r;
+    }
+    auto M1 = e.val;
+    
+    int damperId = this->dampers.size();
+    this->dampers.push_back(Damper(damperId,M0,M1,c));
+    r.val = damperId;
+
+    return r;
+}
+
 Maybe<Spring*> Problem::GetSpring(int id){
     Maybe<Spring*> r;
     if (id >= static_cast<int>(this->springs.size()) || id < 0){
@@ -96,11 +128,23 @@ Maybe<Spring*> Problem::GetSpring(int id){
     return r;
 }
 
+Maybe<Damper*> Problem::GetDamper(int id){
+    Maybe<Damper*> r;
+    if (id >= static_cast<int>(this->dampers.size()) || id < 0){
+        r.isError = true;
+        r.errMsg = "Tried to get damper with invalid id";
+        return r;
+    }
+    r.val = &(this->dampers[id]);
+    return r;
+}
+
 void Problem::Build(){
     int dof = this->GetDof();
 
     this->MInv.resize(dof,dof,false);
     this->K.resize(dof,dof,false);
+    this->C.resize(dof,dof,false);
 
     for (Mass mass : this->masses){
         MInv(mass.xIndex,mass.xIndex) = 1/mass.m;
@@ -112,6 +156,14 @@ void Problem::Build(){
         this->K(s.m0->xIndex, s.m1->xIndex) = localK(0,1);
         this->K(s.m1->xIndex, s.m0->xIndex) = localK(1,0);
         this->K(s.m1->xIndex, s.m1->xIndex) = localK(1,1);
+    }
+
+    for (Damper d : this->dampers){
+        auto localC = d.GetC();
+        this->C(d.m0->xIndex, d.m0->xIndex) = localC(0,0);
+        this->C(d.m0->xIndex, d.m1->xIndex) = localC(0,1);
+        this->C(d.m1->xIndex, d.m0->xIndex) = localC(1,0);
+        this->C(d.m1->xIndex, d.m1->xIndex) = localC(1,1);
     }
 
     this->X = zero_vector<double>(dof*2);
@@ -228,11 +280,26 @@ void Problem::SetXDot(const vector<double> &X, vector<double> &XDot, double t){
         XDot[i] = X[this->GetMassVelIndex(i)];
     }
 
-    // 1D matrix with the second derivatives
-    // calculating with discrete element method
+    // Calculate xDotDot, which contains the accelerations
     // [x0DotDot, x1DotDot, ...]
-    matrix<double> KDisp = prod(this->K, this->getDisp());
-    matrix<double> xDotDot = prod(this->MInv,KDisp);
+    // using the discrete element method
+    // 
+    // Example for single spring and damper:
+    // xDot = [[xDot0],
+    //         [xDot1]]
+    // xDotDot = [[xDotDot0],
+    //            [xDotDot1]]
+    // k = [[-k,k],
+    //      [k,-k]]
+    // c = [[-c,c],
+    //      [c,-c]]
+    // mInv = [[1/m0, 0],
+    //         [0,1/m1]]
+    //
+    // xDotDot = mInv * ( k*x + c*xDot )
+    matrix<double> kx = prod(this->K, this->getDisp());
+    matrix<double> cxDot = prod(this->C, this->getVel());
+    matrix<double> xDotDot = prod(this->MInv,kx+cxDot);
 
     // Set second half of XDot
     for (int i = 0; i < this->GetDof(); i++){

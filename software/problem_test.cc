@@ -308,6 +308,7 @@ TEST(ProblemTest,IntegrateStationaryTest) {
   p.AddMass(1.0,0.0,0.0);
   p.AddMass(2.0,1.0,1.0);
   p.AddSpring(0,1,1.0);
+  p.AddDamper(0,1,1.0);
   p.Build();
 
   p.FixMass(0);
@@ -322,7 +323,7 @@ TEST(ProblemTest,IntegrateStationaryTest) {
   }
 }
 
-TEST(ProblemTest,IntegrateTest) {
+TEST(ProblemTest,HarmonicMotionTest) {
   // This test simulates a mass and spring system and automatically
   // validates the answer by comparing the numerical and theoretical
   // period of oscillation
@@ -338,7 +339,7 @@ TEST(ProblemTest,IntegrateTest) {
 
   Problem p = Problem();
   p.AddMass(1.0,0.0,0.0);
-  p.AddMass(5.0,1.0,1.0);
+  p.AddMass(5.0,1.0,0.0);
   p.AddSpring(0,1,5.0);
   p.Build();
   p.FixMass(0);
@@ -374,4 +375,69 @@ TEST(ProblemTest,IntegrateTest) {
 
   double err = std::abs((halfT-M_PI)/M_PI);
   ASSERT_TRUE(err <= 0.002); // error smaller than 0.2%
+
+  std::cout<<"HarmonicMotionTest output:\n";
+  p.PrintMassTimeHistory(1);
+}
+
+TEST(ProblemTest,DampedOscillatorTest) {
+  // This test simulates a mass, damper and spring system and automatically
+  // validates the answer by comparing the numerical and theoretical
+  // period of oscillation
+  //
+  // Expected natural frequency:
+  // 1/(2pi)*sqrt(k/M - c^2/4m)
+  // Period of oscillation: 2pi/sqrt(k/M - c^2/4m)
+  // Half period: pi/sqrt(k/M - c^2/4m)
+  //
+  // for c=2, M=1 and k=5 -> Half period: pi/sqrt(5/1 - 2^2/4) = pi/2
+  //
+  // The mass's speed starts off negative (it has a positive initial disp).
+  // Half period is how long it takes the mass to change direction, i.e.
+  // For the speed to become zero.
+
+  Problem p = Problem();
+  p.AddMass(0.0,0.0,0.0);
+
+  p.AddMass(1.0,1.0,0.0);
+  p.AddSpring(0,1,5.0);
+  p.AddDamper(0,1,2.0);
+  p.Build();
+  p.FixMass(0);
+  p.SetInitialDisp(1, 10.0);
+
+  p.Integrate(0.0, 1.7, 0.02);
+  for (int i = 0; i < int(p.XHistory.size()); i++){
+    ASSERT_DOUBLE_EQ(p.XHistory[i][p.GetMassDispIndex(0)],0.0);
+    ASSERT_DOUBLE_EQ(p.XHistory[i][p.GetMassVelIndex(0)],0.0);
+  }
+  // Since mass starts with a positive initial displacement,
+  // its velocity after start will be negative
+  ASSERT_TRUE(p.XHistory[1][p.GetMassVelIndex(1)]<0);
+
+  // Find time in which speed becomes zero
+  int tNeg; // t in which velocity is negative
+  int tPos; // t in which velocity is positive
+  for (int i = 0; i < int(p.XHistory.size()) -1 ; i++){
+    if (p.XHistory[i][p.GetMassVelIndex(1)]<=0.0 && p.XHistory[i+1][p.GetMassVelIndex(1)]>0.0){
+      tNeg = i;
+      tPos = i+1;
+      break;
+    }
+  }
+  // Interpolate to find time in which velocity is zero
+  double x0 = p.t[tNeg];
+  double y0 = p.XHistory[tNeg][p.GetMassVelIndex(1)];
+  double x1 = p.t[tPos];
+  double y1 = p.XHistory[tPos][p.GetMassVelIndex(1)];
+  // (y1-y0)/(x1-x0) = (0-y0)/(x-x0)
+  // x = x0 -y0*(x1-x0)/(y1-y0)
+  double halfT = x0 - y0*(x1-x0)/(y1-y0);
+
+  double expectedHalfT  = M_PI/2.0;
+  double err = std::abs((halfT-expectedHalfT)/expectedHalfT);
+  ASSERT_TRUE(err <= 0.007);// error smaller than 0.7%
+  
+  std::cout<<"DampedOscillatorTest output:\n";
+  p.PrintMassTimeHistory(1);
 }
