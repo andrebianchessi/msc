@@ -10,6 +10,11 @@
 using namespace boost::numeric::ublas;
 using namespace boost::numeric::odeint;
 
+Problem::Problem(){
+    this -> isBuilt = false;
+    this -> saveWholeStateVector = true;
+}
+
 int Problem::GetDof() const{
     return this->masses.size();
 }
@@ -314,11 +319,32 @@ void Problem::SetXDot(const vector<double> &X, vector<double> &XDot, double t){
 
 }
 
+Maybe<Void> Problem::TrackOnlyMass(int massId){
+    Maybe<Void> r;
+    auto e = this->GetMass(massId);
+    if (e.isError){
+        r.isError = true;
+        r.errMsg = "Invalid massId";
+        return r;
+    }
+
+    this -> saveWholeStateVector = false;
+    this -> massToSave = massId;
+    return r;
+}
+
 void Problem::save(const vector<double> &X, double t){
     this->t.push_back(t);
-    vector<double> xNow  = vector<double>(int(X.size()));
-    std::copy(X.begin() , X.end(), xNow.begin());
-    this->XHistory.push_back(xNow);
+    if (this->saveWholeStateVector){
+        vector<double> xNow  = vector<double>(int(X.size()));
+        std::copy(X.begin() , X.end(), xNow.begin());
+        this->XHistory.push_back(xNow);
+    } else {
+        vector<double> xNow  = vector<double>(2);
+        xNow[0] = X[this->GetMassDispIndex(this->massToSave)];
+        xNow[1] = X[this->GetMassVelIndex(this->massToSave)];
+        this->XiHistory.push_back(xNow);
+    }
 }
 
 void Problem::Integrate(double t0, double t1, double timestep){
@@ -340,9 +366,18 @@ void Problem::PrintMassTimeHistory(int massId){
     }
     auto m = *e.val;
     cout << "t,x,xDot" << endl;
-    for (int i = 0; i < int(this->t.size()); i++){
-        cout << this->t[i] << ",";
-        cout << this->XHistory[i][m.xIndex] << ",";
-        cout << this->XHistory[i][this->GetMassVelIndex(m)] << endl;
+
+    if (this->saveWholeStateVector){
+        for (int i = 0; i < int(this->t.size()); i++){
+            cout << this->t[i] << ",";
+            cout << this->XHistory[i][m.xIndex] << ",";
+            cout << this->XHistory[i][this->GetMassVelIndex(m)] << endl;
+        }
+    } else {
+        for (int i = 0; i < int(this->t.size()); i++){
+            cout << this->t[i] << ",";
+            cout << this->XiHistory[i][0] << ",";
+            cout << this->XiHistory[i][1] << endl;
+        }
     }
 }

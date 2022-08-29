@@ -14,6 +14,9 @@ using namespace boost::numeric::ublas;
 // Represents a 1D system of masses, springs and dampers
 class Problem {
 public:
+    // Standard constructor
+    Problem();
+
     // Masses in the problem
     std::vector<Mass> masses;
 
@@ -37,9 +40,21 @@ public:
     // X = [x0, x1,... xN, xDot0, xDot1, ..., xDotN]
     vector<double> X;
     
-    // Saves the time series of X
+    // Vector to store the time instants after the system is integrated
     std::vector<double> t;
+    // Contains the state vector after Integrate is called and
+    // saveWholeStateVector =  true
     std::vector<vector<double>> XHistory;
+    // Contains the position and velocity of mass with id = massToSave after
+    // Integrate is called and saveWholeStateVector =  false.
+    // XiHistory = [[xi, xiDot], [xi, xiDot], ...]
+    std::vector<vector<double>> XiHistory;
+
+    // After calling this function, the position and velocity of only the
+    // specified mass will be tracked after calling Integrate. In that case,
+    // XHistory will remain empty. This is used to avoid saving all the state
+    // vector if you're only interested in one of the masses.
+    Maybe<Void> TrackOnlyMass(int massId);
 
     // Sets in XDot the values of the derivatives of the state vector,
     // i.e after calling this function:
@@ -117,7 +132,9 @@ private:
 
     bool massIsFixed(int massId);
 
-    bool isBuilt;
+    bool isBuilt; // default = false
+    bool saveWholeStateVector; // default = true
+    int massToSave;
 
     // Returns row matrix of displacements
     //  [[x0],

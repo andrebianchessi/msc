@@ -323,6 +323,54 @@ TEST(ProblemTest,IntegrateStationaryTest) {
   }
 }
 
+// Helper function that gets half the period of oscillation of the system
+// Expects a setup in the following form:
+//  p.AddMass(0.0,0.0,0.0);
+//  p.AddMass(<M>,1.0,0.0);
+//  p.AddSpring(0,1,<K>);
+//  p.Build();
+//  p.FixMass(0);
+//  p.SetInitialDisp(1, <Number greater than 0>); --> IMPORTANT
+//  p.Integrate(<t0>, <t1>, <tStep>);
+double HalfPeriodOfOscillation(Problem p){
+
+  // Find time in which speed becomes zero
+  int tNeg; // t in which velocity is negative
+  int tPos; // t in which velocity is positive
+  for (int i = 0; i < int(p.XHistory.size()) -1 ; i++){
+    if (p.XHistory[i][p.GetMassVelIndex(1)]<=0.0 && p.XHistory[i+1][p.GetMassVelIndex(1)]>0.0){
+      tNeg = i;
+      tPos = i+1;
+      break;
+    }
+  }
+  // Interpolate to find time in which velocity is zero
+  double x0 = p.t[tNeg];
+  double y0 = p.XHistory[tNeg][p.GetMassVelIndex(1)];
+  double x1 = p.t[tPos];
+  double y1 = p.XHistory[tPos][p.GetMassVelIndex(1)];
+  // (y1-y0)/(x1-x0) = (0-y0)/(x-x0)
+  // x = x0 -y0*(x1-x0)/(y1-y0)
+  double halfT = x0 - y0*(x1-x0)/(y1-y0);
+
+  return halfT;
+}
+
+// Helper function that tests if mass is stationary
+// Should be used after p.Integrate is called
+bool IsStationary(Problem p, int massId){
+  // Verify first mass is stationary
+  for (int i = 0; i < int(p.XHistory.size()); i++){
+    if (p.XHistory[i][p.GetMassDispIndex(0)] != 0.0){
+      return false;
+    }
+    if (p.XHistory[i][p.GetMassVelIndex(0)] != 0.0){
+      return false;
+    }
+  }
+  return true;
+}
+
 TEST(ProblemTest,HarmonicMotionTest) {
   // This test simulates a mass and spring system and automatically
   // validates the answer by comparing the numerical and theoretical
@@ -346,32 +394,12 @@ TEST(ProblemTest,HarmonicMotionTest) {
   p.SetInitialDisp(1, 0.1);
 
   p.Integrate(0.0, 4.0, 0.02);
-  for (int i = 0; i < int(p.XHistory.size()); i++){
-    ASSERT_DOUBLE_EQ(p.XHistory[i][p.GetMassDispIndex(0)],0.0);
-    ASSERT_DOUBLE_EQ(p.XHistory[i][p.GetMassVelIndex(0)],0.0);
-  }
-  // Since mass starts with a positive initial displacement,
-  // its velocity after start will be negative
+
+  // Mass 0 should be stationary, and initial speed of mass 1 should be negative
+  ASSERT_TRUE(IsStationary(p, 0));
   ASSERT_TRUE(p.XHistory[1][p.GetMassVelIndex(1)]<0);
 
-  // Find time in which speed becomes zero
-  int tNeg; // t in which velocity is negative
-  int tPos; // t in which velocity is positive
-  for (int i = 0; i < int(p.XHistory.size()) -1 ; i++){
-    if (p.XHistory[i][p.GetMassVelIndex(1)]<=0.0 && p.XHistory[i+1][p.GetMassVelIndex(1)]>0.0){
-      tNeg = i;
-      tPos = i+1;
-      break;
-    }
-  }
-  // Interpolate to find time in which velocity is zero
-  double x0 = p.t[tNeg];
-  double y0 = p.XHistory[tNeg][p.GetMassVelIndex(1)];
-  double x1 = p.t[tPos];
-  double y1 = p.XHistory[tPos][p.GetMassVelIndex(1)];
-  // (y1-y0)/(x1-x0) = (0-y0)/(x-x0)
-  // x = x0 -y0*(x1-x0)/(y1-y0)
-  double halfT = x0 - y0*(x1-x0)/(y1-y0);
+  double halfT = HalfPeriodOfOscillation(p);
 
   double err = std::abs((halfT-M_PI)/M_PI);
   ASSERT_TRUE(err <= 0.002); // error smaller than 0.2%
@@ -407,37 +435,66 @@ TEST(ProblemTest,DampedOscillatorTest) {
   p.SetInitialDisp(1, 10.0);
 
   p.Integrate(0.0, 1.7, 0.02);
-  for (int i = 0; i < int(p.XHistory.size()); i++){
-    ASSERT_DOUBLE_EQ(p.XHistory[i][p.GetMassDispIndex(0)],0.0);
-    ASSERT_DOUBLE_EQ(p.XHistory[i][p.GetMassVelIndex(0)],0.0);
-  }
-  // Since mass starts with a positive initial displacement,
-  // its velocity after start will be negative
+
+  // Mass 0 should be stationary, and initial speed of mass 1 should be negative
+  ASSERT_TRUE(IsStationary(p, 0));
   ASSERT_TRUE(p.XHistory[1][p.GetMassVelIndex(1)]<0);
 
-  // Find time in which speed becomes zero
-  int tNeg; // t in which velocity is negative
-  int tPos; // t in which velocity is positive
-  for (int i = 0; i < int(p.XHistory.size()) -1 ; i++){
-    if (p.XHistory[i][p.GetMassVelIndex(1)]<=0.0 && p.XHistory[i+1][p.GetMassVelIndex(1)]>0.0){
-      tNeg = i;
-      tPos = i+1;
-      break;
-    }
-  }
-  // Interpolate to find time in which velocity is zero
-  double x0 = p.t[tNeg];
-  double y0 = p.XHistory[tNeg][p.GetMassVelIndex(1)];
-  double x1 = p.t[tPos];
-  double y1 = p.XHistory[tPos][p.GetMassVelIndex(1)];
-  // (y1-y0)/(x1-x0) = (0-y0)/(x-x0)
-  // x = x0 -y0*(x1-x0)/(y1-y0)
-  double halfT = x0 - y0*(x1-x0)/(y1-y0);
+  double halfT = HalfPeriodOfOscillation(p);
 
   double expectedHalfT  = M_PI/2.0;
   double err = std::abs((halfT-expectedHalfT)/expectedHalfT);
   ASSERT_TRUE(err <= 0.007);// error smaller than 0.7%
   
   std::cout<<"DampedOscillatorTest output:\n";
+  p.PrintMassTimeHistory(1);
+}
+
+TEST(ProblemTest,TrackOnlyMassTest) {
+  // Same as DampedOscillatorTest, but using TrackOnlyMass
+
+  Problem p = Problem();
+  p.AddMass(0.0,0.0,0.0);
+
+  p.AddMass(1.0,1.0,0.0);
+  p.AddSpring(0,1,5.0);
+  p.AddDamper(0,1,2.0);
+  p.Build();
+  p.FixMass(0);
+  p.SetInitialDisp(1, 10.0);
+
+  auto e = p.TrackOnlyMass(2); // invalid mass id
+  ASSERT_TRUE(e.isError);
+
+  p.TrackOnlyMass(1);
+  p.Integrate(0.0, 1.7, 0.02);
+
+  ASSERT_TRUE(p.XiHistory.size()>0);
+  ASSERT_EQ(p.XiHistory[0].size(),2);
+
+  // Initial speed of mass 1 should be negative
+  ASSERT_TRUE(p.XiHistory[1][1]<0.0);
+
+  // Calculate halfT. See DampedOscillatorTest to understand how this is done.
+  int tNeg;
+  int tPos;
+  for (int i = 0; i < int(p.XiHistory.size()) -1 ; i++){
+    if (p.XiHistory[i][1]<=0.0 && p.XiHistory[i+1][1]>0.0){
+      tNeg = i;
+      tPos = i+1;
+      break;
+    }
+  }
+  double x0 = p.t[tNeg];
+  double y0 = p.XiHistory[tNeg][1];
+  double x1 = p.t[tPos];
+  double y1 = p.XiHistory[tPos][1];
+  double halfT = x0 - y0*(x1-x0)/(y1-y0);
+
+  double expectedHalfT  = M_PI/2.0;
+  double err = std::abs((halfT-expectedHalfT)/expectedHalfT);
+  ASSERT_TRUE(err <= 0.007);// error smaller than 0.7%
+  
+  std::cout<<"TrackOnlyMassTest output:\n";
   p.PrintMassTimeHistory(1);
 }
