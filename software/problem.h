@@ -42,9 +42,12 @@ public:
     
     // Vector to store the time instants after the system is integrated
     std::vector<double> t;
-    // Contains the state vector after Integrate is called and
-    // saveWholeStateVector =  true
+    // Contains the state vector after Integrate is called.
     std::vector<vector<double>> XHistory;
+    // Contains the accelerations of each mass after Integrate is called:
+    // AccelHistory =
+    //     [[x0DotDot at t0, x1DotDot at t0, ...], [x0DotDot at t1, ...], ...]
+    std::vector<vector<double>> AccelHistory;
 
     // Sets in XDot the values of the derivatives of the state vector,
     // i.e after calling this function:

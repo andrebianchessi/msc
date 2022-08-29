@@ -325,10 +325,22 @@ vector<double> Problem::GetXDot(const vector<double> &X, double t){
 }
 
 void Problem::save(const vector<double> &X, double t){
+    // Save time instant
     this->t.push_back(t);
+
+    // Save state vector
     vector<double> xNow  = vector<double>(int(X.size()));
     std::copy(X.begin() , X.end(), xNow.begin());
     this->XHistory.push_back(xNow);
+
+    // Save accelerations (which, because of how odeint expects the
+    // save function to be, must, unfortunately, be calculated again)
+    vector<double> XDot = this->GetXDot(X,t);
+    vector<double> Accel = vector<double>(this->GetDof());
+    for (int i = 0; i < this->GetDof(); i++){
+        Accel[i] = XDot[this->GetMassVelIndex(i)];
+    }
+    this->AccelHistory.push_back(Accel);
 }
 
 void Problem::Integrate(double t0, double t1, double timestep){
@@ -349,11 +361,12 @@ void Problem::PrintMassTimeHistory(int massId){
         return;
     }
     auto m = *e.val;
-    cout << "t,x,xDot" << endl;
+    cout << "t,x,xDot,xDotDot" << endl;
 
     for (int i = 0; i < int(this->t.size()); i++){
         cout << this->t[i] << ",";
         cout << this->XHistory[i][m.xIndex] << ",";
-        cout << this->XHistory[i][this->GetMassVelIndex(m)] << endl;
+        cout << this->XHistory[i][this->GetMassVelIndex(m)] << ",";
+        cout << this->AccelHistory[i][m.xIndex] << endl;
     }
 }
