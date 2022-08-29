@@ -239,10 +239,10 @@ TEST(ProblemTest, XDotInitialDisplacementTest) {
   // Non-zero initial displacements and zero Initial velocities:
   //    Initial accelerations are non-zero.
   EXPECT_EQ(XDot.size(), 4);
-  EXPECT_DOUBLE_EQ(XDot(0), 0.0);
-  EXPECT_DOUBLE_EQ(XDot(1), 0.0);
-  EXPECT_DOUBLE_EQ(XDot(2), 1/m0*(-k*x0+k*x1));
-  EXPECT_DOUBLE_EQ(XDot(3), 1/m1*(k*x0-k*x1));
+  EXPECT_DOUBLE_EQ(XDot(0), 0.0); // x0Dot
+  EXPECT_DOUBLE_EQ(XDot(1), 0.0); // x1Dot
+  EXPECT_DOUBLE_EQ(XDot(2), 1/m0*(-k*x0+k*x1)); // x0DotDot
+  EXPECT_DOUBLE_EQ(XDot(3), 1/m1*(k*x0-k*x1));  // x1DotDot
 }
 
 TEST(ProblemTest, XDotInitialDisplacementAndVelocityTest) {
