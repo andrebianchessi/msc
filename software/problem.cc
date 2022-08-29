@@ -175,17 +175,17 @@ void Problem::Build(){
     this->isBuilt = true;
 }
 
-int Problem::GetMassVelIndex(Mass m){
-    return this->GetDof()+m.xIndex;
-}
-int Problem::GetMassVelIndex(int xIndex){
-    return this->GetDof()+xIndex;
-}
 int Problem::GetMassDispIndex(Mass m){
     return m.xIndex;
 }
 int Problem::GetMassDispIndex(int xIndex){
     return xIndex;
+}
+int Problem::GetMassVelIndex(Mass m){
+    return this->GetDof()+m.xIndex;
+}
+int Problem::GetMassVelIndex(int xIndex){
+    return this->GetDof()+xIndex;
 }
 
 Maybe<Void> Problem::SetInitialDisp(int massId, double value){
