@@ -6,30 +6,32 @@
 TEST(ProblemTest, MassCreationTest) {
   Problem* p = new Problem();
 
-  auto e = p->AddMass(0.0,0.0,0.0);
+  auto e = p->AddMass(1.0,0.0,0.0);
   EXPECT_FALSE(e.isError);
   EXPECT_TRUE(p->GetDof() == 1);
   EXPECT_TRUE(e.val == 0);
 
-  e = p->AddMass(0.0,1.0,0.0);
+  e = p->AddMass(1.0,1.0,0.0);
   EXPECT_FALSE(e.isError);
   EXPECT_TRUE(p->GetDof() == 2);
   EXPECT_TRUE(e.val == 1);
 
-  e = p->AddMass(0.0,1.0,1.0);
+  e = p->AddMass(1.0,1.0,1.0);
   EXPECT_FALSE(e.isError);
   EXPECT_TRUE(p->GetDof() == 3);
   EXPECT_TRUE(e.val == 2);
 
-  e = p->AddMass(0.0,0.0,0.0);
+  e = p->AddMass(1.0,0.0,0.0);
   EXPECT_TRUE(e.isError);
   EXPECT_TRUE(p->GetDof() == 3);
+
+  EXPECT_TRUE(p->AddMass(0.0,9.0,9.0).isError); // 0.0 mass
 }
 
 TEST(ProblemTest, GetMassDispAndVelTest) {
   auto p = Problem();
 
-  p.AddMass(0.0,0.0,0.0);
+  p.AddMass(1.0,0.0,0.0);
   p.AddMass(1.0,1.0,1.0);
   p.AddMass(2.0,2.0,2.0);
 
@@ -44,9 +46,9 @@ TEST(ProblemTest, GetMassDispAndVelTest) {
 TEST(ProblemTest, GetMassTest) {
   Problem* p = new Problem();
 
-  p->AddMass(0.0,0.0,0.1);
-  p->AddMass(0.0,1.0,1.1);
-  p->AddMass(0.0,2.0,2.1);
+  p->AddMass(1.0,0.0,0.1);
+  p->AddMass(1.0,1.0,1.1);
+  p->AddMass(1.0,2.0,2.1);
 
   auto e = p->GetMass(0);
   EXPECT_FALSE(e.isError);
@@ -70,32 +72,69 @@ TEST(ProblemTest, SimpleBuildTest) {
   Problem p = Problem();
 
   p.AddMass(1.0,0.0,0.0);
-  p.AddMass(2.0,1.0,1.0);
-  p.AddSpring(0,1,9.0);
+  p.AddMass(1.0,1.0,1.0);
+  p.AddMass(1.0,2.0,2.0);
+
+  p.AddSpring(0,1,1.0);
+  p.AddSpring(1,2,1.0);
+  p.AddDamper(0,1,1.0);
+  p.AddDamper(1,2,1.0);
+
+
   p.Build();
   p.Build(); // Calling again to make sure matrices are reset
 
+  // |x0DotDot| = |1/m0 0       0| * (|-k1  k1       0| * |x0| + |-c1  c1        0| * |xDot0|)
+  // |x1DotDot|   |0    1/m1    0|   (|k1   -k1-k2  k2|   |x1|   |c1   -c1-c2   c2| * |xDot1|)
+  // |x2DotDot|   |0    0    1/m2|   (|0    k2     -k2|   |x2|   |0    c2      -c2| * |xDot1|)
+
   auto MInv = p.MInv;
-  EXPECT_EQ(MInv.size1(), 2);
-  EXPECT_EQ(MInv.size2(), 2);
+  EXPECT_EQ(MInv.size1(), 3);
+  EXPECT_EQ(MInv.size2(), 3);
   EXPECT_DOUBLE_EQ(MInv(0,0), 1.0);
   EXPECT_DOUBLE_EQ(MInv(0,1), 0.0);
+  EXPECT_DOUBLE_EQ(MInv(0,2), 0.0);
   EXPECT_DOUBLE_EQ(MInv(1,0), 0.0);
-  EXPECT_DOUBLE_EQ(MInv(1,1), 0.5);
+  EXPECT_DOUBLE_EQ(MInv(1,1), 1.0);
+  EXPECT_DOUBLE_EQ(MInv(1,2), 0.0);
+  EXPECT_DOUBLE_EQ(MInv(2,0), 0.0);
+  EXPECT_DOUBLE_EQ(MInv(2,1), 0.0);
+  EXPECT_DOUBLE_EQ(MInv(2,2), 1.0);
 
   auto K = p.K;
-  EXPECT_EQ(K.size1(), 2);
-  EXPECT_EQ(K.size2(), 2);
-  EXPECT_DOUBLE_EQ(K(0,0), -9.0);
-  EXPECT_DOUBLE_EQ(K(0,1), 9.0);
-  EXPECT_DOUBLE_EQ(K(1,0), 9.0);
-  EXPECT_DOUBLE_EQ(K(1,1), -9.0);
+  EXPECT_EQ(K.size1(), 3);
+  EXPECT_EQ(K.size2(), 3);
+  EXPECT_DOUBLE_EQ(K(0,0), -1.0);
+  EXPECT_DOUBLE_EQ(K(0,1), 1.0);
+  EXPECT_DOUBLE_EQ(K(0,2), 0.0);
+  EXPECT_DOUBLE_EQ(K(1,0), 1.0);
+  EXPECT_DOUBLE_EQ(K(1,1), -2.0);
+  EXPECT_DOUBLE_EQ(K(1,2), 1.0);
+  EXPECT_DOUBLE_EQ(K(2,0), 0.0);
+  EXPECT_DOUBLE_EQ(K(2,1), 1.0);
+  EXPECT_DOUBLE_EQ(K(2,2), -1.0);
 
-  EXPECT_EQ(p.X.size(), 4);
+  auto C = p.C;
+  EXPECT_EQ(C.size1(), 3);
+  EXPECT_EQ(C.size2(), 3);
+  EXPECT_DOUBLE_EQ(C(0,0), -1.0);
+  EXPECT_DOUBLE_EQ(C(0,1), 1.0);
+  EXPECT_DOUBLE_EQ(C(0,2), 0.0);
+  EXPECT_DOUBLE_EQ(C(1,0), 1.0);
+  EXPECT_DOUBLE_EQ(C(1,1), -2.0);
+  EXPECT_DOUBLE_EQ(C(1,2), 1.0);
+  EXPECT_DOUBLE_EQ(C(2,0), 0.0);
+  EXPECT_DOUBLE_EQ(C(2,1), 1.0);
+  EXPECT_DOUBLE_EQ(C(2,2), -1.0);
+
+  EXPECT_EQ(p.X.size(), 6);
   EXPECT_DOUBLE_EQ(p.X(0), 0.0);
   EXPECT_DOUBLE_EQ(p.X(1), 0.0);
   EXPECT_DOUBLE_EQ(p.X(2), 0.0);
   EXPECT_DOUBLE_EQ(p.X(3), 0.0);
+  EXPECT_DOUBLE_EQ(p.X(4), 0.0);
+  EXPECT_DOUBLE_EQ(p.X(5), 0.0);
+
 }
 
 TEST(ProblemTest, InitialConditionsTest) {
@@ -131,14 +170,21 @@ TEST(ProblemTest, FixMassTest) {
   p.AddMass(2.0,1.0,1.0);
   
   Maybe<Void> e = p.FixMass(0);
+  EXPECT_TRUE(e.isError); // Must first build
+
+  p.Build();
+  p.SetInitialVel(10.0);
+  e = p.FixMass(0);
   EXPECT_FALSE(e.isError);
 
-  e = p.FixMass(1);
-  EXPECT_FALSE(e.isError);
+  EXPECT_DOUBLE_EQ(p.X[0], 0.0);
+  EXPECT_DOUBLE_EQ(p.X[1], 0.0);
+  EXPECT_DOUBLE_EQ(p.X[2], 0.0);
+  EXPECT_DOUBLE_EQ(p.X[3], 10.0);
 
-  EXPECT_EQ(p.fixedMasses.size(),2);
+  EXPECT_EQ(p.fixedMasses.size(),1);
   EXPECT_TRUE(p.fixedMasses.find(p.GetMass(0).val) != p.fixedMasses.end());
-  EXPECT_TRUE(p.fixedMasses.find(p.GetMass(1).val) != p.fixedMasses.end());
+  EXPECT_TRUE(p.fixedMasses.find(p.GetMass(1).val) == p.fixedMasses.end());
 
   e = p.FixMass(2);
   EXPECT_TRUE(e.isError);
@@ -149,24 +195,28 @@ TEST(ProblemTest, FixMassTest) {
 
 TEST(ProblemTest, GetDispAndVelTest) {
 
-  vector<double> X = vector<double>(4);
-  // System with 2 masses. Both with 7.0 displacement and 8.0 velocity
+  vector<double> X = vector<double>(6);
+  // System with 3 masses: 7.0 displacements and 8.0 velocities 
   X[0] = 7.0;
   X[1] = 7.0;
-  X[2] = 8.0;
+  X[2] = 7.0;
   X[3] = 8.0;
+  X[4] = 8.0;
+  X[5] = 8.0;
 
-  auto s = Problem::getDisp(X, 2);
-  EXPECT_EQ(s.size1(), 2);
+  auto s = Problem::getDisp(X, 3);
+  EXPECT_EQ(s.size1(), 3);
   EXPECT_EQ(s.size2(), 1);
   EXPECT_DOUBLE_EQ(s(0,0), 7.0);
   EXPECT_DOUBLE_EQ(s(1,0), 7.0);
+  EXPECT_DOUBLE_EQ(s(2,0), 7.0);
 
-  auto v = Problem::getVel(X, 2);
-  EXPECT_EQ(v.size1(), 2);
+  auto v = Problem::getVel(X, 3);
+  EXPECT_EQ(v.size1(), 3);
   EXPECT_EQ(v.size2(), 1);
   EXPECT_DOUBLE_EQ(v(0,0), 8.0);
   EXPECT_DOUBLE_EQ(v(1,0), 8.0);
+  EXPECT_DOUBLE_EQ(v(2,0), 8.0);
 }
 
 TEST(ProblemTest, XDotSimpleTest) {
@@ -287,8 +337,8 @@ TEST(ProblemTest, XDotInitialDisplacementAndVelocityWithFixedMassTest) {
   p.AddSpring(0,1,k);
   p.Build();
 
+  p.SetInitialVel(0,99.0);
   p.FixMass(0);
-  p.SetInitialVel(0,99.0); // FixMass should take precedence over SetInitialVel
 
   p.SetInitialDisp(1,x1);
   p.SetInitialVel(1,x1Dot);
@@ -401,7 +451,7 @@ TEST(ProblemTest,IntegrateStationaryTest) {
 
 // Helper function that gets half the period of oscillation of the system
 // Expects a setup in the following form:
-//  p.AddMass(0.0,0.0,0.0);
+//  p.AddMass(1.0,0.0,0.0);
 //  p.AddMass(<M>,1.0,0.0);
 //  p.AddSpring(0,1,<K>);
 //  p.Build();
@@ -498,7 +548,7 @@ TEST(ProblemTest,DampedOscillatorTest) {
   // For the speed to become zero.
 
   Problem p = Problem();
-  p.AddMass(0.0,0.0,0.0);
+  p.AddMass(1.0,0.0,0.0);
 
   p.AddMass(1.0,1.0,0.0);
   p.AddSpring(0,1,5.0);
@@ -526,7 +576,7 @@ TEST(ProblemTest,DampedOscillatorPlotTest) {
   // http://spiff.rit.edu/classes/phys312/workshops/w5b/damped_theory.html#:~:text=A%20lightly%20damped%20harmonic%20oscillator,the%20decay%20happens%20more%20quickly.
 
   Problem p = Problem();
-  p.AddMass(0.0,0.0,0.0);
+  p.AddMass(1.0,0.0,0.0);
 
   p.AddMass(20.0,1.0,0.0);
   p.AddSpring(0,1,30.0);
@@ -541,6 +591,72 @@ TEST(ProblemTest,DampedOscillatorPlotTest) {
   p.PrintMassTimeHistory(1);
 }
 
+TEST(ProblemTest, MultiBodyBibliographyDataTest) {
+  // This test simulates a system with 2 masses, similar to one found in the
+  // bibliography and plots it's response so that we can compare it with the
+  // results in the bibliography.
+  // Source:
+  // Mostafa, Marzbanrad Javad And. 2011. “A System Identification Algorithm for Vehicle Lumped.” International Journal of Modeling and Optimization 1 (January): 163–66.
+  // Figure 5
+
+  double m1 = 800;
+  double m2 = 80;
+  double c1 = 10000;
+  double c2 = 1100;
+  double k1 = 1000;
+  double k2 = 160;
+  double k3 = 2700;
+
+  Problem p = Problem();
+  EXPECT_FALSE(p.AddMass(1.0,0.0,0.0).isError);
+  EXPECT_FALSE(p.AddMass(m1,1.0,0.0).isError); // m1
+  EXPECT_FALSE(p.AddMass(m2,2.0,0.0).isError); // m2
+
+  EXPECT_FALSE(p.AddSpring(0,1,k1).isError);
+  EXPECT_FALSE(p.AddDamper(0,1,c1).isError);
+
+  EXPECT_FALSE(p.AddSpring(1,2,k2).isError);
+  EXPECT_FALSE(p.AddDamper(1,2,c2).isError);
+  EXPECT_FALSE(p.AddSpring(1,2,k3).isError);
+
+  p.Build();
+  p.SetInitialVel(14.0);
+  EXPECT_FALSE(p.FixMass(0).isError);
+
+  EXPECT_EQ(p.X.size(), 6);
+  EXPECT_DOUBLE_EQ(p.X[0], 0.0);
+  EXPECT_DOUBLE_EQ(p.X[1], 0.0);
+  EXPECT_DOUBLE_EQ(p.X[2], 0.0);
+  EXPECT_DOUBLE_EQ(p.X[3], 0.0);
+  EXPECT_DOUBLE_EQ(p.X[4], 14.0);
+  EXPECT_DOUBLE_EQ(p.X[5], 14.0);
+
+  auto XDot0 = p.GetXDot(p.X, 0.0);
+  // Expected values
+  // |x0DotDot| = |1/m0 0       0| * (|-k1  k1             0| * |x0| + |-c1  c1        0| * |xDot0|)
+  // |x1DotDot|   |0    1/m1    0|   (|k1   -k1-k2-k3  k2+k3|   |x1|   |c1   -c1-c2   c2| * |xDot1|)
+  // |x2DotDot|   |0    0    1/m2|   (|0    k2+k3     -k2-k3|   |x2|   |0    c2      -c2| * |xDot1|)
+  EXPECT_EQ(XDot0.size(), 6);
+  EXPECT_DOUBLE_EQ(XDot0[0], 0.0);  // xDot0
+  EXPECT_DOUBLE_EQ(XDot0[1], 14.0); // xDot1
+  EXPECT_DOUBLE_EQ(XDot0[2], 14.0); // xDot2
+  EXPECT_DOUBLE_EQ(XDot0[3], 0.0);  // xDotDot0
+  EXPECT_DOUBLE_EQ(XDot0[4], 1/m1*((-c1-c2)*14 + c2*14)); // xDotDot1
+  EXPECT_DOUBLE_EQ(XDot0[5], 1/m2*(c2*14 -c2*14)); // xDotDot1
+
+  EXPECT_FALSE(p.Integrate(0.0, 1.0, 0.001).isError);
+  
+  auto e = p.GetMassMinAccel(2);
+  ASSERT_FALSE(e.isError);
+  ASSERT_TRUE(-80<e.val && e.val<-60);
+ 
+  e = p.GetMassMaxAccel(2);
+  ASSERT_FALSE(e.isError);
+  ASSERT_TRUE(0<e.val && e.val<10);
+
+  ASSERT_DOUBLE_EQ(p.GetMassMaxAbsAccel(2).val, abs(p.GetMassMinAccel(2).val));
+}
+
 TEST(ProblemTest, MinMaxAccelTest){
   Problem p = Problem();
 
@@ -551,9 +667,9 @@ TEST(ProblemTest, MinMaxAccelTest){
   e = p.GetMassMinAccel(0);
   ASSERT_TRUE(e.isError);
 
-  p.AddMass(0.0,0.0,0.0);
-  p.AddMass(0.0,1.0,0.0);
-  p.AddMass(0.0,2.0,0.0);
+  p.AddMass(1.0,0.0,0.0);
+  p.AddMass(1.0,1.0,0.0);
+  p.AddMass(1.0,2.0,0.0);
   
   // Called to prevent "problem must be integrated" error.
   // AccelHistory is then cleared and mocked for the test

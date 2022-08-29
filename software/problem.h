@@ -95,8 +95,7 @@ public:
     void SetInitialVel(double value);
 
     // Set mass with id massId as fixed, i.e. always zero speed
-    // Not that this takes precedence over setting initial velocity
-    // explicitly with SetInitialVel.
+    // Should be called after Build() and SetInitialVel(value);
     Maybe<Void> FixMass(int massId);
 
     // Builds MInv, K

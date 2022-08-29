@@ -34,6 +34,11 @@ bool Problem::massIsFixed(int massId){
 
 Maybe<int> Problem::AddMass(double m, double px, double py){
     Maybe<int> r;
+    if (m <= 0.0){
+        r.isError = true;
+        r.errMsg = "Mass must be > 0";
+        return r;
+    }
     if (this->HasMassAt(px, py)){
         r.isError = true;
         r.errMsg = "Mass already present at (" +
@@ -157,18 +162,18 @@ void Problem::Build(){
 
     for (Spring s : this->springs){
         auto localK = s.GetK();
-        this->K(s.m0->xIndex, s.m0->xIndex) = localK(0,0);
-        this->K(s.m0->xIndex, s.m1->xIndex) = localK(0,1);
-        this->K(s.m1->xIndex, s.m0->xIndex) = localK(1,0);
-        this->K(s.m1->xIndex, s.m1->xIndex) = localK(1,1);
+        this->K(s.m0->xIndex, s.m0->xIndex) += localK(0,0);
+        this->K(s.m0->xIndex, s.m1->xIndex) += localK(0,1);
+        this->K(s.m1->xIndex, s.m0->xIndex) += localK(1,0);
+        this->K(s.m1->xIndex, s.m1->xIndex) += localK(1,1);
     }
 
     for (Damper d : this->dampers){
         auto localC = d.GetC();
-        this->C(d.m0->xIndex, d.m0->xIndex) = localC(0,0);
-        this->C(d.m0->xIndex, d.m1->xIndex) = localC(0,1);
-        this->C(d.m1->xIndex, d.m0->xIndex) = localC(1,0);
-        this->C(d.m1->xIndex, d.m1->xIndex) = localC(1,1);
+        this->C(d.m0->xIndex, d.m0->xIndex) += localC(0,0);
+        this->C(d.m0->xIndex, d.m1->xIndex) += localC(0,1);
+        this->C(d.m1->xIndex, d.m0->xIndex) += localC(1,0);
+        this->C(d.m1->xIndex, d.m1->xIndex) += localC(1,1);
     }
 
     this->X = zero_vector<double>(dof*2);
@@ -253,12 +258,21 @@ void Problem::SetInitialVel(double value){
 
 Maybe<Void> Problem::FixMass(int massId){
     Maybe<Void> r;
+
+    if (!this -> isBuilt){
+        r.isError = true;
+        r.errMsg = "Problem not built yet";
+        return r;
+    }
+
     auto e = this->GetMass(massId);
     if (e.isError){
         r.isError = true;
         r.errMsg = "Invalid massId";
         return r;
     }
+    int xDotIndex = this->GetMassVelIndex(*e.val);
+    this->X[xDotIndex] = 0.0;
     this->fixedMasses.insert(e.val);
     return r;
 }
