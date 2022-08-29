@@ -45,16 +45,6 @@ public:
     // Contains the state vector after Integrate is called and
     // saveWholeStateVector =  true
     std::vector<vector<double>> XHistory;
-    // Contains the position and velocity of mass with id = massToSave after
-    // Integrate is called and saveWholeStateVector =  false.
-    // XiHistory = [[xi, xiDot], [xi, xiDot], ...]
-    std::vector<vector<double>> XiHistory;
-
-    // After calling this function, the position and velocity of only the
-    // specified mass will be tracked after calling Integrate. In that case,
-    // XHistory will remain empty. This is used to avoid saving all the state
-    // vector if you're only interested in one of the masses.
-    Maybe<Void> TrackOnlyMass(int massId);
 
     // Sets in XDot the values of the derivatives of the state vector,
     // i.e after calling this function:
@@ -133,8 +123,6 @@ private:
     bool massIsFixed(int massId);
 
     bool isBuilt; // default = false
-    bool saveWholeStateVector; // default = true
-    int massToSave;
 
     // Returns row matrix of displacements
     //  [[x0],
