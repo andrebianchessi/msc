@@ -440,7 +440,7 @@ TEST(ProblemTest,DampedOscillatorTest) {
   p.FixMass(0);
   p.SetInitialDisp(1, 10.0);
 
-  p.Integrate(0.0, 1.7, 0.02);
+  p.Integrate(0.0, 5.0, 0.02);
 
   // Mass 0 should be stationary, and initial speed of mass 1 should be negative
   ASSERT_TRUE(IsStationary(p, 0));
