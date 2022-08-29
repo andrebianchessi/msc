@@ -262,18 +262,18 @@ Maybe<Void> Problem::FixMass(int massId){
     return r;
 }
 
-matrix<double> Problem::getDisp(){
-    matrix<double> s = matrix<double>(this->GetDof(),1);
-    for (int i = 0; i < this->GetDof(); i++){
-        s(i,0) = this->X[i];
+matrix<double> Problem::getDisp(vector<double> X, int dof){
+    matrix<double> s = matrix<double>(dof,1);
+    for (int i = 0; i < dof; i++){
+        s(i,0) = X[i];
     }
     return s;
 }
 
-matrix<double> Problem::getVel(){
-    matrix<double> v = matrix<double>(this->GetDof(),1);
-    for (int i = 0; i < this->GetDof(); i++){
-        v(i,0) = this->X[this->GetMassVelIndex(i)];
+matrix<double> Problem::getVel(vector<double> X, int dof){
+    matrix<double> v = matrix<double>(dof,1);
+    for (int i = 0; i < dof; i++){
+        v(i,0) = X[dof + i];
     }
     return v;
 }
@@ -301,8 +301,8 @@ void Problem::SetXDot(const vector<double> &X, vector<double> &XDot, double t){
     //         [0,1/m1]]
     //
     // xDotDot = mInv * ( k*x + c*xDot )
-    matrix<double> kx = prod(this->K, this->getDisp());
-    matrix<double> cxDot = prod(this->C, this->getVel());
+    matrix<double> kx = prod(this->K, Problem::getDisp(X, this->GetDof()));
+    matrix<double> cxDot = prod(this->C, Problem::getVel(X, this->GetDof()));
     matrix<double> xDotDot = prod(this->MInv,kx+cxDot);
 
     // Set second half of XDot
@@ -316,6 +316,12 @@ void Problem::SetXDot(const vector<double> &X, vector<double> &XDot, double t){
         XDot[this->GetMassVelIndex(m->xIndex)] = 0;
     }
     
+}
+
+vector<double> Problem::GetXDot(const vector<double> &X, double t){
+    vector<double> XDot = zero_vector<double>(X.size());
+    this -> SetXDot(X, XDot, t);
+    return XDot;
 }
 
 void Problem::save(const vector<double> &X, double t){

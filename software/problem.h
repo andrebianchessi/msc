@@ -54,7 +54,10 @@ public:
     // That's why X is passed as an argument, and not accessed with
     // this->X.
     void SetXDot(const vector<double> &X, vector<double> &XDot, double t);
-    // void operator () (const vector<double> &X, vector<double> &XDot, double t);
+
+    // This is just a wrapper that instantiates a vector, calls
+    // SetXDot on it, and returns it.
+    vector<double> GetXDot(const vector<double> &X, double t);
 
     // Returns true if system has a mass with initial position (px,py)
     bool HasMassAt(double px, double py) const;
@@ -128,12 +131,14 @@ private:
     //  [[x0],
     //   [x1],
     //   ... ]
-    matrix<double> getDisp();
+    // from the state vector provided
+    static matrix<double> getDisp(vector<double> X, int dof);
     // Returns row matrix of Velocities
     //  [[x0Dot],
     //   [x1Dot],
     //      ... ]
-    matrix<double> getVel();
+    // from the state vector provided
+    static matrix<double> getVel(vector<double> X, int dof);
     FRIEND_TEST(ProblemTest, GetDispAndVelTest);
 
     // Save current state vector

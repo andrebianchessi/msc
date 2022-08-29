@@ -148,23 +148,21 @@ TEST(ProblemTest, FixMassTest) {
 }
 
 TEST(ProblemTest, GetDispAndVelTest) {
-  Problem p = Problem();
 
-  p.AddMass(1.0,0.0,0.0);
-  p.AddMass(2.0,1.0,1.0);
-  p.AddSpring(0,1,9.0);
-  p.Build();
+  vector<double> X = vector<double>(4);
+  // System with 2 masses. Both with 7.0 displacement and 8.0 velocity
+  X[0] = 7.0;
+  X[1] = 7.0;
+  X[2] = 8.0;
+  X[3] = 8.0;
 
-  p.SetInitialDisp(7.0);
-  p.SetInitialVel(8.0);
-
-  auto s = p.getDisp();
+  auto s = Problem::getDisp(X, 2);
   EXPECT_EQ(s.size1(), 2);
   EXPECT_EQ(s.size2(), 1);
   EXPECT_DOUBLE_EQ(s(0,0), 7.0);
   EXPECT_DOUBLE_EQ(s(1,0), 7.0);
 
-  auto v = p.getVel();
+  auto v = Problem::getVel(X, 2);
   EXPECT_EQ(v.size1(), 2);
   EXPECT_EQ(v.size2(), 1);
   EXPECT_DOUBLE_EQ(v(0,0), 8.0);
@@ -220,11 +218,13 @@ TEST(ProblemTest, XDotInitialDisplacementTest) {
   auto m0 = 1.0;
   auto m1 = 2.0;
   auto k = 5.0;
+  auto c = 7.0;
   auto x0 = 9.0;
   auto x1 = 11.0;
   p.AddMass(m0,0.0,0.0);
   p.AddMass(m1,1.0,1.0);
   p.AddSpring(0,1,k);
+  p.AddDamper(0,1,c);
   p.Build();
 
   p.SetInitialDisp(0,x0);
@@ -233,8 +233,8 @@ TEST(ProblemTest, XDotInitialDisplacementTest) {
   vector<double> XDot = vector<double>(p.X.size());
   p.SetXDot(p.X, XDot, 0.0);
 
-  // |x0DotDot| = |1/m0 0   | * |-k k| * |x0|
-  // |x1DotDot|   |0    1/m1|   |k -k|   |x1|
+  // |x0DotDot| = |1/m0 0   | * (|-k k| * |x0| + |-c c| * |xDot0|)
+  // |x1DotDot|   |0    1/m1|   (|k -k|   |x1|   |c -c| * |xDot1|)
 
   // Non-zero initial displacements and zero Initial velocities:
   //    Initial accelerations are non-zero.
@@ -301,6 +301,76 @@ TEST(ProblemTest, XDotInitialDisplacementAndVelocityWithFixedMassTest) {
   EXPECT_DOUBLE_EQ(XDot(1), x1Dot);
   EXPECT_DOUBLE_EQ(XDot(2), 0.0);
   EXPECT_DOUBLE_EQ(XDot(3), 1/m1*(k*0-k*x1));
+}
+
+TEST(ProblemTest, GetXDotTest) {
+  Problem p = Problem();
+  auto m0 = 1.0;
+  auto m1 = 2.0;
+  auto k = 5.0;
+  auto c = 7.0;
+  p.AddMass(m0,0.0,-8.0); // random y values to test that they have no effect
+  p.AddMass(m1,1.0,99.0);
+  p.AddSpring(0,1,k);
+  p.AddDamper(0,1,c);
+  p.Build();
+
+  ASSERT_EQ(p.X.size(), 4);
+  vector<double> X = vector<double>(p.X.size());
+  vector<double> XDot;
+
+  // ZERO DISPLACEMENTS AND VELOCITIES TEST
+  X[0] = 0.0;
+  X[1] = 0.0;
+  X[2] = 0.0;
+  X[3] = 0.0;
+  XDot = p.GetXDot(X, 0.0);
+  EXPECT_EQ(XDot.size(), 4);
+
+  // Expected values
+  // |x0DotDot| = |1/m0 0   | * (|-k k| * |x0| + |-c c| * |xDot0|)
+  // |x1DotDot|   |0    1/m1|   (|k -k|   |x1|   |c -c| * |xDot1|)
+  double x0Dot = X[2];
+  double x1Dot = X[3];
+  double x0DotDot = 1/m0*(-k*X[0]+k*X[1]-c*X[2]+c*X[3]);
+  double x1DotDot = 1/m1*(k*X[0]-k*X[1]+c*X[2]-c*X[3]);
+
+  EXPECT_DOUBLE_EQ(XDot(0), x0Dot);
+  EXPECT_DOUBLE_EQ(XDot(1), x1Dot);
+  EXPECT_DOUBLE_EQ(XDot(2), x0DotDot);
+  EXPECT_DOUBLE_EQ(XDot(3), x1DotDot);
+
+  // INITIAL DISPLACEMENTS AND ZERO VELOCITIES TEST
+  X[0] = 5.0;
+  X[1] = 17.0;
+  X[2] = 0.0;
+  X[3] = 0.0;
+  XDot = p.GetXDot(X, 0.0);
+  EXPECT_EQ(XDot.size(), 4);
+  x0Dot = X[2];
+  x1Dot = X[3];
+  x0DotDot = 1/m0*(-k*X[0]+k*X[1]-c*X[2]+c*X[3]);
+  x1DotDot = 1/m1*(k*X[0]-k*X[1]+c*X[2]-c*X[3]);
+  EXPECT_DOUBLE_EQ(XDot(0), x0Dot);
+  EXPECT_DOUBLE_EQ(XDot(1), x1Dot);
+  EXPECT_DOUBLE_EQ(XDot(2), x0DotDot);
+  EXPECT_DOUBLE_EQ(XDot(3), x1DotDot);
+
+  // INITIAL DISPLACEMENTS AND VELOCITIES TEST
+  X[0] = 3.0;
+  X[1] = 30.0;
+  X[2] = 33.0;
+  X[3] = 11.0;
+  XDot = p.GetXDot(X, 0.0);
+  EXPECT_EQ(XDot.size(), 4);
+  x0Dot = X[2];
+  x1Dot = X[3];
+  x0DotDot = 1/m0*(-k*X[0]+k*X[1]-c*X[2]+c*X[3]);
+  x1DotDot = 1/m1*(k*X[0]-k*X[1]+c*X[2]-c*X[3]);
+  EXPECT_DOUBLE_EQ(XDot(0), x0Dot);
+  EXPECT_DOUBLE_EQ(XDot(1), x1Dot);
+  EXPECT_DOUBLE_EQ(XDot(2), x0DotDot);
+  EXPECT_DOUBLE_EQ(XDot(3), x1DotDot);
 }
 
 TEST(ProblemTest,IntegrateStationaryTest) {
