@@ -409,9 +409,6 @@ TEST(ProblemTest,HarmonicMotionTest) {
 
   double err = std::abs((halfT-M_PI)/M_PI);
   ASSERT_TRUE(err <= 0.002); // error smaller than 0.2%
-
-  std::cout<<"HarmonicMotionTest output:\n";
-  p.PrintMassTimeHistory(1);
 }
 
 TEST(ProblemTest,DampedOscillatorTest) {
@@ -451,7 +448,25 @@ TEST(ProblemTest,DampedOscillatorTest) {
   double expectedHalfT  = M_PI/2.0;
   double err = std::abs((halfT-expectedHalfT)/expectedHalfT);
   ASSERT_TRUE(err <= 0.007);// error smaller than 0.7%
+}
+
+TEST(ProblemTest,DampedOscillatorPlotTest) {
+  // This test simulates a mass, damper and spring system and prints a csv
+  // to be visually tested against a plot available under:
+  // http://spiff.rit.edu/classes/phys312/workshops/w5b/damped_theory.html#:~:text=A%20lightly%20damped%20harmonic%20oscillator,the%20decay%20happens%20more%20quickly.
+
+  Problem p = Problem();
+  p.AddMass(0.0,0.0,0.0);
+
+  p.AddMass(20.0,1.0,0.0);
+  p.AddSpring(0,1,30.0);
+  p.AddDamper(0,1,2.9);
+  p.Build();
+  p.FixMass(0);
+  p.SetInitialDisp(1, 1.0);
+
+  p.Integrate(0.0, 40, 0.1);
   
-  std::cout<<"DampedOscillatorTest output:\n";
+  std::cout<<"DampedOscillatorPlotTest output:\n";
   p.PrintMassTimeHistory(1);
 }
