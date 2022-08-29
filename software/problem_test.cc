@@ -540,3 +540,51 @@ TEST(ProblemTest,DampedOscillatorPlotTest) {
   std::cout<<"DampedOscillatorPlotTest output:\n";
   p.PrintMassTimeHistory(1);
 }
+
+TEST(ProblemTest, MinMaxAccelTest){
+  Problem p = Problem();
+
+  auto e = p.GetMassMaxAbsAccel(0);
+  ASSERT_TRUE(e.isError);
+  e = p.GetMassMaxAccel(0);
+  ASSERT_TRUE(e.isError);
+  e = p.GetMassMinAccel(0);
+  ASSERT_TRUE(e.isError);
+
+  p.AddMass(0.0,0.0,0.0);
+  p.AddMass(0.0,1.0,0.0);
+  p.AddMass(0.0,2.0,0.0);
+  
+  // Called to prevent "problem must be integrated" error.
+  // AccelHistory is then cleared and mocked for the test
+  p.Build();
+  p.Integrate(0.0,0.0,0.0);
+  p.AccelHistory.clear();
+  ASSERT_EQ(p.AccelHistory.size(), 0);
+
+  vector<double> a = vector<double>(3);
+  a[0] = -1.0;
+  a[1] = 0.0;
+  a[2] = -8.0;
+  p.AccelHistory.push_back(a);
+  a[0] = 0.0;
+  a[1] = 1.0;
+  a[2] = -90.0;
+  p.AccelHistory.push_back(a);
+  a[0] = 1.0;
+  a[1] = 2.0;
+  a[2] = -9.0;
+  p.AccelHistory.push_back(a);
+
+  ASSERT_DOUBLE_EQ(p.GetMassMaxAccel(0).val, 1.0);
+  ASSERT_DOUBLE_EQ(p.GetMassMinAccel(0).val, -1.0);
+  ASSERT_DOUBLE_EQ(p.GetMassMaxAbsAccel(0).val, 1.0);
+
+  ASSERT_DOUBLE_EQ(p.GetMassMaxAccel(1).val, 2.0);
+  ASSERT_DOUBLE_EQ(p.GetMassMinAccel(1).val, 0.0);
+  ASSERT_DOUBLE_EQ(p.GetMassMaxAbsAccel(1).val, 2.0);
+
+  ASSERT_DOUBLE_EQ(p.GetMassMaxAccel(2).val, -8.0);
+  ASSERT_DOUBLE_EQ(p.GetMassMinAccel(2).val, -90.0);
+  ASSERT_DOUBLE_EQ(p.GetMassMaxAbsAccel(2).val, 90.0);
+}

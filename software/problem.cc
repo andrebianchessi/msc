@@ -12,6 +12,7 @@ using namespace boost::numeric::odeint;
 
 Problem::Problem(){
     this -> isBuilt = false;
+    this -> isIntegrated = false;
 }
 
 int Problem::GetDof() const{
@@ -343,7 +344,13 @@ void Problem::save(const vector<double> &X, double t){
     this->AccelHistory.push_back(Accel);
 }
 
-void Problem::Integrate(double t0, double t1, double timestep){
+Maybe<Void> Problem::Integrate(double t0, double t1, double timestep){
+    Maybe<Void> r;
+    if (!this->isBuilt){
+        r.isError = true;
+        r.errMsg = "Problem not built yet";
+        return r;
+    }
     auto setXDot = [this](vector<double> const& X, vector<double> &XDot , double t ) {
         this->SetXDot(X, XDot, t);
     };
@@ -351,6 +358,8 @@ void Problem::Integrate(double t0, double t1, double timestep){
         this->save(X,t);
     };
     integrate( setXDot, this->X, t0, t1, timestep, save);
+    this -> isIntegrated = true;
+    return r;
 }
 
 void Problem::PrintMassTimeHistory(int massId){
@@ -369,4 +378,77 @@ void Problem::PrintMassTimeHistory(int massId){
         cout << this->XHistory[i][this->GetMassVelIndex(m)] << ",";
         cout << this->AccelHistory[i][m.xIndex] << endl;
     }
+}
+
+Maybe<double> Problem::GetMassMaxAccel(int massId){
+    Maybe<double> r;
+    auto e = this->GetMass(massId);
+    if (e.isError){
+        r.isError = true;
+        r.errMsg = "Invalid massId";
+        return r;
+    }
+    if (!this->isIntegrated){
+        r.isError = true;
+        r.errMsg = "Problem not yet integrated";
+        return r;
+    }
+
+    double max = this->AccelHistory[0][massId];
+
+    for (int i = 0; i < int(AccelHistory.size()); i++){
+        if (this->AccelHistory[i][massId] > max){
+            max = this->AccelHistory[i][massId];
+        }
+    }
+
+    r.val = max;
+    return r;
+}
+Maybe<double> Problem::GetMassMinAccel(int massId){
+    Maybe<double> r;
+    auto e = this->GetMass(massId);
+    if (e.isError){
+        r.isError = true;
+        r.errMsg = "Invalid massId";
+        return r;
+    }
+    if (!this->isIntegrated){
+        r.isError = true;
+        r.errMsg = "Problem not yet integrated";
+        return r;
+    }
+
+    double min = this->AccelHistory[0][massId];
+
+    for (int i = 0; i < int(AccelHistory.size()); i++){
+        if (this->AccelHistory[i][massId] < min){
+            min = this->AccelHistory[i][massId];
+        }
+    }
+
+    r.val = min;
+    return r;
+}
+
+Maybe<double> Problem::GetMassMaxAbsAccel(int massId){
+    Maybe<double> r;
+    auto e = this -> GetMassMaxAccel(massId);
+    if (e.isError){
+        return e;
+    }
+    double max = e.val;
+
+    e = this -> GetMassMinAccel(massId);
+    if (e.isError){
+        return e;
+    }
+    double minAbs = abs(e.val);
+
+    if (minAbs > max) {
+        r.val = minAbs;
+    } else {
+        r.val = max;
+    }
+    return r;
 }

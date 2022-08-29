@@ -104,7 +104,7 @@ public:
     void Build();
 
     // Integrates the system and saves the state vectors at t and XHistory
-    void Integrate(double t0, double t1, double timestep);
+    Maybe<Void> Integrate(double t0, double t1, double timestep);
 
     // Prints the time history of mass by id
     void PrintMassTimeHistory(int massId);
@@ -116,6 +116,16 @@ public:
     // Returns the index of the velocity of the mass in the state vector (X)
     int GetMassVelIndex(Mass m);
     int GetMassVelIndex(int xIndex);
+
+    // Returns maximum absolute value of acceleration of a mass. Must be called
+    // after Integrate.
+    Maybe<double> GetMassMaxAbsAccel(int massId);
+    // Returns maximum value of acceleration of a mass. Must be called
+    // after Integrate.
+    Maybe<double> GetMassMaxAccel(int massId);
+    // Returns minimum value of acceleration of a mass. Must be called
+    // after Integrate.
+    Maybe<double> GetMassMinAccel(int massId);
 
 private:
     // Initial position (px,py) of all masses in the problem.
@@ -129,6 +139,7 @@ private:
     bool massIsFixed(int massId);
 
     bool isBuilt; // default = false
+    bool isIntegrated; // default = false
 
     // Returns row matrix of displacements
     //  [[x0],
