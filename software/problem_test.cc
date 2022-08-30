@@ -657,6 +657,90 @@ TEST(ProblemTest, MultiBodyBibliographyDataTest) {
   ASSERT_DOUBLE_EQ(p.GetMassMaxAbsAccel(2).val, abs(p.GetMassMinAccel(2).val));
 }
 
+TEST(ProblemTest, MultiBodyBibliographyDataTest2) {
+  // This test simulates a system with 5 masses, similar to one found in the
+  // bibliography and plots it's response so that we can compare it with the
+  // results in the bibliography.
+  // Source:
+  // Mostafa, Marzbanrad Javad And. 2011. “A System Identification Algorithm for Vehicle Lumped.” International Journal of Modeling and Optimization 1 (January): 163–66.
+  // Figure 11
+
+
+  Problem p = Problem();
+  EXPECT_FALSE(p.AddMass(1.0,0.0,0.0).isError); // m0
+  EXPECT_FALSE(p.AddMass(300,1.0,1.0).isError); // m1
+  EXPECT_FALSE(p.AddMass(120,1.0,0.0).isError); // m2
+  EXPECT_FALSE(p.AddMass(150,1.0,3.0).isError); // m3
+  EXPECT_FALSE(p.AddMass(700,2.0,0.0).isError); // m4
+  EXPECT_FALSE(p.AddMass(80 ,3.0,0.0).isError); // m5
+
+  double k1 = 48.866;
+  double k2 = 915522.58;
+  double k3 = 1206875.43;
+  double k4 = 1178694.84;
+  double k5 = 36.7265;
+  double k6 = 136.4661;
+  double k7 = 38.6678;
+  double k8 = 4761249.39;
+  double k9 = 389232.42;
+  double c4 = 0.8981;
+  double c5 = 33114.21;
+  double c6 = 1.7284;
+  double c7 = 6764.6574;
+  double c8 = 8648277.61;
+  double c9 = 1595.52;
+
+  EXPECT_FALSE(p.AddSpring(0,1,k1).isError);
+  EXPECT_FALSE(p.AddSpring(1,2,k2).isError);
+  EXPECT_FALSE(p.AddSpring(1,3,k3).isError);
+  EXPECT_FALSE(p.AddSpring(1,4,k4).isError);
+  EXPECT_FALSE(p.AddDamper(1,4,c4).isError);
+  EXPECT_FALSE(p.AddSpring(0,2,k5).isError);
+  EXPECT_FALSE(p.AddDamper(0,2,c5).isError);
+  EXPECT_FALSE(p.AddSpring(2,4,k6).isError);
+  EXPECT_FALSE(p.AddDamper(2,4,c6).isError);
+  EXPECT_FALSE(p.AddSpring(0,3,k7).isError);
+  EXPECT_FALSE(p.AddDamper(0,3,c7).isError);
+  EXPECT_FALSE(p.AddSpring(3,4,k8).isError);
+  EXPECT_FALSE(p.AddDamper(3,4,c8).isError);
+  EXPECT_FALSE(p.AddSpring(4,5,k9).isError);
+  EXPECT_FALSE(p.AddDamper(4,5,c9).isError);
+
+
+  p.Build();
+  p.SetInitialVel(14.0);
+  EXPECT_FALSE(p.FixMass(0).isError);
+
+  EXPECT_FALSE(p.Integrate(0.0, 0.15, 0.05).isError);
+
+  // The velocities we get match with the paper. The acceleration follows the
+  // same shape, but the paper doesn't show the units for the acceleration.
+  // If our data is correct, it seems to be (10m/s^2). To validate the
+  // accelerations we get is also correct, we do a single check using linear
+  // interpolation at a random time instant.
+  int i = p.XHistory.size()/2;
+  double t0 = p.t[i];
+  double v0 = p.XHistory[i][p.GetMassVelIndex(5)];
+  double vDot0 = p.AccelHistory[i][5];
+  double t1 = p.t[i+1];
+  double v1 = p.XHistory[i+1][p.GetMassVelIndex(5)];
+  double expectedV1 = v0 + vDot0*(t1-t0);
+  double err = abs((expectedV1-v1)/v1);
+  EXPECT_TRUE(err< 0.0001);
+
+  p.PrintMassTimeHistory(5);
+
+  auto e = p.GetMassMinAccel(5);
+  ASSERT_FALSE(e.isError);
+  ASSERT_TRUE(-400<e.val && e.val<-350);
+ 
+  e = p.GetMassMaxAccel(5);
+  ASSERT_FALSE(e.isError);
+  ASSERT_TRUE(0<e.val && e.val<100);
+
+  // p.PrintMassTimeHistory(5);
+}
+
 TEST(ProblemTest, MinMaxAccelTest){
   Problem p = Problem();
 

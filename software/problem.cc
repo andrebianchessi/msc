@@ -380,7 +380,11 @@ void Problem::PrintMassTimeHistory(int massId){
     using namespace std;
     auto e = this->GetMass(massId);
     if (e.isError){
-        cout << "Invalid massId" << endl;
+        cout << "ERROR: Invalid massId" << endl;
+        return;
+    }
+    if (!this->isIntegrated){
+        cout << "ERROR: Not yet integrated" << endl;
         return;
     }
     auto m = *e.val;
