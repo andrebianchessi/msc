@@ -91,8 +91,8 @@ public:
     Maybe<Void> SetInitialVel(int massId, double value);
 
     // Set initial displacement and velocities for all masses
-    void SetInitialDisp(double value);
-    void SetInitialVel(double value);
+    Maybe<Void> SetInitialDisp(double value);
+    Maybe<Void> SetInitialVel(double value);
 
     // Set mass with id massId as fixed, i.e. always zero speed
     // Should be called after Build() and SetInitialVel(value);
@@ -126,6 +126,11 @@ public:
     // after Integrate.
     Maybe<double> GetMassMinAccel(int massId);
 
+    // Clears the XHistory and AccelHistory arrays. X is set to it's initial
+    // value.
+    // Should be used to save memory when the past values are no longer needed.
+    void ClearHistory();
+
 private:
     // Initial position (px,py) of all masses in the problem.
     // Note that two masses can't be created at the same initial position.
@@ -139,6 +144,7 @@ private:
 
     bool isBuilt; // default = false
     bool isIntegrated; // default = false
+    FRIEND_TEST(ProblemTest, ClearHistoryTest);
 
     // Returns row matrix of displacements
     //  [[x0],

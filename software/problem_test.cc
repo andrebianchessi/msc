@@ -788,3 +788,59 @@ TEST(ProblemTest, MinMaxAccelTest){
   ASSERT_DOUBLE_EQ(p.GetMassMinAccel(2).val, -90.0);
   ASSERT_DOUBLE_EQ(p.GetMassMaxAbsAccel(2).val, 90.0);
 }
+
+TEST(ProblemTest, ClearHistoryTest){
+  Problem p = Problem();
+
+  // Create dummy problem
+  ASSERT_FALSE(p.AddMass(1.0,0.0,0.0).isError);
+  ASSERT_FALSE(p.AddMass(1.0,1.0,0.0).isError);
+  ASSERT_FALSE(p.AddMass(1.0,2.0,0.0).isError);
+  ASSERT_FALSE(p.AddSpring(0,1,1.0).isError);
+  ASSERT_FALSE(p.AddSpring(1,2,1.0).isError);
+  ASSERT_FALSE(p.AddDamper(0,1,1.0).isError);
+  ASSERT_FALSE(p.AddDamper(1,2,1.0).isError);
+
+  p.Build();
+  ASSERT_FALSE(p.SetInitialVel(10).isError);
+  ASSERT_FALSE(p.FixMass(0).isError);
+
+  ASSERT_FALSE(p.Integrate(0,1.0,0.01).isError);
+
+  // Store some values of state vector and accelerations to compare latter
+  ASSERT_TRUE(int(p.XHistory.size())>3);
+  int XHistory0Size = int(p.XHistory.size());
+  int AccelHistory0Size = int(p.AccelHistory.size());
+  vector<double> X0 = vector<double>(p.XHistory[0].size());
+  vector<double> XN = vector<double>(p.XHistory[0].size());
+  vector<double> A0 = vector<double>(p.AccelHistory[0].size());
+  vector<double> AN = vector<double>(p.AccelHistory[0].size());
+
+  int n = int(p.XHistory.size())/2;
+  std::copy(p.XHistory[0].begin(),p.XHistory[0].end(), X0.begin());
+  std::copy(p.XHistory[n].begin(),p.XHistory[n].end(), XN.begin());
+  std::copy(p.AccelHistory[0].begin(),p.AccelHistory[0].end(), A0.begin());
+  std::copy(p.AccelHistory[n].begin(),p.AccelHistory[n].end(), AN.begin());
+
+  p.ClearHistory();
+  ASSERT_FALSE(p.isIntegrated);
+  ASSERT_EQ(p.XHistory.size(),0);
+  ASSERT_EQ(p.AccelHistory.size(),0);
+
+  // Integrate again
+  ASSERT_FALSE(p.Integrate(0,1.0,0.01).isError);
+  ASSERT_TRUE(p.isIntegrated);
+
+  // Compare values
+  ASSERT_EQ(p.XHistory.size(), XHistory0Size);
+  ASSERT_EQ(p.AccelHistory.size(), AccelHistory0Size);
+  for (int i = 0; i < int(p.XHistory[0].size()); i++){
+    ASSERT_EQ(p.XHistory[0][i], X0[i]);
+    ASSERT_EQ(p.XHistory[n][i], XN[i]);
+  }
+  for (int i = 0; i < int(p.AccelHistory[0].size()); i++){
+    ASSERT_EQ(p.AccelHistory[0][i], A0[i]);
+    ASSERT_EQ(p.AccelHistory[n][i], AN[i]);
+  }
+
+}

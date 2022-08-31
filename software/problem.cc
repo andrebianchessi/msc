@@ -244,16 +244,30 @@ Maybe<Void> Problem::SetInitialVel(int massId, double value){
     return r;
 }
 
-void Problem::SetInitialDisp(double value){
+Maybe<Void> Problem::SetInitialDisp(double value){
+    Maybe<Void> r;
+    if (!this->isBuilt){
+        r.isError = true;
+        r.errMsg = "Problem not yet built.";
+        return r;
+    }
     for (int i = 0; i < int(this->X.size()); i++){
         this->X[i] = value;
     }
+    return r;
 }
 
-void Problem::SetInitialVel(double value){
+Maybe<Void> Problem::SetInitialVel(double value){
+    Maybe<Void> r;
+    if (!this->isBuilt){
+        r.isError = true;
+        r.errMsg = "Problem not yet built.";
+        return r;
+    }
     for (Mass m : this->masses){
         this->X[this->GetMassVelIndex(m)] = value;
     }
+    return r;
 }
 
 Maybe<Void> Problem::FixMass(int massId){
@@ -469,4 +483,11 @@ Maybe<double> Problem::GetMassMaxAbsAccel(int massId){
         r.val = max;
     }
     return r;
+}
+
+void Problem::ClearHistory(){
+    this -> isIntegrated = false;
+    std::copy(this->XHistory[0].begin(),this->XHistory[0].end(),this->X.begin());
+    this->XHistory.clear();
+    this->AccelHistory.clear();
 }
