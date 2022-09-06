@@ -138,3 +138,37 @@ cc_test(
     ":bounded",
     ],
 )
+
+cc_library(
+  name = "utils",
+  srcs = [
+    "utils.h"
+  ],
+  hdrs = [
+    "utils.h"
+  ]
+)
+cc_test(
+  name = "utils_test",
+  size = "small",
+  srcs = [
+    "utils_test.cc"
+    ],
+  deps = [
+    "@com_google_googletest//:gtest_main",
+    ":utils",
+    ],
+)
+
+cc_library(
+  name = "problem_description",
+  srcs = [
+    "problem_description.cc"
+  ],
+  hdrs = [
+    "problem_description.cc.h"
+  ],
+  deps = [
+    ":problem"
+  ]
+)
