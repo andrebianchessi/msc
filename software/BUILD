@@ -33,6 +33,17 @@ cc_library(
     "@boost//:numeric_ublas"
   ]
 )
+cc_test(
+  name = "spring_test",
+  size = "small",
+  srcs = [
+    "spring_test.cc"
+    ],
+  deps = [
+    "@com_google_googletest//:gtest_main",
+    ":problem",
+    ],
+)
 
 cc_library(
   name = "damper",
@@ -48,6 +59,17 @@ cc_library(
     ":mass",
     "@boost//:numeric_ublas"
   ]
+)
+cc_test(
+  name = "damper_test",
+  size = "small",
+  srcs = [
+    "damper_test.cc"
+    ],
+  deps = [
+    "@com_google_googletest//:gtest_main",
+    ":problem",
+    ],
 )
 
 cc_library(
@@ -69,20 +91,6 @@ cc_library(
     "@com_google_googletest//:gtest_main",
   ]
 )
-
-cc_library(
-  name = "bounded",
-  srcs = [
-    "bounded.cc"
-  ],
-  hdrs = [
-    "bounded.h"
-  ],
-  deps = [
-    ":maybe"
-  ]
-)
-
 cc_test(
   name = "problem_test",
   size = "small",
@@ -107,30 +115,18 @@ cc_test(
     ],
 )
 
-cc_test(
-  name = "spring_test",
-  size = "small",
+cc_library(
+  name = "bounded",
   srcs = [
-    "spring_test.cc"
-    ],
+    "bounded.cc"
+  ],
+  hdrs = [
+    "bounded.h"
+  ],
   deps = [
-    "@com_google_googletest//:gtest_main",
-    ":problem",
-    ],
+    ":maybe"
+  ]
 )
-
-cc_test(
-  name = "damper_test",
-  size = "small",
-  srcs = [
-    "damper_test.cc"
-    ],
-  deps = [
-    "@com_google_googletest//:gtest_main",
-    ":problem",
-    ],
-)
-
 cc_test(
   name = "bounded_test",
   size = "small",
