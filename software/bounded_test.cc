@@ -1,5 +1,7 @@
-#include <gtest/gtest.h>
 #include "bounded.h"
+
+#include <gtest/gtest.h>
+
 #include "maybe.h"
 
 TEST(BoundedTest, SimpleTest) {
