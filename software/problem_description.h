@@ -1,4 +1,7 @@
-// Represents the description of a problem that we want to optimize
+// Represents the description of a problem that we want to optimize.
+// This is mainly used so that we can create multiple Problem instances
+// (with different values of spring and damper constants) for the same
+// set of masses and geometries
 #include <vector>
 
 #include "maybe.h"

@@ -149,3 +149,65 @@ TEST(ProblemDescriptionTest, MultiBodyBibliographyDataTest2) {
     ASSERT_FALSE(e2.isError);
     ASSERT_TRUE(0 < e2.val && e2.val < 100);
 }
+
+TEST(ProblemDescriptionTest, CreateMultipleTest) {
+    // Tests creation of multiple Problem instances
+
+    // Create arbitrary pd with a large range for spring and damper constants
+    ProblemDescription pd = ProblemDescription();
+    pd.AddMass(1.0, 0.0, 0.0);
+    pd.AddMass(300, 1.0, 1.0);
+    pd.AddMass(120, 1.0, 0.0);
+    pd.AddMass(150, 1.0, 3.0);
+    pd.AddMass(700, 2.0, 0.0);
+    pd.AddMass(80, 3.0, 0.0);
+    pd.AddSpring(0, 1, 0.0, 1000000);
+    pd.AddSpring(1, 2, 0.0, 1000000);
+    pd.AddSpring(1, 3, 0.0, 1000000);
+    pd.AddSpring(1, 4, 0.0, 1000000);
+    pd.AddDamper(1, 4, 0.0, 1000000);
+    pd.AddSpring(0, 2, 0.0, 1000000);
+    pd.AddDamper(0, 2, 0.0, 1000000);
+    pd.AddSpring(2, 4, 0.0, 1000000);
+    pd.AddDamper(2, 4, 0.0, 1000000);
+    pd.AddSpring(0, 3, 0.0, 1000000);
+    pd.AddDamper(0, 3, 0.0, 1000000);
+    pd.AddSpring(3, 4, 0.0, 1000000);
+    pd.AddDamper(3, 4, 0.0, 1000000);
+    pd.AddSpring(4, 5, 0.0, 1000000);
+    pd.AddDamper(4, 5, 0.0, 1000000);
+    pd.AddInitialVel(14.0);
+    pd.SetFixedMass(0);
+
+    // Get multiple problem instances and check they have different values
+    auto e = pd.BuildRandom();
+    EXPECT_FALSE(e.isError);
+    auto p0 = e.val;
+
+    e = pd.BuildRandom();
+    EXPECT_FALSE(e.isError);
+    auto p1 = e.val;
+
+    e = pd.BuildRandom();
+    EXPECT_FALSE(e.isError);
+    auto p2 = e.val;
+
+    EXPECT_FALSE(p0->Integrate(0.0, 0.15, 0.05).isError);
+    EXPECT_FALSE(p1->Integrate(0.0, 0.15, 0.05).isError);
+    EXPECT_FALSE(p2->Integrate(0.0, 0.15, 0.05).isError);
+
+    auto a0 = p0->GetMassMaxAbsAccel(5);
+    auto a1 = p1->GetMassMaxAbsAccel(5);
+    auto a2 = p2->GetMassMaxAbsAccel(5);
+    EXPECT_FALSE(a0.isError);
+    EXPECT_FALSE(a1.isError);
+    EXPECT_FALSE(a2.isError);
+
+    EXPECT_TRUE(a0.val != a1.val);
+    EXPECT_TRUE(a1.val != a2.val);
+    EXPECT_TRUE(a0.val != a2.val);
+
+    print("a0.val", a0.val);
+    print("a1.val", a1.val);
+    print("a2.val", a2.val);
+}
