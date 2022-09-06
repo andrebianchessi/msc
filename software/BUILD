@@ -70,6 +70,19 @@ cc_library(
   ]
 )
 
+cc_library(
+  name = "bounded",
+  srcs = [
+    "bounded.cc"
+  ],
+  hdrs = [
+    "bounded.h"
+  ],
+  deps = [
+    ":maybe"
+  ]
+)
+
 cc_test(
   name = "problem_test",
   size = "small",
@@ -115,5 +128,17 @@ cc_test(
   deps = [
     "@com_google_googletest//:gtest_main",
     ":problem",
+    ],
+)
+
+cc_test(
+  name = "bounded_test",
+  size = "small",
+  srcs = [
+    "bounded_test.cc"
+    ],
+  deps = [
+    "@com_google_googletest//:gtest_main",
+    ":bounded",
     ],
 )
