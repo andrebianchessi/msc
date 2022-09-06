@@ -166,9 +166,21 @@ cc_library(
     "problem_description.cc"
   ],
   hdrs = [
-    "problem_description.cc.h"
+    "problem_description.h"
   ],
   deps = [
-    ":problem"
+    ":problem",
+    ":utils"
   ]
+)
+cc_test(
+  name = "problem_description_test",
+  size = "small",
+  srcs = [
+    "problem_description_test.cc"
+    ],
+  deps = [
+    "@com_google_googletest//:gtest_main",
+    ":problem_description",
+    ],
 )
