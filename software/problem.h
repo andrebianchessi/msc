@@ -1,19 +1,21 @@
 #pragma once
-#include <vector>
+#include <gtest/gtest.h>
+
+#include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <set>
 #include <tuple>
-#include "mass.h"
-#include "spring.h"
+#include <vector>
+
 #include "damper.h"
+#include "mass.h"
 #include "maybe.h"
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-#include <gtest/gtest.h>
+#include "spring.h"
 
 using namespace boost::numeric::ublas;
 
 // Represents a 1D system of masses, springs and dampers
 class Problem {
-public:
+   public:
     // Standard constructor
     Problem();
 
@@ -39,7 +41,7 @@ public:
     // Contains all displacements, followed by all velocities
     // X = [x0, x1,... xN, xDot0, xDot1, ..., xDotN]
     vector<double> X;
-    
+
     // Vector to store the time instants after the system is integrated
     std::vector<double> t;
     // Contains the state vector after Integrate is called.
@@ -131,7 +133,7 @@ public:
     // Should be used to save memory when the past values are no longer needed.
     void ClearHistory();
 
-private:
+   private:
     // Initial position (px,py) of all masses in the problem.
     // Note that two masses can't be created at the same initial position.
     std::set<std::tuple<double, double>> initialPositions;
@@ -142,8 +144,8 @@ private:
 
     bool massIsFixed(int massId);
 
-    bool isBuilt; // default = false
-    bool isIntegrated; // default = false
+    bool isBuilt;       // default = false
+    bool isIntegrated;  // default = false
     FRIEND_TEST(ProblemTest, ClearHistoryTest);
 
     // Returns row matrix of displacements
