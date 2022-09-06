@@ -374,9 +374,15 @@ Maybe<Void> Problem::Integrate(double t0, double t1, double timestep) {
     auto setXDot = [this](vector<double> const &X, vector<double> &XDot,
                           double t) { this->SetXDot(X, XDot, t); };
     auto save = [this](const vector<double> &X, double t) { this->save(X, t); };
-    integrate(setXDot, this->X, t0, t1, timestep, save);
-    this->isIntegrated = true;
-    return r;
+    try {
+        integrate(setXDot, this->X, t0, t1, timestep, save);
+        this->isIntegrated = true;
+        return r;
+    } catch (...) {
+        r.isError = true;
+        r.errMsg = "Unexpected error when integrating.";
+        return r;
+    }
 }
 
 void Problem::PrintMassTimeHistory(int massId) {
