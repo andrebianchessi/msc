@@ -22,7 +22,7 @@ class Evolution {
 
    private:
     // Percentage of the population that will survive each generation
-    double nKeep = 0.5;
+    double survival = 0.5;
     // Percentage of the dna slots that will be mutated;
     // Example:
     // creatures with DnaSize = 10
@@ -61,6 +61,9 @@ class Evolution {
     // generation.
     int endFittest();
     FRIEND_TEST(EvolutionTest, EndFittestTest);
+
+    // Returns number of creatures that will survive to next generation
+    int nFittest();
 
     // Randomly mutates some of the less fit creatures
     void mutate();

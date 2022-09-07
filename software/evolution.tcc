@@ -23,7 +23,12 @@ void Evolution<creature>::sortPopulation() {
 
 template <typename creature>
 int Evolution<creature>::endFittest() {
-    return floor(this->nKeep * this->population->size()) - 1;
+    return floor(this->survival * this->population->size()) - 1;
+}
+
+template <typename creature>
+int Evolution<creature>::nFittest() {
+    return this->endFittest() + 1;
 }
 
 template <typename creature>
@@ -38,9 +43,9 @@ creature* Evolution<creature>::GetCreature(int i) {
 
 template <typename creature>
 vector<double> Evolution<creature>::fitness() {
-    vector<double> costs = vector<double>(this->popSize());
+    vector<double> costs = vector<double>(this->nFittest());
     double totalCost = 0;
-    for (int i = 0; i < this->popSize(); i++) {
+    for (int i = 0; i < this->nFittest(); i++) {
         totalCost += (*this->population)[i].GetCost();
         costs[i] = (*this->population)[i].GetCost();
     }
@@ -49,8 +54,8 @@ vector<double> Evolution<creature>::fitness() {
     // higher fitness value -> better
 
     // Start by filing with cost values
-    vector<double> fitness = vector<double>(this->popSize());
-    for (int i = 0; i < this->popSize(); i++) {
+    vector<double> fitness = vector<double>(this->nFittest());
+    for (int i = 0; i < this->nFittest(); i++) {
         fitness[i] = costs[i];
     }
     // Remove negative values if needed
@@ -59,23 +64,23 @@ vector<double> Evolution<creature>::fitness() {
     // fitness: [4,6,7] -> [4,6,7]
     double minCost = costs[0];
     if (minCost <= 0) {
-        for (int i = 0; i < this->popSize(); i++) {
+        for (int i = 0; i < this->nFittest(); i++) {
             fitness[i] += -minCost + 1;
         }
     }
     // Invert values
     // fitness: [1,2,3] -> [1, 0.5, 0.33]
     // fitness: [4,6,7] -> [0.25, 0.16, 0.14]
-    for (int i = 0; i < this->popSize(); i++) {
+    for (int i = 0; i < this->nFittest(); i++) {
         fitness[i] = 1 / fitness[i];
     }
 
     // Normalize values
     double totalFitness = 0;
-    for (int i = 0; i < this->popSize(); i++) {
+    for (int i = 0; i < this->nFittest(); i++) {
         totalFitness += fitness[i];
     }
-    for (int i = 0; i < this->popSize(); i++) {
+    for (int i = 0; i < this->nFittest(); i++) {
         fitness[i] = fitness[i] / totalFitness;
     }
     return fitness;
@@ -85,9 +90,9 @@ template <typename creature>
 tuple<creature*, creature*> Evolution<creature>::getParents() {
     // Biased roulette wheel method
     vector<double> f = this->fitness();
-    vector<double> roulette = vector<double>(this->popSize());
+    vector<double> roulette = vector<double>(this->nFittest());
     double accumulated = 0.0;
-    for (int i = 0; i < this->popSize(); i++) {
+    for (int i = 0; i < this->nFittest(); i++) {
         roulette[i] = f[i] + accumulated;
         accumulated += f[i];
     }
@@ -134,3 +139,15 @@ void Evolution<creature>::mutate() {
         }
     }
 }
+
+// template <typename creature>
+// void Evolution<creature>::step() {
+//     this->sortPopulation();
+
+//     // Replace less fit of the population
+//     for (int i = this->endFittest() + 1; i < this->popSize(); i++) {
+//         auto e = ev.getParents();
+//         creature* p1 = get<0>(e);
+//         creature* p2 = get<1>(e);
+//     }
+// }

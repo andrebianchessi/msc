@@ -34,12 +34,15 @@ TEST(EvolutionTest, EndFittestTest) {
     Evolution<C> ev = Evolution<C>(&pop);
 
     ASSERT_EQ(ev.endFittest(), 4);
+    ASSERT_EQ(ev.nFittest(), 5);
 
-    // Test other values of nKeep
-    ev.nKeep = 0.33;
+    // Test other values of survival
+    ev.survival = 0.33;
     ASSERT_EQ(ev.endFittest(), 2);
-    ev.nKeep = 0.1;
+    ASSERT_EQ(ev.nFittest(), 3);
+    ev.survival = 0.1;
     ASSERT_EQ(ev.endFittest(), 0);
+    ASSERT_EQ(ev.nFittest(), 1);
 }
 
 TEST(EvolutionTest, fitnessTest) {
@@ -55,14 +58,16 @@ TEST(EvolutionTest, fitnessTest) {
     Evolution<C> ev = Evolution<C>(&pop);
     ASSERT_EQ(ev.popSize(), 4);
 
-    // costs = [0,0,0,0,0]
-    // fitness = [1/4,1/4,1/4,1/4]
+    // 3 creatures will survive to next generation
+    ev.survival = 3 / 4.0;
+
+    // costs = [0,0,0,0]
+    // fitness = [1/3,1/3,1/3]
     auto f = ev.fitness();
-    ASSERT_EQ(f.size(), 4);
-    ASSERT_DOUBLE_EQ(f[0], 1 / 4.0);
-    ASSERT_DOUBLE_EQ(f[1], 1 / 4.0);
-    ASSERT_DOUBLE_EQ(f[2], 1 / 4.0);
-    ASSERT_DOUBLE_EQ(f[3], 1 / 4.0);
+    ASSERT_EQ(f.size(), 3);
+    ASSERT_DOUBLE_EQ(f[0], 1 / 3.0);
+    ASSERT_DOUBLE_EQ(f[1], 1 / 3.0);
+    ASSERT_DOUBLE_EQ(f[2], 1 / 3.0);
 
     // Test other values of dna
     // Set xB0 = 0.25 -> x = -1
@@ -80,13 +85,12 @@ TEST(EvolutionTest, fitnessTest) {
     ASSERT_DOUBLE_EQ(ev.GetCreature(1)->GetCost(), 0.0);
     ASSERT_DOUBLE_EQ(ev.GetCreature(2)->GetCost(), 1.0);
     ASSERT_DOUBLE_EQ(ev.GetCreature(3)->GetCost(), 5.0);
-    // fitness = [1,1,2,6] -> [1,1,1/2,1/6] -> [1/(1+1+1/2+1/6), ...]
+    // fitness = [1,1,2] -> [1,1,1/2] -> [1/(1+1+1/2), ...]
     f = ev.fitness();
-    ASSERT_EQ(f.size(), 4);
-    ASSERT_DOUBLE_EQ(f[0], 1 / (1 + 1 + 1 / 2.0 + 1 / 6.0));
-    ASSERT_DOUBLE_EQ(f[1], 1 / (1 + 1 + 1 / 2.0 + 1 / 6.0));
-    ASSERT_DOUBLE_EQ(f[2], 1 / 2.0 / (1 + 1 + 1 / 2.0 + 1 / 6.0));
-    ASSERT_DOUBLE_EQ(f[3], 1 / 6.0 / (1 + 1 + 1 / 2.0 + 1 / 6.0));
+    ASSERT_EQ(f.size(), 3);
+    ASSERT_DOUBLE_EQ(f[0], 1 / (1 + 1 + 1 / 2.0));
+    ASSERT_DOUBLE_EQ(f[1], 1 / (1 + 1 + 1 / 2.0));
+    ASSERT_DOUBLE_EQ(f[2], 1 / 2.0 / (1 + 1 + 1 / 2.0));
 }
 
 TEST(EvolutionTest, getParentsTest) {
@@ -109,26 +113,29 @@ TEST(EvolutionTest, getParentsTest) {
     y.Set(0.0);
     pop.push_back(C(x, y));
 
-    // costs = [0,1,2]
-    // fitness = [1,2,3] -> [1,1/2,1/3]
-    //     -> [1/(1+1/2+1/3), ...]
+    // cost = 14
+    x.Set(1.0);
+    y.Set(1.0);
+    pop.push_back(C(x, y));
 
     Evolution<C> ev = Evolution<C>(&pop);
+    ev.survival = 3 / 4.0;
     ev.sortPopulation();
 
     ASSERT_DOUBLE_EQ(ev.GetCreature(0)->GetCost(), 0.0);
     ASSERT_DOUBLE_EQ(ev.GetCreature(1)->GetCost(), 1.0);
     ASSERT_DOUBLE_EQ(ev.GetCreature(2)->GetCost(), 2.0);
+    ASSERT_DOUBLE_EQ(ev.GetCreature(3)->GetCost(), 14.0);
 
     // Number of parents with cost X selected each time by getParents
     int cost0ParentCount = 0;
     int cost1ParentCount = 0;
     int cost2ParentCount = 0;
+    int cost14ParentCount = 0;
 
     for (int i = 0; i < 100000; i++) {
         auto e = ev.getParents();
         C* p1 = get<0>(e);
-        C* p2 = get<0>(e);
         if (abs(p1->GetCost() - 0.0) < 0.005f) {
             cost0ParentCount += 1;
         }
@@ -138,19 +145,14 @@ TEST(EvolutionTest, getParentsTest) {
         if (abs(p1->GetCost() - 2.0) < 0.005f) {
             cost2ParentCount += 1;
         }
-        if (abs(p2->GetCost() - 0.0) < 0.005f) {
-            cost0ParentCount += 1;
-        }
-        if (abs(p2->GetCost() - 1.0) < 0.005f) {
-            cost1ParentCount += 1;
-        }
-        if (abs(p2->GetCost() - 2.0) < 0.005f) {
-            cost2ParentCount += 1;
+        if (abs(p1->GetCost() - 14.0) < 0.005f) {
+            cost14ParentCount += 1;
         }
     }
 
     ASSERT_TRUE(cost0ParentCount > cost1ParentCount);
     ASSERT_TRUE(cost1ParentCount > cost2ParentCount);
+    ASSERT_EQ(cost14ParentCount, 0);
 
     // fitness = [1/k,(1/2)/k,(1/3)/k]
     // Frequency of choosing each parent is proportional to fitness:
@@ -161,11 +163,11 @@ TEST(EvolutionTest, getParentsTest) {
     // -> cost0Count/cost2Count = 3.0
     // -> cost1Count/cost2Count = 1.5
     ASSERT_TRUE(abs((float(cost0ParentCount) / cost1ParentCount - 2.0) / 2.0) <
-                0.01);
+                0.05);
     ASSERT_TRUE(abs((float(cost0ParentCount) / cost2ParentCount - 3.0) / 3.0) <
-                0.01);
+                0.05);
     ASSERT_TRUE(abs((float(cost1ParentCount) / cost2ParentCount - 1.5) / 1.5) <
-                0.01);
+                0.05);
 }
 
 TEST(EvolutionTest, MutateTest) {
