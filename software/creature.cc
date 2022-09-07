@@ -7,11 +7,10 @@
 
 int Creature::DnaSize() { return this->dna.size(); }
 
-void Creature::Mutate() {
+void Creature::Mutate(int i) {
     // Uniform random mutation
     // Haupt, Randy L., Sue Ellen Haupt, and Sue Ellen Autor Haupt. 2004.
     // Practical Genetic Algorithms. Wiley.
-    int i = RandomInt(0, this->DnaSize());
     this->dna[i].Set(Random());
 }
 

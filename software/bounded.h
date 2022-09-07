@@ -1,6 +1,8 @@
 // Represents a double in the interval [0.0, 1.0]
 
 #pragma once
+#include <gtest/gtest.h>
+
 #include "maybe.h"
 
 class Bounded {
@@ -16,4 +18,5 @@ class Bounded {
 
    private:
     double val;
+    FRIEND_TEST(EvolutionTest, MutateTest);
 };

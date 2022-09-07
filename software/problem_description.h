@@ -2,6 +2,7 @@
 // This is mainly used so that we can create multiple Problem instances
 // (with different values of spring and damper constants) for the same
 // set of masses and geometries
+#pragma once
 #include <vector>
 
 #include "maybe.h"

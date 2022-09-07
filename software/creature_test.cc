@@ -62,7 +62,7 @@ TEST(CreatureTest, MateAndMutationTest) {
     EXPECT_TRUE(child1.dna[1].Get() == 0.0);
     EXPECT_TRUE(child0.dna[1].Get() == 0.0);
 
-    c0.Mutate();
+    c0.Mutate(RandomInt(0, c0.DnaSize()));
     // print("dna: ", c0.dna[0].Get(), c0.dna[1].Get());
     bool changed = c0.dna[0].Get() != 1.0 || c0.dna[1].Get() != 0.0;
     EXPECT_TRUE(changed);

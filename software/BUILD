@@ -124,7 +124,8 @@ cc_library(
     "bounded.h"
   ],
   deps = [
-    ":maybe"
+    ":maybe",
+    "@com_google_googletest//:gtest_main"
   ]
 )
 cc_test(
@@ -220,14 +221,25 @@ cc_library(
   name = "evolution",
   srcs = [
     "evolution.h",
-    "evolution.cc",
+    "evolution.tcc",
   ],
   hdrs = [
     "evolution.h",
   ],
   deps = [
-    "@boost//:static_assert",
-    "@boost//:type_traits",
+    "@com_google_googletest//:gtest_main",
     ":creature"
   ]
+)
+cc_test(
+  name = "evolution_test",
+  size = "small",
+  srcs = [
+    "creature_test.h",
+    "evolution_test.cc"
+    ],
+  deps = [
+    "@com_google_googletest//:gtest_main",
+    ":evolution",
+    ],
 )

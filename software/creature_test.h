@@ -15,7 +15,7 @@ using namespace std;
 // Global optimal solution:
 // (x,y) = (-1,-0.5)
 // f(-1,-0.5) = 0
-class EqSol : Creature {
+class EqSol : public Creature {
    public:
     static constexpr double xMax = 2.0;
     static constexpr double xMin = -2.0;
@@ -23,6 +23,16 @@ class EqSol : Creature {
     static constexpr double yMin = -2.0;
 
     EqSol(Bounded x, Bounded y) {
+        this->dna = vector<Bounded>(2);
+        this->dna[0].Set(x.Get());
+        this->dna[1].Set(y.Get());
+    }
+
+    // Random constructor
+    EqSol() {
+        Bounded x, y;
+        x.Set(Random());
+        y.Set(Random());
         this->dna = vector<Bounded>(2);
         this->dna[0].Set(x.Get());
         this->dna[1].Set(y.Get());
@@ -39,4 +49,5 @@ class EqSol : Creature {
     shared_ptr<Bounded> y;
     FRIEND_TEST(CreatureTest, SimpleTest);
     FRIEND_TEST(CreatureTest, MateAndMutationTest);
+    FRIEND_TEST(EvolutionTest, MutateTest);
 };

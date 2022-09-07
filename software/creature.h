@@ -1,5 +1,6 @@
 // Abstract class that represents one candidate solution for the Evolution
 //('real-encoded'/'continuous' genetic algorithm)
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -19,8 +20,8 @@ class Creature {
     // Returns value that we want to minimize
     virtual double GetCost() = 0;
 
-    // Applies mutation to the DNA of this creature
-    void Mutate();
+    // Applies mutation to the DNA of this creature at index i of the dna
+    void Mutate(int i);
 
     // Combines this with c1 creature to create two children
     void Mate(Creature& c1, Creature* child0, Creature* child1);
