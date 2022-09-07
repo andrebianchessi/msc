@@ -1,9 +1,11 @@
 #pragma once
 #include <algorithm>
+#include <iostream>
 #include <memory>
 
 #include "creature.h"
 #include "evolution.h"
+#include "maybe.h"
 #include "utils.h"
 
 using namespace std;
@@ -183,4 +185,40 @@ void Evolution<creature>::step() {
     }
 
     this->mutate();
+}
+
+template <typename creature>
+Maybe<creature*> Evolution<creature>::Evolve(double stop,
+                                             bool printProgression) {
+    Maybe<creature*> r;
+    this->sortPopulation();
+    double fittestCost0 = this->FittestCost();
+    this->step();
+    double fittestCost1 = this->FittestCost();
+
+    int i = 1;
+    const int maxI = 1000000000;
+    if (printProgression) {
+        cout << "generation,cost" << endl;
+    }
+    print("abs((fittestCost1 - fittestCost0) / fittestCost0) ",
+          abs((fittestCost1 - fittestCost0) / fittestCost0));
+    while (abs((fittestCost1 - fittestCost0) / fittestCost0) > stop) {
+        fittestCost0 = fittestCost1;
+        this->step();
+        fittestCost1 = this->FittestCost();
+
+        if (printProgression) {
+            cout << i << "," << fittestCost1 << endl;
+        }
+        if (i == maxI) {
+            r.isError = true;
+            r.errMsg = "Evolution did not converge";
+            break;
+        }
+        i += 1;
+    }
+
+    r.val = this->GetCreature(0);
+    return r;
 }

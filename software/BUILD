@@ -228,7 +228,8 @@ cc_library(
   ],
   deps = [
     "@com_google_googletest//:gtest_main",
-    ":creature"
+    ":creature",
+    ":maybe",
   ]
 )
 cc_test(

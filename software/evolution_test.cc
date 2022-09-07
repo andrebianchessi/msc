@@ -319,3 +319,29 @@ TEST(EvolutionTest, StepTest) {
     // print("bestCost, bestX, bestY: ", bestCost, bestCreature->GetX(),
     //   bestCreature->GetY());
 }
+
+TEST(EvolutionTest, EvolveTest) {
+    // Create random population of size 30
+    vector<C> pop = vector<C>();
+    for (int i = 0; i < 30; i++) {
+        pop.push_back(C());
+    }
+    Evolution<C> ev = Evolution<C>(&pop);
+
+    // Perform multiple evolution steps and check that total cost and
+    // fittest cost are reduced
+    double tc0 = ev.TotalCost();
+    double fc0 = ev.FittestCost();
+
+    auto e = ev.Evolve(0.001, true);
+    ASSERT_FALSE(e.isError);
+
+    C* best = e.val;
+    double tc1 = ev.TotalCost();
+    double fc1 = ev.FittestCost();
+
+    ASSERT_TRUE(tc1 < tc0);
+    ASSERT_TRUE(fc1 < fc0);
+
+    EXPECT_TRUE(abs(best->GetCost()) < 0.01);
+}

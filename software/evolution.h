@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 
+#include "maybe.h"
+
 using namespace std;
 // Template class must be child of Creature
 template <typename creature>
@@ -17,8 +19,12 @@ class Evolution {
     // Get creature by index
     creature* GetCreature(int i);
 
-    // Performs Genetic Algorithm optimization and returns optimal creature
-    creature* Evolve();
+    // Performs Genetic Algorithm optimization until the FittestCost
+    // difference is smaller than 'stop', i.e. until
+    // abs((FittestCost_1-FittestCost_0)/FittestCost_0)<stop
+    // Returns error if solution doesn't converge.
+    // If printProgression, the progression of costs will be printed to stdout.
+    Maybe<creature*> Evolve(double stop, bool printProgression);
 
     // Helper function which returns population size;
     int PopSize();
