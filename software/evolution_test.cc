@@ -75,45 +75,104 @@ TEST(EvolutionTest, fitnessTest) {
     (*pop)[1].dna[0].Set(0.75);
     (*pop)[1].dna[1].Set(0.75);
     // f(x,y) = x^2 + y^2 + 2x + y
-    // cost = [1-2, 5, 0, 0]
-    // cost = [-1, 5, 0, 0]
+    // cost = [|1-2|, 5, 0, 0]
+    // cost = [1, 5, 0, 0]
     ev.sortPopulation();
-    // cost = [-1, 0, 0, 5]
-    ASSERT_DOUBLE_EQ((*pop)[0].GetCost(), -1.0);
+    // cost = [0, 0, 1, 5]
+    ASSERT_DOUBLE_EQ((*pop)[0].GetCost(), 0.0);
     ASSERT_DOUBLE_EQ((*pop)[1].GetCost(), 0.0);
-    ASSERT_DOUBLE_EQ((*pop)[2].GetCost(), 0.0);
+    ASSERT_DOUBLE_EQ((*pop)[2].GetCost(), 1.0);
     ASSERT_DOUBLE_EQ((*pop)[3].GetCost(), 5.0);
-    // fitness = [1,2,2,7] -> [1,1/2,1/2,1/7] -> [1/(1+1/2+1/2+1/7), ...]
+    // fitness = [1,1,2,6] -> [1,1,1/2,1/6] -> [1/(1+1+1/2+1/6), ...]
     f = ev.fitness();
     ASSERT_EQ(f.size(), 4);
-    ASSERT_DOUBLE_EQ(f[0], 1 / (1 + 1 / 2.0 + 1 / 2.0 + 1 / 7.0));
-    ASSERT_DOUBLE_EQ(f[1], 1 / 2.0 / (1 + 1 / 2.0 + 1 / 2.0 + 1 / 7.0));
-    ASSERT_DOUBLE_EQ(f[2], 1 / 2.0 / (1 + 1 / 2.0 + 1 / 2.0 + 1 / 7.0));
-    ASSERT_DOUBLE_EQ(f[3], 1 / 7.0 / (1 + 1 / 2.0 + 1 / 2.0 + 1 / 7.0));
+    ASSERT_DOUBLE_EQ(f[0], 1 / (1 + 1 + 1 / 2.0 + 1 / 6.0));
+    ASSERT_DOUBLE_EQ(f[1], 1 / (1 + 1 + 1 / 2.0 + 1 / 6.0));
+    ASSERT_DOUBLE_EQ(f[2], 1 / 2.0 / (1 + 1 + 1 / 2.0 + 1 / 6.0));
+    ASSERT_DOUBLE_EQ(f[3], 1 / 6.0 / (1 + 1 + 1 / 2.0 + 1 / 6.0));
 }
 
-// TEST(EvolutionTest, getParentsTest) {
-//     // Create 10 random creatures
-//     shared_ptr<vector<EqSol>> pop = make_shared<vector<EqSol>>();
-//     *pop = vector<EqSol>();
-//     for (int i = 0; i < 10; i++) {
-//         pop->push_back(EqSol());
-//     }
-//     ASSERT_EQ(pop->size(), 10);
+TEST(EvolutionTest, getParentsTest) {
+    shared_ptr<vector<EqSol>> pop = make_shared<vector<EqSol>>();
+    *pop = vector<EqSol>();
+    Bounded x = Bounded();
+    Bounded y = Bounded();
 
-//     // Instantiate Evolution
-//     Evolution<EqSol> ev = Evolution<EqSol>(pop);
+    // cost = 1
+    x.Set(0.25);
+    y.Set(0.25);
+    pop->push_back(EqSol(x, y));
 
-//     auto e = ev.getParents();
+    // cost = 0
+    x.Set(0.5);
+    y.Set(0.5);
+    pop->push_back(EqSol(x, y));
 
-//     // ASSERT_EQ(ev.endFittest(), 4);
+    // cost = 2
+    x.Set(0.0);
+    y.Set(0.0);
+    pop->push_back(EqSol(x, y));
 
-//     // // Test other values of nKeep
-//     // ev.nKeep = 0.33;
-//     // ASSERT_EQ(ev.endFittest(), 2);
-//     // ev.nKeep = 0.1;
-//     // ASSERT_EQ(ev.endFittest(), 0);
-// }
+    // costs = [0,1,2]
+    // fitness = [1,2,3] -> [1,1/2,1/3]
+    //     -> [1/(1+1/2+1/3), ...]
+
+    Evolution<EqSol> ev = Evolution<EqSol>(pop);
+    ev.sortPopulation();
+
+    ASSERT_DOUBLE_EQ(pop->at(0).GetCost(), 0.0);
+    ASSERT_DOUBLE_EQ(pop->at(1).GetCost(), 1.0);
+    ASSERT_DOUBLE_EQ(pop->at(2).GetCost(), 2.0);
+
+    // Number of parents with cost X selected each time by getParents
+    int cost0ParentCount = 0;
+    int cost1ParentCount = 0;
+    int cost2ParentCount = 0;
+
+    for (int i = 0; i < 100000; i++) {
+        auto e = ev.getParents();
+        EqSol* p1 = get<0>(e);
+        EqSol* p2 = get<0>(e);
+        if (abs(p1->GetCost() - 0.0) < 0.005f) {
+            cost0ParentCount += 1;
+        }
+        if (abs(p1->GetCost() - 1.0) < 0.005f) {
+            cost1ParentCount += 1;
+        }
+        if (abs(p1->GetCost() - 2.0) < 0.005f) {
+            cost2ParentCount += 1;
+        }
+        if (abs(p2->GetCost() - 0.0) < 0.005f) {
+            cost0ParentCount += 1;
+        }
+        if (abs(p2->GetCost() - 1.0) < 0.005f) {
+            cost1ParentCount += 1;
+        }
+        if (abs(p2->GetCost() - 2.0) < 0.005f) {
+            cost2ParentCount += 1;
+        }
+    }
+
+    ASSERT_TRUE(cost0ParentCount > cost1ParentCount);
+    ASSERT_TRUE(cost1ParentCount > cost2ParentCount);
+
+    // fitness = [1/k,(1/2)/k,(1/3)/k]
+    // Frequency of choosing each parent is proportional to fitness:
+    // freqCost0 = alpha*1
+    // freqCost1 = alpha*1/2
+    // freqCost2 = alpha*1/3
+    // -> cost0Count/cost1Count = 2.0
+    // -> cost0Count/cost2Count = 3.0
+    // -> cost1Count/cost2Count = 1.5
+    print("ratio",
+          abs((float(cost0ParentCount) / cost1ParentCount - 2.0) / 2.0));
+    ASSERT_TRUE(abs((float(cost0ParentCount) / cost1ParentCount - 2.0) / 2.0) <
+                0.01);
+    ASSERT_TRUE(abs((float(cost0ParentCount) / cost2ParentCount - 3.0) / 3.0) <
+                0.01);
+    ASSERT_TRUE(abs((float(cost1ParentCount) / cost2ParentCount - 1.5) / 1.5) <
+                0.01);
+}
 
 TEST(EvolutionTest, MutateTest) {
     // Create 4 creatures with 0.0 values

@@ -41,7 +41,7 @@ class EqSol : public Creature {
     double GetCost() {
         double xVal = Unnormalize(this->dna[0], EqSol::xMin, EqSol::xMax);
         double yVal = Unnormalize(this->dna[1], EqSol::yMin, EqSol::yMax);
-        return xVal * xVal + yVal * yVal + 2 * xVal + yVal;
+        return abs(xVal * xVal + yVal * yVal + 2 * xVal + yVal);
     }
 
    private:

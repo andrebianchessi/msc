@@ -75,19 +75,27 @@ vector<double> Evolution<creature>::fitness() {
     return fitness;
 }
 
-// template <typename creature>
-// tuple<creature*, creature*> Evolution<creature>::getParents() {
-//     tuple<creature*, creature*> r = tuple<creature*, creature*>();
+template <typename creature>
+tuple<creature*, creature*> Evolution<creature>::getParents() {
+    // Biased roulette wheel method
+    vector<double> f = this->fitness();
+    vector<double> roulette = vector<double>(this->popSize());
+    double accumulated = 0.0;
+    for (int i = 0; i < this->popSize(); i++) {
+        roulette[i] = f[i] + accumulated;
+        accumulated += f[i];
+    }
 
-//     // Biased roulette wheel method
+    auto it = lower_bound(roulette.begin(), roulette.end(), Random());
+    int p1 = it - roulette.begin();
+    int p2 = p1;
+    while (p2 == p1) {
+        it = lower_bound(roulette.begin(), roulette.end(), Random());
+        p2 = it - roulette.begin();
+    }
 
-//     // vector<double> roulette = vector<double>(this->popSize());
-//     // for (int i = 0; i < this->popSize(); i++) {
-//     //     roulette[i] =
-//     // }
-
-//     return r;
-// };
+    return make_tuple(&((*this->population)[p1]), &((*this->population)[p2]));
+};
 
 template <typename creature>
 void Evolution<creature>::mutate() {
