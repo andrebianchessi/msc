@@ -4,16 +4,16 @@
 #include "maybe.h"
 
 class Bounded {
-    public:
-        const double min = 0.0;
-        const double max = 1.0;
+   public:
+    const double min = 0.0;
+    const double max = 1.0;
 
-        // Only has empty constructor. Value must be set using Set method.
-        Bounded();
+    // Only has empty constructor. Value must be set using Set method.
+    Bounded();
 
-        double Get();
-        Maybe<Void> Set(double val);
+    double Get();
+    Maybe<Void> Set(double val);
 
-    private:
-        double val;
+   private:
+    double val;
 };

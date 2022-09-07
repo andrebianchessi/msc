@@ -86,5 +86,10 @@
         "thread": "cpp",
         "typeindex": "cpp",
         "valarray": "cpp"
-    }
+    },
+    "cSpell.words": [
+        "Disps",
+        "Unnormalize",
+        "Vels"
+    ]
 }

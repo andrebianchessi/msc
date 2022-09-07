@@ -146,6 +146,10 @@ cc_library(
   ],
   hdrs = [
     "utils.h"
+  ],
+  deps = [
+    ":maybe",
+    ":bounded"
   ]
 )
 cc_test(
@@ -183,4 +187,47 @@ cc_test(
     "@com_google_googletest//:gtest_main",
     ":problem_description",
     ],
+)
+
+cc_library(
+  name = "creature",
+  srcs = [
+    "creature.h",
+    "creature.cc"
+  ],
+  hdrs = [
+    "creature.h"
+  ],
+  deps = [
+    ":bounded",
+    ":utils"
+  ]
+)
+cc_test(
+  name = "creature_test",
+  size = "small",
+  srcs = [
+    "creature_test.h",
+    "creature_test.cc"
+    ],
+  deps = [
+    "@com_google_googletest//:gtest_main",
+    ":creature",
+    ],
+)
+
+cc_library(
+  name = "evolution",
+  srcs = [
+    "evolution.h",
+    "evolution.cc",
+  ],
+  hdrs = [
+    "evolution.h",
+  ],
+  deps = [
+    "@boost//:static_assert",
+    "@boost//:type_traits",
+    ":creature"
+  ]
 )
