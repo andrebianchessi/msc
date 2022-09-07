@@ -7,6 +7,7 @@ using namespace boost::numeric::ublas;
 
 class Damper {
     friend class Problem;
+    friend class Creature;
 
    public:
     int id;

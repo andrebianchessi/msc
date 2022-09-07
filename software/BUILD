@@ -23,7 +23,6 @@ cc_library(
   srcs = [
     "spring.h",
     "spring.cc",
-    "problem.h",
   ],
   hdrs = [
     "spring.h"
@@ -50,7 +49,6 @@ cc_library(
   srcs = [
     "damper.h",
     "damper.cc",
-    "problem.h",
   ],
   hdrs = [
     "damper.h"
@@ -243,4 +241,20 @@ cc_test(
     "@com_google_googletest//:gtest_main",
     ":evolution",
     ],
+)
+
+cc_library(
+  name = "problem_creature",
+  srcs = [
+    "problem_creature.h",
+  ],
+  hdrs = [
+    "problem_creature.h",
+  ],
+  deps = [
+    "@com_google_googletest//:gtest_main",
+    ":creature",
+    ":problem_description",
+    ":bounded"
+  ]
 )

@@ -60,6 +60,9 @@ class ProblemDescription {
     void AddDamper(int m0, int m1, double cMin, double cMax);
     Maybe<std::shared_ptr<Problem>> BuildRandom();
 
+    // Returns number of springs + number of dampers
+    int NumberOfSpringsAndDampers();
+
    private:
     std::vector<MassDescription> masses;
     std::vector<SpringDescription> springs;

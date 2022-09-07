@@ -30,6 +30,10 @@ void ProblemDescription::SetFixedMass(int massId) {
     this->fixedMasses.push_back(massId);
 };
 
+int ProblemDescription::NumberOfSpringsAndDampers() {
+    return this->springs.size() + this->dampers.size();
+};
+
 Maybe<std::shared_ptr<Problem>> ProblemDescription::BuildRandom() {
     Maybe<std::shared_ptr<Problem>> r;
     auto p = std::make_shared<Problem>();
