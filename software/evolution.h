@@ -20,6 +20,16 @@ class Evolution {
     // Performs Genetic Algorithm optimization and returns optimal creature
     creature* Evolve();
 
+    // Helper function which returns population size;
+    int PopSize();
+
+    // Returns the sum of the cost of the fittest creatures.
+    // The number of creatures that we consider for this is determined
+    // by Evolve.survival
+    double FittestCost();
+    // Returns the sum of the cost of all creatures
+    double TotalCost();
+
    private:
     // Percentage of the population that will survive each generation
     double survival = 0.5;
@@ -30,9 +40,7 @@ class Evolution {
     // total DnaSlots = 10*30 = 300
     // 0.05*300 will be mutated
     double mutationRate = 0.05;
-
-    // Helper function which returns population size;
-    int popSize();
+    FRIEND_TEST(EvolutionTest, TotalCostCount);
 
     // Sort population vector by increasing cost;
     // population[0] has the minimum cost after calling this method
@@ -73,6 +81,7 @@ class Evolution {
     // i.e. replace less fit with offsprings from the most fit part of the
     // population
     void step();
+    FRIEND_TEST(EvolutionTest, StepTest);
 };
 
 #include "evolution.tcc"

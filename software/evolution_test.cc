@@ -13,11 +13,11 @@ TEST(EvolutionTest, SimpleTest) {
 
     // Instantiate Evolution
     Evolution<C> ev = Evolution<C>(&pop);
-    ASSERT_EQ(ev.popSize(), 10);
+    ASSERT_EQ(ev.PopSize(), 10);
 
     // Sort
     ev.sortPopulation();
-    for (int i = 0; i < int(ev.popSize()) - 1; i++) {
+    for (int i = 0; i < int(ev.PopSize()) - 1; i++) {
         ASSERT_TRUE(ev.population->at(i).GetCost() <=
                     ev.population->at(i + 1).GetCost());
     }
@@ -56,7 +56,7 @@ TEST(EvolutionTest, fitnessTest) {
         pop.push_back(C(xB, xB));
     }
     Evolution<C> ev = Evolution<C>(&pop);
-    ASSERT_EQ(ev.popSize(), 4);
+    ASSERT_EQ(ev.PopSize(), 4);
 
     // 3 creatures will survive to next generation
     ev.survival = 3 / 4.0;
@@ -178,12 +178,12 @@ TEST(EvolutionTest, MutateTest) {
         pop.push_back(C(x, x));
     }
     Evolution<C> ev = Evolution<C>(&pop);
-    ASSERT_EQ(ev.popSize(), 4);
+    ASSERT_EQ(ev.PopSize(), 4);
 
     // Set invalid values for DNAs
     // This is done just to make sure which values were edited by the mutate
     // function, and should never be done outside tests.
-    for (int i = 0; i < int(ev.popSize()); i++) {
+    for (int i = 0; i < int(ev.PopSize()); i++) {
         ev.GetCreature(i)->dna[0].val = -99.0;
         ev.GetCreature(i)->dna[1].val = -99.0;
     }
@@ -196,7 +196,7 @@ TEST(EvolutionTest, MutateTest) {
     ASSERT_DOUBLE_EQ(ev.GetCreature(0)->dna[1].val, -99.0);
 
     int changeCount = 0;
-    for (int i = 0; i < ev.popSize(); i++) {
+    for (int i = 0; i < ev.PopSize(); i++) {
         if (ev.GetCreature(i)->dna[0].val != -99.0) {
             changeCount += 1;
         }
@@ -212,7 +212,7 @@ TEST(EvolutionTest, MutateTest) {
     ASSERT_EQ(changeCount, 3);
 
     // Repeat for different mutation rates: 2/3
-    for (int i = 0; i < ev.popSize(); i++) {
+    for (int i = 0; i < ev.PopSize(); i++) {
         ev.GetCreature(i)->dna[0].val = -99.0;
         ev.GetCreature(i)->dna[1].val = -99.0;
     }
@@ -221,7 +221,7 @@ TEST(EvolutionTest, MutateTest) {
     ASSERT_DOUBLE_EQ(ev.GetCreature(0)->dna[0].val, -99.0);
     ASSERT_DOUBLE_EQ(ev.GetCreature(0)->dna[1].val, -99.0);
     changeCount = 0;
-    for (int i = 0; i < ev.popSize(); i++) {
+    for (int i = 0; i < ev.PopSize(); i++) {
         if (ev.GetCreature(i)->dna[0].val != -99.0) {
             changeCount += 1;
         }
@@ -232,7 +232,7 @@ TEST(EvolutionTest, MutateTest) {
     ASSERT_EQ(changeCount, 4);
 
     // Repeat for different mutation rates: 0%
-    for (int i = 0; i < ev.popSize(); i++) {
+    for (int i = 0; i < ev.PopSize(); i++) {
         ev.GetCreature(i)->dna[0].val = -99.0;
         ev.GetCreature(i)->dna[1].val = -99.0;
     }
@@ -241,7 +241,7 @@ TEST(EvolutionTest, MutateTest) {
     ASSERT_DOUBLE_EQ(ev.GetCreature(0)->dna[0].val, -99.0);
     ASSERT_DOUBLE_EQ(ev.GetCreature(0)->dna[1].val, -99.0);
     changeCount = 0;
-    for (int i = 0; i < ev.popSize(); i++) {
+    for (int i = 0; i < ev.PopSize(); i++) {
         if (ev.GetCreature(i)->dna[0].val != -99.0) {
             changeCount += 1;
         }
@@ -250,4 +250,72 @@ TEST(EvolutionTest, MutateTest) {
         }
     }
     ASSERT_EQ(changeCount, 0);
+}
+
+TEST(EvolutionTest, TotalCostCount) {
+    // Create 4 creatures
+    vector<C> pop = vector<C>();
+    Bounded x = Bounded();
+    Bounded y = Bounded();
+
+    // cost = 1
+    x.Set(0.25);
+    y.Set(0.25);
+    pop.push_back(C(x, y));
+
+    // cost = 0
+    x.Set(0.5);
+    y.Set(0.5);
+    pop.push_back(C(x, y));
+
+    // cost = 2
+    x.Set(0.0);
+    y.Set(0.0);
+    pop.push_back(C(x, y));
+
+    // cost = 14
+    x.Set(1.0);
+    y.Set(1.0);
+    pop.push_back(C(x, y));
+
+    Evolution<C> ev = Evolution<C>(&pop);
+
+    ASSERT_DOUBLE_EQ(ev.TotalCost(), 1 + 0 + 2 + 14);
+
+    ev.survival = 0.5;
+    ASSERT_DOUBLE_EQ(ev.FittestCost(), 1 + 0);
+}
+
+TEST(EvolutionTest, StepTest) {
+    // Create random population of size 21
+    // (Using odd number to check if it all works)
+    vector<C> pop = vector<C>();
+    for (int i = 0; i < 21; i++) {
+        pop.push_back(C());
+    }
+    Evolution<C> ev = Evolution<C>(&pop);
+
+    // Perform multiple evolution steps and check that total cost and
+    // fittest cost are reduced
+    double tc0 = ev.TotalCost();
+    double fc0 = ev.FittestCost();
+    for (int i = 0; i < 1000; i++) {
+        ev.step();
+    }
+    double tc1 = ev.TotalCost();
+    double fc1 = ev.FittestCost();
+    ASSERT_TRUE(tc1 < tc0);
+    ASSERT_TRUE(fc1 < fc0);
+
+    C* bestCreature = ev.GetCreature(0);
+    double bestCost = bestCreature->GetCost();
+    // f(x,y) = x^2 + y^2 + 2x + y
+    // Theoretical global min = 0.0
+    double bestX = bestCreature->GetX();
+    double bestY = bestCreature->GetY();
+    ASSERT_DOUBLE_EQ(bestCost,
+                     bestX * bestX + bestY * bestY + 2 * bestX + bestY);
+    EXPECT_TRUE(abs(bestCost) < 0.01);
+    // print("bestCost, bestX, bestY: ", bestCost, bestCreature->GetX(),
+    //   bestCreature->GetY());
 }

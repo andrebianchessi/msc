@@ -39,10 +39,14 @@ class C : public Creature {
     }
 
     double GetCost() {
-        double xVal = Unnormalize(this->dna[0], C::xMin, C::xMax);
-        double yVal = Unnormalize(this->dna[1], C::yMin, C::yMax);
+        double xVal = this->GetX();
+        double yVal = this->GetY();
         return abs(xVal * xVal + yVal * yVal + 2 * xVal + yVal);
     }
+
+    double GetX() { return Unnormalize(this->dna[0], C::xMin, C::xMax); }
+
+    double GetY() { return Unnormalize(this->dna[1], C::xMin, C::xMax); }
 
    private:
     shared_ptr<Bounded> x;

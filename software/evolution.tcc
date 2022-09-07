@@ -32,8 +32,26 @@ int Evolution<creature>::nFittest() {
 }
 
 template <typename creature>
-int Evolution<creature>::popSize() {
+int Evolution<creature>::PopSize() {
     return this->population->size();
+}
+
+template <typename creature>
+double Evolution<creature>::FittestCost() {
+    double cost = 0;
+    for (int i = 0; i < this->nFittest(); i++) {
+        cost += this->GetCreature(i)->GetCost();
+    }
+    return cost;
+}
+
+template <typename creature>
+double Evolution<creature>::TotalCost() {
+    double cost = 0;
+    for (int i = 0; i < this->PopSize(); i++) {
+        cost += this->GetCreature(i)->GetCost();
+    }
+    return cost;
 }
 
 template <typename creature>
@@ -140,14 +158,29 @@ void Evolution<creature>::mutate() {
     }
 }
 
-// template <typename creature>
-// void Evolution<creature>::step() {
-//     this->sortPopulation();
+template <typename creature>
+void Evolution<creature>::step() {
+    this->sortPopulation();
 
-//     // Replace less fit of the population
-//     for (int i = this->endFittest() + 1; i < this->popSize(); i++) {
-//         auto e = ev.getParents();
-//         creature* p1 = get<0>(e);
-//         creature* p2 = get<1>(e);
-//     }
-// }
+    // Replace less fit of the population
+    for (int i = this->endFittest() + 1; i < this->PopSize(); i++) {
+        auto parents = this->getParents();
+        creature* p0 = get<0>(parents);
+        creature* p1 = get<1>(parents);
+
+        creature* child0;
+        creature* child1;
+        child0 = this->GetCreature(i);
+        // If we still have 2 or more creatures to replace, get two creatures.
+        // Else, set both childs to same child.
+        if (i + 1 < this->PopSize()) {
+            child1 = this->GetCreature(i + 1);
+        } else {
+            child1 = child1;
+        }
+
+        p0->Mate(*p1, child0, child1);
+    }
+
+    this->mutate();
+}
