@@ -9,10 +9,10 @@ using namespace std;
 template <typename creature>
 class Evolution {
    public:
-    Evolution(shared_ptr<vector<creature>> population);
+    Evolution(vector<creature>* population);
 
     // Pointer to vector of creatures which this instance is optimizing
-    shared_ptr<vector<creature>> population;
+    vector<creature>* population;
 
     // Get creature by index
     creature* GetCreature(int i);

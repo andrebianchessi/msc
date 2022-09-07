@@ -9,7 +9,7 @@
 using namespace std;
 
 template <typename creature>
-Evolution<creature>::Evolution(shared_ptr<vector<creature>> population) {
+Evolution<creature>::Evolution(vector<creature>* population) {
     this->population = population;
 }
 

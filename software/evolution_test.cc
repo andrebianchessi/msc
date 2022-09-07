@@ -12,7 +12,7 @@ TEST(EvolutionTest, SimpleTest) {
     }
 
     // Instantiate Evolution
-    Evolution<C> ev = Evolution<C>(make_shared<vector<C>>(pop));
+    Evolution<C> ev = Evolution<C>(&pop);
     ASSERT_EQ(ev.popSize(), 10);
 
     // Sort
@@ -31,7 +31,7 @@ TEST(EvolutionTest, EndFittestTest) {
     }
 
     // Instantiate Evolution
-    Evolution<C> ev = Evolution<C>(make_shared<vector<C>>(pop));
+    Evolution<C> ev = Evolution<C>(&pop);
 
     ASSERT_EQ(ev.endFittest(), 4);
 
@@ -52,7 +52,7 @@ TEST(EvolutionTest, fitnessTest) {
     for (int i = 0; i < 4; i++) {
         pop.push_back(C(xB, xB));
     }
-    Evolution<C> ev = Evolution<C>(make_shared<vector<C>>(pop));
+    Evolution<C> ev = Evolution<C>(&pop);
     ASSERT_EQ(ev.popSize(), 4);
 
     // costs = [0,0,0,0,0]
@@ -113,7 +113,7 @@ TEST(EvolutionTest, getParentsTest) {
     // fitness = [1,2,3] -> [1,1/2,1/3]
     //     -> [1/(1+1/2+1/3), ...]
 
-    Evolution<C> ev = Evolution<C>(make_shared<vector<C>>(pop));
+    Evolution<C> ev = Evolution<C>(&pop);
     ev.sortPopulation();
 
     ASSERT_DOUBLE_EQ(ev.GetCreature(0)->GetCost(), 0.0);
@@ -175,7 +175,7 @@ TEST(EvolutionTest, MutateTest) {
     for (int i = 0; i < 4; i++) {
         pop.push_back(C(x, x));
     }
-    Evolution<C> ev = Evolution<C>(make_shared<vector<C>>(pop));
+    Evolution<C> ev = Evolution<C>(&pop);
     ASSERT_EQ(ev.popSize(), 4);
 
     // Set invalid values for DNAs
