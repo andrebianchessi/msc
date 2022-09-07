@@ -15,7 +15,7 @@ TEST(CreatureTest, SimpleTest) {
     EXPECT_DOUBLE_EQ(x.Get(), 1.0);
     EXPECT_DOUBLE_EQ(y.Get(), 0.0);
 
-    EqSol c0 = EqSol(x, y);
+    C c0 = C(x, y);
 
     EXPECT_DOUBLE_EQ(c0.dna[0].Get(), 1.0);
     EXPECT_DOUBLE_EQ(c0.dna[1].Get(), 0.0);
@@ -37,9 +37,9 @@ TEST(CreatureTest, MateAndMutationTest) {
     Bounded y = Bounded();
     x.Set(1.0);
 
-    EqSol c0 = EqSol(x, y);
+    C c0 = C(x, y);
     x.Set(0.0);
-    EqSol c1 = EqSol(x, y);
+    C c1 = C(x, y);
     EXPECT_DOUBLE_EQ(c0.dna[0].Get(), 1.0);
     EXPECT_DOUBLE_EQ(c0.dna[1].Get(), 0.0);
     EXPECT_DOUBLE_EQ(c1.dna[0].Get(), 0.0);
@@ -52,8 +52,8 @@ TEST(CreatureTest, MateAndMutationTest) {
     // x in [0,1]
     // child0: [x, 0.0]
     // child1: [x, 0.0]
-    EqSol child0 = EqSol(x, y);
-    EqSol child1 = EqSol(x, y);
+    C child0 = C(x, y);
+    C child1 = C(x, y);
 
     c0.Mate(c1, &child0, &child1);
 

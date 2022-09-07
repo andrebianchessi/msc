@@ -6,15 +6,15 @@
 using namespace std;
 TEST(EvolutionTest, SimpleTest) {
     // Create 10 random creatures
-    shared_ptr<vector<EqSol>> pop = make_shared<vector<EqSol>>();
-    *pop = vector<EqSol>();
+    shared_ptr<vector<C>> pop = make_shared<vector<C>>();
+    *pop = vector<C>();
     for (int i = 0; i < 10; i++) {
-        pop->push_back(EqSol());
+        pop->push_back(C());
     }
     ASSERT_EQ(pop->size(), 10);
 
     // Instantiate Evolution
-    Evolution<EqSol> ev = Evolution<EqSol>(pop);
+    Evolution<C> ev = Evolution<C>(pop);
     ASSERT_EQ(ev.popSize(), 10);
 
     // Sort
@@ -26,15 +26,15 @@ TEST(EvolutionTest, SimpleTest) {
 
 TEST(EvolutionTest, EndFittestTest) {
     // Create 10 random creatures
-    shared_ptr<vector<EqSol>> pop = make_shared<vector<EqSol>>();
-    *pop = vector<EqSol>();
+    shared_ptr<vector<C>> pop = make_shared<vector<C>>();
+    *pop = vector<C>();
     for (int i = 0; i < 10; i++) {
-        pop->push_back(EqSol());
+        pop->push_back(C());
     }
     ASSERT_EQ(pop->size(), 10);
 
     // Instantiate Evolution
-    Evolution<EqSol> ev = Evolution<EqSol>(pop);
+    Evolution<C> ev = Evolution<C>(pop);
 
     ASSERT_EQ(ev.endFittest(), 4);
 
@@ -47,16 +47,16 @@ TEST(EvolutionTest, EndFittestTest) {
 
 TEST(EvolutionTest, fitnessTest) {
     // Create population with all 0.5 DNAs (which have zero cost)
-    shared_ptr<vector<EqSol>> pop = make_shared<vector<EqSol>>();
-    *pop = vector<EqSol>();
+    shared_ptr<vector<C>> pop = make_shared<vector<C>>();
+    *pop = vector<C>();
     Bounded x = Bounded();
     x.Set(0.5);
     // xNorm = 0.5 -> x = 0.0;
     for (int i = 0; i < 4; i++) {
-        pop->push_back(EqSol(x, x));
+        pop->push_back(C(x, x));
     }
     ASSERT_EQ(pop->size(), 4);
-    Evolution<EqSol> ev = Evolution<EqSol>(pop);
+    Evolution<C> ev = Evolution<C>(pop);
 
     // costs = [0,0,0,0,0]
     // fitness = [1/4,1/4,1/4,1/4]
@@ -93,31 +93,31 @@ TEST(EvolutionTest, fitnessTest) {
 }
 
 TEST(EvolutionTest, getParentsTest) {
-    shared_ptr<vector<EqSol>> pop = make_shared<vector<EqSol>>();
-    *pop = vector<EqSol>();
+    shared_ptr<vector<C>> pop = make_shared<vector<C>>();
+    *pop = vector<C>();
     Bounded x = Bounded();
     Bounded y = Bounded();
 
     // cost = 1
     x.Set(0.25);
     y.Set(0.25);
-    pop->push_back(EqSol(x, y));
+    pop->push_back(C(x, y));
 
     // cost = 0
     x.Set(0.5);
     y.Set(0.5);
-    pop->push_back(EqSol(x, y));
+    pop->push_back(C(x, y));
 
     // cost = 2
     x.Set(0.0);
     y.Set(0.0);
-    pop->push_back(EqSol(x, y));
+    pop->push_back(C(x, y));
 
     // costs = [0,1,2]
     // fitness = [1,2,3] -> [1,1/2,1/3]
     //     -> [1/(1+1/2+1/3), ...]
 
-    Evolution<EqSol> ev = Evolution<EqSol>(pop);
+    Evolution<C> ev = Evolution<C>(pop);
     ev.sortPopulation();
 
     ASSERT_DOUBLE_EQ(pop->at(0).GetCost(), 0.0);
@@ -131,8 +131,8 @@ TEST(EvolutionTest, getParentsTest) {
 
     for (int i = 0; i < 100000; i++) {
         auto e = ev.getParents();
-        EqSol* p1 = get<0>(e);
-        EqSol* p2 = get<0>(e);
+        C* p1 = get<0>(e);
+        C* p2 = get<0>(e);
         if (abs(p1->GetCost() - 0.0) < 0.005f) {
             cost0ParentCount += 1;
         }
@@ -176,16 +176,16 @@ TEST(EvolutionTest, getParentsTest) {
 
 TEST(EvolutionTest, MutateTest) {
     // Create 4 creatures with 0.0 values
-    shared_ptr<vector<EqSol>> pop = make_shared<vector<EqSol>>();
-    *pop = vector<EqSol>();
+    shared_ptr<vector<C>> pop = make_shared<vector<C>>();
+    *pop = vector<C>();
     Bounded x = Bounded();
     for (int i = 0; i < 4; i++) {
-        pop->push_back(EqSol(x, x));
+        pop->push_back(C(x, x));
     }
     ASSERT_EQ(pop->size(), 4);
 
     // Instantiate Evolution
-    Evolution<EqSol> ev = Evolution<EqSol>(pop);
+    Evolution<C> ev = Evolution<C>(pop);
 
     // Set invalid values for dna
     // This is done just to make sure which values were edited by the mutate
