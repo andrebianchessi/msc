@@ -17,7 +17,7 @@ class Creature {
    public:
     int DnaSize();
 
-    // Returns value that we want to minimize
+    // Returns value that we want to minimize.
     virtual double GetCost() = 0;
 
     // Applies mutation to the DNA of this creature at index i of the dna

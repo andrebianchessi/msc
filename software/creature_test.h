@@ -50,4 +50,5 @@ class EqSol : public Creature {
     FRIEND_TEST(CreatureTest, SimpleTest);
     FRIEND_TEST(CreatureTest, MateAndMutationTest);
     FRIEND_TEST(EvolutionTest, MutateTest);
+    FRIEND_TEST(EvolutionTest, fitnessTest);
 };

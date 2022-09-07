@@ -28,14 +28,29 @@ class Evolution {
     // Pointer to vector of creatures which this instance is optimizing
     shared_ptr<vector<creature>> population;
 
+    // Helper function which returns population size;
+    int popSize();
+
     // Sort population vector by increasing cost;
     // population[0] has the minimum cost after calling this method
     void sortPopulation();
     FRIEND_TEST(EvolutionTest, SimpleTest);
 
+    // Returns the fitness vector;
+    // WARNING: Assumes population vector is sorted.
+    // This vector is made up of strictly positive numbers, and the sum
+    // of all elements is 1.0
+    // The numbers are in ascending order, since a higher fitness
+    // means a better solution.
+    vector<double> fitness();
+    FRIEND_TEST(EvolutionTest, fitnessTest);
+
     // Get creatures from the population that will mate
-    // A.K.A. "Select Mates" in the literature
+    // A.K.A. "Select Mates" in the literature.
+    // This function assumes the population is sorted, i.e. sortPopulation
+    // must be called before calling this method;
     tuple<creature*, creature*> getParents();
+    FRIEND_TEST(EvolutionTest, getParentsTest);
 
     // Returns the position (inclusive) in which we separate the creatures
     // who will survive to the next generation;

@@ -25,6 +25,69 @@ template <typename creature>
 int Evolution<creature>::endFittest() {
     return floor(this->nKeep * this->population->size()) - 1;
 }
+template <typename creature>
+int Evolution<creature>::popSize() {
+    return this->population->size();
+}
+
+template <typename creature>
+vector<double> Evolution<creature>::fitness() {
+    vector<double> costs = vector<double>(this->popSize());
+    double totalCost = 0;
+    for (int i = 0; i < this->popSize(); i++) {
+        totalCost += (*this->population)[i].GetCost();
+        costs[i] = (*this->population)[i].GetCost();
+    }
+
+    // Calculate the fitness vector, which indicates how fit a creature is,
+    // higher fitness value -> better
+
+    // Start by filing with cost values
+    vector<double> fitness = vector<double>(this->popSize());
+    for (int i = 0; i < this->popSize(); i++) {
+        fitness[i] = costs[i];
+    }
+    // Remove negative values if needed
+    // fitness: [-4,-1,0,2] -> [1,4,5,7]
+    // fitness: [0,1,2] -> [1,2,3]
+    // fitness: [4,6,7] -> [4,6,7]
+    double minCost = costs[0];
+    if (minCost <= 0) {
+        for (int i = 0; i < this->popSize(); i++) {
+            fitness[i] += -minCost + 1;
+        }
+    }
+    // Invert values
+    // fitness: [1,2,3] -> [1, 0.5, 0.33]
+    // fitness: [4,6,7] -> [0.25, 0.16, 0.14]
+    for (int i = 0; i < this->popSize(); i++) {
+        fitness[i] = 1 / fitness[i];
+    }
+
+    // Normalize values
+    double totalFitness = 0;
+    for (int i = 0; i < this->popSize(); i++) {
+        totalFitness += fitness[i];
+    }
+    for (int i = 0; i < this->popSize(); i++) {
+        fitness[i] = fitness[i] / totalFitness;
+    }
+    return fitness;
+}
+
+// template <typename creature>
+// tuple<creature*, creature*> Evolution<creature>::getParents() {
+//     tuple<creature*, creature*> r = tuple<creature*, creature*>();
+
+//     // Biased roulette wheel method
+
+//     // vector<double> roulette = vector<double>(this->popSize());
+//     // for (int i = 0; i < this->popSize(); i++) {
+//     //     roulette[i] =
+//     // }
+
+//     return r;
+// };
 
 template <typename creature>
 void Evolution<creature>::mutate() {
