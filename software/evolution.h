@@ -11,6 +11,12 @@ class Evolution {
    public:
     Evolution(shared_ptr<vector<creature>> population);
 
+    // Pointer to vector of creatures which this instance is optimizing
+    shared_ptr<vector<creature>> population;
+
+    // Get creature by index
+    creature* GetCreature(int i);
+
     // Performs Genetic Algorithm optimization and returns optimal creature
     creature* Evolve();
 
@@ -24,9 +30,6 @@ class Evolution {
     // total DnaSlots = 10*30 = 300
     // 0.05*300 will be mutated
     double mutationRate = 0.05;
-
-    // Pointer to vector of creatures which this instance is optimizing
-    shared_ptr<vector<creature>> population;
 
     // Helper function which returns population size;
     int popSize();

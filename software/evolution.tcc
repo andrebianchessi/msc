@@ -25,9 +25,15 @@ template <typename creature>
 int Evolution<creature>::endFittest() {
     return floor(this->nKeep * this->population->size()) - 1;
 }
+
 template <typename creature>
 int Evolution<creature>::popSize() {
     return this->population->size();
+}
+
+template <typename creature>
+creature* Evolution<creature>::GetCreature(int i) {
+    return &(this->population->at(i));
 }
 
 template <typename creature>
