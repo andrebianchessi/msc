@@ -6,13 +6,13 @@
 #include "problem.h"
 
 TEST(DamperTest, SimpleTest) {
-    Problem* p = new Problem();
-    p->AddMass(10.0, 0.0, 0.0);
-    p->AddMass(20.0, 1.0, 1.0);
+    Problem p = Problem();
+    p.AddMass(10.0, 0.0, 0.0);
+    p.AddMass(20.0, 1.0, 1.0);
 
-    p->AddDamper(0, 1, 30.0);
+    p.AddDamper(0, 1, 30.0);
 
-    auto e = p->GetDamper(0);
+    auto e = p.GetDamper(0);
     ASSERT_FALSE(e.isError);
 
     auto s = e.val;
@@ -31,16 +31,16 @@ TEST(DamperTest, SimpleTest) {
 }
 
 TEST(DamperTest, ErrorsTest) {
-    Problem* p = new Problem();
-    p->AddMass(10.0, 0.0, 0.0);
-    p->AddMass(10.0, 1.0, 1.0);
+    Problem p = Problem();
+    p.AddMass(10.0, 0.0, 0.0);
+    p.AddMass(10.0, 1.0, 1.0);
 
-    auto e = p->AddDamper(0, 0, 30.0);
+    auto e = p.AddDamper(0, 0, 30.0);
     ASSERT_TRUE(e.isError);
 
-    e = p->AddDamper(0, 99, 30.0);
+    e = p.AddDamper(0, 99, 30.0);
     ASSERT_TRUE(e.isError);
 
-    e = p->AddDamper(99, 0, 30.0);
+    e = p.AddDamper(99, 0, 30.0);
     ASSERT_TRUE(e.isError);
 }
