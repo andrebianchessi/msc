@@ -26,4 +26,6 @@ class ProblemCreature : public Creature {
     ProblemCreature(ProblemDescription* pd, int massId, double t, double tStep);
 
     double GetCost();
+
+    FRIEND_TEST(ProblemCreatureTest, SimpleTest);
 };

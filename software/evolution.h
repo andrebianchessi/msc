@@ -21,17 +21,23 @@ class Evolution {
 
     // Performs Genetic Algorithm optimization until the FittestCost
     // difference is smaller than 'stop', i.e. until
-    // abs((FittestCost_1-FittestCost_0)/FittestCost_0)<stop
+    // RelAbsError(FittestCost_1,FittestCost_0)<stop
     // Returns error if solution doesn't converge.
     // If printProgression, the progression of costs will be printed to stdout.
     Maybe<creature*> Evolve(double stop, bool printProgression);
+
+    // Performs Genetic Algorithm optimization for a given number
+    // of generations.
+    // If printProgression, the progression of costs will be printed to stdout.
+    Maybe<creature*> Evolve(int generations, bool printProgression);
 
     // Helper function which returns population size;
     int PopSize();
 
     // Returns the sum of the cost of the fittest creatures.
     // The number of creatures that we consider for this is determined
-    // by Evolve.survival
+    // by Evolve.survival.
+    // WARNING: Assumes population is already sorted.
     double FittestCost();
     // Returns the sum of the cost of all creatures
     double TotalCost();
@@ -85,7 +91,8 @@ class Evolution {
 
     // Performs one evolution step;
     // i.e. replace less fit with offsprings from the most fit part of the
-    // population
+    // population.
+    // WARNING: Assumes population is already sorted.
     void step();
     FRIEND_TEST(EvolutionTest, StepTest);
 };

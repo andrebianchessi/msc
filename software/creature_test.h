@@ -30,6 +30,7 @@ class C : public Creature {
 
     // Random constructor
     C() {
+        this->hasGetCostCache = false;
         Bounded x, y;
         x.Set(Random());
         y.Set(Random());
@@ -39,9 +40,14 @@ class C : public Creature {
     }
 
     double GetCost() {
+        if (this->hasGetCostCache == true) {
+            return this->getCostCache;
+        }
         double xVal = this->GetX();
         double yVal = this->GetY();
-        return abs(xVal * xVal + yVal * yVal + 2 * xVal + yVal);
+        this->hasGetCostCache = true;
+        this->getCostCache = abs(xVal * xVal + yVal * yVal + 2 * xVal + yVal);
+        return this->getCostCache;
     }
 
     double GetX() { return Unnormalize(this->dna[0], C::xMin, C::xMax); }

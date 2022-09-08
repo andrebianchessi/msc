@@ -41,8 +41,7 @@ bool ProblemDescription::IsOk() {
     if (p.isError) {
         return false;
     }
-    auto e = p.val->Integrate(0.0, 0.01, 0.01);
-    return (!e.isError);
+    return true;
 }
 
 Maybe<std::shared_ptr<Problem>> ProblemDescription::BuildFromDNA(

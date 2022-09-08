@@ -200,7 +200,8 @@ cc_library(
   ],
   deps = [
     ":bounded",
-    ":utils"
+    ":utils",
+    "@com_google_googletest//:gtest_main",
   ]
 )
 cc_test(
@@ -263,7 +264,7 @@ cc_library(
 )
 cc_test(
   name = "problem_creature_test",
-  size = "small",
+  size = "medium",
   srcs = [
     "problem_creature_test.cc"
     ],

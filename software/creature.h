@@ -2,6 +2,8 @@
 //('real-encoded'/'continuous' genetic algorithm)
 #pragma once
 
+#include <gtest/gtest.h>
+
 #include <memory>
 #include <vector>
 
@@ -9,9 +11,12 @@
 
 class Creature {
    protected:
-    // Values that describe this creature.
-    // A.K.A. Chromosome, in the literature.
-    std::vector<Bounded> dna;
+    // For expensive GetCost operations, remember to cache the GetCost values.
+    // The cache is deleted (hasGetCostCache set to false) after Mutations, and
+    // and children are created without cache.
+    double getCostCache;
+    bool hasGetCostCache;
+    FRIEND_TEST(CreatureTest, GetCostCacheTest);
 
    public:
     int DnaSize();
@@ -24,4 +29,8 @@ class Creature {
 
     // Combines this with c1 creature to create two children
     void Mate(Creature& c1, Creature* child0, Creature* child1);
+
+    // Values that describe this creature.
+    // A.K.A. Chromosome, in the literature.
+    std::vector<Bounded> dna;
 };

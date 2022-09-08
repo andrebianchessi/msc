@@ -12,6 +12,8 @@ void Creature::Mutate(int i) {
     // Haupt, Randy L., Sue Ellen Haupt, and Sue Ellen Autor Haupt. 2004.
     // Practical Genetic Algorithms. Wiley.
     this->dna[i].Set(Random());
+
+    this->hasGetCostCache = false;
 }
 
 void Creature::Mate(Creature& c1, Creature* child0, Creature* child1) {
@@ -27,4 +29,6 @@ void Creature::Mate(Creature& c1, Creature* child0, Creature* child1) {
         child1->dna[i].Set((1 - beta) * this->dna[i].Get() +
                            beta * c1.dna[i].Get());
     }
+    child0->hasGetCostCache = false;
+    child1->hasGetCostCache = false;
 }

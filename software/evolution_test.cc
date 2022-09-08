@@ -72,10 +72,12 @@ TEST(EvolutionTest, fitnessTest) {
     // Test other values of dna
     // Set xB0 = 0.25 -> x = -1
     ev.GetCreature(0)->dna[0].Set(0.25);
+    ev.GetCreature(0)->hasGetCostCache = false;
     // Set xB1 = 0.75 -> x = 1
     // Set yB1 = 0.75 -> y = 1
     ev.GetCreature(1)->dna[0].Set(0.75);
     ev.GetCreature(1)->dna[1].Set(0.75);
+    ev.GetCreature(1)->hasGetCostCache = false;
     // f(x,y) = x^2 + y^2 + 2x + y
     // cost = [|1-2|, 5, 0, 0]
     // cost = [1, 5, 0, 0]

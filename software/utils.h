@@ -30,6 +30,16 @@ int RandomInt(int x0, int x1) {
     return distr(gen);
 };
 
+double RelativeAbsError(double x, double y) {
+    if (x == y) {
+        return 0;
+    }
+    if (y != 0) {
+        return abs((x - y) / y);
+    }
+    return abs((y - x) / x);
+}
+
 // Function to easily debug by printing on output
 // Example:
 //  p.SetInitialDisp(d.massId, d.val);

@@ -41,7 +41,7 @@ int Evolution<creature>::PopSize() {
 template <typename creature>
 double Evolution<creature>::FittestCost() {
     double cost = 0;
-    for (int i = 0; i < this->nFittest(); i++) {
+    for (int i = 0; i <= this->endFittest(); i++) {
         cost += this->GetCreature(i)->GetCost();
     }
     return cost;
@@ -119,10 +119,17 @@ std::tuple<creature*, creature*> Evolution<creature>::getParents() {
 
     auto it = lower_bound(roulette.begin(), roulette.end(), Random());
     int p1 = it - roulette.begin();
-    int p2 = p1;
-    while (p2 == p1) {
-        it = lower_bound(roulette.begin(), roulette.end(), Random());
-        p2 = it - roulette.begin();
+    it = lower_bound(roulette.begin(), roulette.end(), Random());
+    int p2 = it - roulette.begin();
+
+    // If got the same parent twice from roulette,
+    // get the next for the second parent.
+    if (p2 == p1) {
+        if (p2 == this->endFittest()) {
+            p2 = 0;
+        } else {
+            p2 += 1;
+        }
     }
 
     return std::make_tuple(&((*this->population)[p1]),
@@ -150,8 +157,10 @@ void Evolution<creature>::mutate() {
     std::set<std::tuple<int, int>> mutationsDone =
         std::set<std::tuple<int, int>>();
     while (mutations < nMutations) {
-        // pick random creature (outside best one) and mutate
-        int creatureI = RandomInt(1, this->population->size() - 1);
+        // pick random creature from the less fit ones
+        // The fittest ones do not suffer mutation
+        int creatureI =
+            RandomInt(this->endFittest() + 1, this->population->size() - 1);
         int dnaI = RandomInt(0, (*this->population)[creatureI].DnaSize() - 1);
         auto pair = std::tuple<int, int>(creatureI, dnaI);
         if (mutationsDone.find(pair) == mutationsDone.end()) {
@@ -164,9 +173,8 @@ void Evolution<creature>::mutate() {
 
 template <typename creature>
 void Evolution<creature>::step() {
-    this->sortPopulation();
-
-    // Replace less fit of the population
+    // Replace less fit of the population (assuming sortPopulation was already
+    // called)
     for (int i = this->endFittest() + 1; i < this->PopSize(); i++) {
         auto parents = this->getParents();
         creature* p0 = std::get<0>(parents);
@@ -187,36 +195,79 @@ void Evolution<creature>::step() {
     }
 
     this->mutate();
+
+    this->sortPopulation();
 }
 
 template <typename creature>
 Maybe<creature*> Evolution<creature>::Evolve(double stop,
                                              bool printProgression) {
     Maybe<creature*> r;
-    this->sortPopulation();
-    double fittestCost0 = this->FittestCost();
-    this->step();
-    double fittestCost1 = this->FittestCost();
+    if (stop > 1 || stop < 0) {
+        r.isError = true;
+        r.errMsg = "stop must be 0<=stop<=1";
+        return r;
+    }
 
-    int i = 1;
-    const int maxI = 1000000000;
+    // step() requires sortPopulation() to be called first
+    this->sortPopulation();
+    double pastCost = -1.0;
+    double currentCost = this->FittestCost();
+
+    int i = 0;
+    const int maxI = 1000000;
     if (printProgression) {
         std::cout << "generation,cost" << std::endl;
     }
-    while (abs((fittestCost1 - fittestCost0) / fittestCost0) > stop) {
-        fittestCost0 = fittestCost1;
-        this->step();
-        fittestCost1 = this->FittestCost();
 
+    while (i == 0 || RelativeAbsError(currentCost, pastCost) > stop) {
         if (printProgression) {
-            std::cout << i << "," << fittestCost1 << std::endl;
+            std::cout << i << "," << currentCost << std::endl;
         }
+        pastCost = currentCost;
+        this->step();
+        currentCost = this->FittestCost();
+
         if (i == maxI) {
             r.isError = true;
             r.errMsg = "Evolution did not converge";
             break;
         }
         i += 1;
+    }
+    if (printProgression) {
+        std::cout << i << "," << currentCost << std::endl;
+    }
+
+    r.val = this->GetCreature(0);
+    return r;
+}
+
+template <typename creature>
+Maybe<creature*> Evolution<creature>::Evolve(int generations,
+                                             bool printProgression) {
+    Maybe<creature*> r;
+    if (generations < 1) {
+        r.isError = true;
+        r.errMsg = "generations must be >=1";
+        return r;
+    }
+
+    // step() requires sortPopulation() to be called first
+    this->sortPopulation();
+    int i = 0;
+    if (printProgression) {
+        std::cout << "generation,cost" << std::endl;
+    }
+    while (i < generations) {
+        if (printProgression) {
+            std::cout << i << "," << this->FittestCost() << std::endl;
+        }
+        this->step();
+        i += 1;
+    }
+    if (printProgression) {
+        std::cout << i << "," << this->FittestCost() << std::endl;
     }
 
     r.val = this->GetCreature(0);
