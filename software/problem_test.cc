@@ -6,28 +6,28 @@
 #include <iostream>
 
 TEST(ProblemTest, MassCreationTest) {
-    Problem* p = new Problem();
+    Problem p = Problem();
 
-    auto e = p->AddMass(1.0, 0.0, 0.0);
+    auto e = p.AddMass(1.0, 0.0, 0.0);
     EXPECT_FALSE(e.isError);
-    EXPECT_TRUE(p->GetDof() == 1);
+    EXPECT_TRUE(p.GetDof() == 1);
     EXPECT_TRUE(e.val == 0);
 
-    e = p->AddMass(1.0, 1.0, 0.0);
+    e = p.AddMass(1.0, 1.0, 0.0);
     EXPECT_FALSE(e.isError);
-    EXPECT_TRUE(p->GetDof() == 2);
+    EXPECT_TRUE(p.GetDof() == 2);
     EXPECT_TRUE(e.val == 1);
 
-    e = p->AddMass(1.0, 1.0, 1.0);
+    e = p.AddMass(1.0, 1.0, 1.0);
     EXPECT_FALSE(e.isError);
-    EXPECT_TRUE(p->GetDof() == 3);
+    EXPECT_TRUE(p.GetDof() == 3);
     EXPECT_TRUE(e.val == 2);
 
-    e = p->AddMass(1.0, 0.0, 0.0);
+    e = p.AddMass(1.0, 0.0, 0.0);
     EXPECT_TRUE(e.isError);
-    EXPECT_TRUE(p->GetDof() == 3);
+    EXPECT_TRUE(p.GetDof() == 3);
 
-    EXPECT_TRUE(p->AddMass(0.0, 9.0, 9.0).isError);  // 0.0 mass
+    EXPECT_TRUE(p.AddMass(0.0, 9.0, 9.0).isError);  // 0.0 mass
 }
 
 TEST(ProblemTest, GetMassDispAndVelTest) {
@@ -46,27 +46,27 @@ TEST(ProblemTest, GetMassDispAndVelTest) {
 }
 
 TEST(ProblemTest, GetMassTest) {
-    Problem* p = new Problem();
+    Problem p = Problem();
 
-    p->AddMass(1.0, 0.0, 0.1);
-    p->AddMass(1.0, 1.0, 1.1);
-    p->AddMass(1.0, 2.0, 2.1);
+    p.AddMass(1.0, 0.0, 0.1);
+    p.AddMass(1.0, 1.0, 1.1);
+    p.AddMass(1.0, 2.0, 2.1);
 
-    auto e = p->GetMass(0);
+    auto e = p.GetMass(0);
     EXPECT_FALSE(e.isError);
     auto m = e.val;
     EXPECT_TRUE(m->xIndex == 0);
     EXPECT_TRUE(m->px == 0.0);
     EXPECT_TRUE(m->py == 0.1);
 
-    e = p->GetMass(2);
+    e = p.GetMass(2);
     EXPECT_FALSE(e.isError);
     m = e.val;
     EXPECT_TRUE(m->xIndex == 2);
     EXPECT_TRUE(m->px == 2.0);
     EXPECT_TRUE(m->py == 2.1);
 
-    e = p->GetMass(3);
+    e = p.GetMass(3);
     EXPECT_TRUE(e.isError);
 }
 
