@@ -20,12 +20,12 @@ TEST(ProblemCreatureTest, SimpleTest) {
     ASSERT_TRUE(pd.IsOk());
 
     // Since the first mass is fixed, its accelerations will be zero
-    ProblemCreature c0 = ProblemCreature(&pd, 0, 0.5, 0.01);
+    ProblemCreature c0 = ProblemCreature(&pd, 0, 0.5);
     ASSERT_FALSE(c0.hasGetCostCache);
     ASSERT_DOUBLE_EQ(c0.GetCost(), 0.0);
     ASSERT_TRUE(c0.hasGetCostCache);
 
-    ProblemCreature c1 = ProblemCreature(&pd, 1, 0.5, 0.01);
+    ProblemCreature c1 = ProblemCreature(&pd, 1, 0.5);
     ASSERT_FALSE(c1.hasGetCostCache);
     ASSERT_TRUE(c1.GetCost() > 0.0);
     ASSERT_TRUE(c1.hasGetCostCache);
@@ -66,7 +66,7 @@ TEST(ProblemCreatureTest, EvolutionTest) {
     // Create population of 50 creatures
     std::vector<ProblemCreature> pop = std::vector<ProblemCreature>();
     for (int i = 0; i < 50; i++) {
-        pop.push_back(ProblemCreature(&pd, 5, 0.15, 0.01));
+        pop.push_back(ProblemCreature(&pd, 5, 0.15));
     }
 
     Evolution<ProblemCreature> evolution = Evolution<ProblemCreature>(&pop);
@@ -114,7 +114,7 @@ TEST(ProblemCreatureTest, EvolutionTest2) {
     // Create population of 20 creatures
     std::vector<ProblemCreature> pop = std::vector<ProblemCreature>();
     for (int i = 0; i < 20; i++) {
-        pop.push_back(ProblemCreature(&pd, 5, 0.15, 0.01));
+        pop.push_back(ProblemCreature(&pd, 5, 0.15));
     }
 
     Evolution<ProblemCreature> evolution = Evolution<ProblemCreature>(&pop);

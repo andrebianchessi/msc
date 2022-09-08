@@ -1,10 +1,8 @@
 #include "problem_creature.h"
 
-ProblemCreature::ProblemCreature(ProblemDescription* pd, int massId, double t,
-                                 double tStep) {
+ProblemCreature::ProblemCreature(ProblemDescription* pd, int massId, double t) {
     this->problemDescription = pd;
     this->t = t;
-    this->tStep = tStep;
     this->massId = massId;
     this->hasGetCostCache = false;
 
@@ -23,7 +21,7 @@ double ProblemCreature::GetCost() {
     // could be slightly better, since BuildFromDNA creates the masses again,
     // for example, which we don't alter at the dna.
     auto p = this->problemDescription->BuildFromDNA(dna).val;
-    auto e0 = p->Integrate(0.0, this->t, this->tStep);
+    auto e0 = p->Integrate(this->t);
     if (e0.isError) {
         throw("Unexpected Integrate error in GetCost");
     }

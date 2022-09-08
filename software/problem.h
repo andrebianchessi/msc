@@ -106,8 +106,9 @@ class Problem {
     // Creates X and XDot with zero values
     void Build();
 
-    // Integrates the system and saves the state vectors at t and XHistory
-    Maybe<Void> Integrate(double t0, double t1, double timestep);
+    // Integrates the system up to given time; saves the state vectors at
+    // this->XHistory and the time instants at this->t
+    Maybe<Void> Integrate(double t);
 
     // Prints the time history of mass by id
     void PrintMassTimeHistory(int massId);

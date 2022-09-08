@@ -49,7 +49,7 @@ TEST(ProblemDescriptionTest, MassSpringDamperCreationTest) {
     ASSERT_FALSE(e0.isError);
 
     Problem p = (*e0.val);
-    ASSERT_FALSE(p.Integrate(0.0, 0.1, 0.01).isError);
+    ASSERT_FALSE(p.Integrate(0.1).isError);
     auto maxAccel0 = p.GetMassMaxAbsAccel(0);
     ASSERT_FALSE(maxAccel0.isError);
     ASSERT_DOUBLE_EQ(maxAccel0.val, 0.0);
@@ -71,7 +71,7 @@ TEST(ProblemDescriptionTest, DynamicTestWithInitialVel) {
     ASSERT_FALSE(e0.isError);
 
     Problem p = (*e0.val);
-    ASSERT_FALSE(p.Integrate(0.0, 0.1, 0.01).isError);
+    ASSERT_FALSE(p.Integrate(0.1).isError);
     auto maxAccel0 = p.GetMassMaxAbsAccel(0);
     ASSERT_FALSE(maxAccel0.isError);
     ASSERT_DOUBLE_EQ(maxAccel0.val, 0.0);
@@ -93,7 +93,7 @@ TEST(ProblemDescriptionTest, DynamicTestWithInitialDisp) {
     ASSERT_FALSE(e0.isError);
 
     Problem p = (*e0.val);
-    ASSERT_FALSE(p.Integrate(0.0, 0.1, 0.01).isError);
+    ASSERT_FALSE(p.Integrate(0.1).isError);
     auto maxAccel0 = p.GetMassMaxAbsAccel(0);
     ASSERT_FALSE(maxAccel0.isError);
     ASSERT_DOUBLE_EQ(maxAccel0.val, 0.0);
@@ -150,7 +150,7 @@ TEST(ProblemDescriptionTest, MultiBodyBibliographyDataTest2) {
     EXPECT_FALSE(e.isError);
 
     auto p = e.val;
-    EXPECT_FALSE(p->Integrate(0.0, 0.15, 0.05).isError);
+    EXPECT_FALSE(p->Integrate(0.15).isError);
 
     auto e2 = p->GetMassMinAccel(5);
     ASSERT_FALSE(e2.isError);

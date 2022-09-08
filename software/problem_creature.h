@@ -12,18 +12,17 @@ class ProblemCreature : public Creature {
     ProblemDescription* problemDescription;
 
     // Parameters used to calculate cost
-    double t;      // integration duration
-    double tStep;  // integration time step
+    double t;  // integration duration
 
     // Id of the mass we want to minimize the acceleration
     int massId;
 
     // Random constructor. Receives problem description, id of mass
-    // we want to minimize the acceleration and the time parameters
+    // we want to minimize the acceleration and the time duration
     // used when integrating the problem.
     // WARNING: Make sure to first call IsOk() method to check the problem
     // description.
-    ProblemCreature(ProblemDescription* pd, int massId, double t, double tStep);
+    ProblemCreature(ProblemDescription* pd, int massId, double t);
 
     double GetCost();
 

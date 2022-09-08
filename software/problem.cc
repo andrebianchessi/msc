@@ -364,7 +364,7 @@ void Problem::save(const vector<double> &X, double t) {
     this->AccelHistory.push_back(Accel);
 }
 
-Maybe<Void> Problem::Integrate(double t0, double t1, double timestep) {
+Maybe<Void> Problem::Integrate(double t) {
     Maybe<Void> r;
     if (!this->isBuilt) {
         r.isError = true;
@@ -375,7 +375,7 @@ Maybe<Void> Problem::Integrate(double t0, double t1, double timestep) {
                           double t) { this->SetXDot(X, XDot, t); };
     auto save = [this](const vector<double> &X, double t) { this->save(X, t); };
     try {
-        integrate(setXDot, this->X, t0, t1, timestep, save);
+        integrate(setXDot, this->X, 0.0, t, 0.01 * t, save);
         this->isIntegrated = true;
         return r;
     } catch (...) {

@@ -435,7 +435,7 @@ TEST(ProblemTest, IntegrateStationaryTest) {
     p.FixMass(0);
     p.FixMass(1);
 
-    p.Integrate(0.0, 1.0, 0.02);
+    p.Integrate(1.0);
 
     ASSERT_EQ(p.t.size(), p.XHistory.size());
 
@@ -519,7 +519,7 @@ TEST(ProblemTest, HarmonicMotionTest) {
     p.FixMass(0);
     p.SetInitialDisp(1, 0.1);
 
-    p.Integrate(0.0, 4.0, 0.02);
+    p.Integrate(4.0);
 
     // Mass 0 should be stationary, and initial speed of mass 1 should be
     // negative
@@ -558,7 +558,7 @@ TEST(ProblemTest, DampedOscillatorTest) {
     p.FixMass(0);
     p.SetInitialDisp(1, 10.0);
 
-    p.Integrate(0.0, 5.0, 0.02);
+    p.Integrate(5.0);
 
     // Mass 0 should be stationary, and initial speed of mass 1 should be
     // negative
@@ -587,7 +587,7 @@ TEST(ProblemTest, DampedOscillatorPlotTest) {
     p.FixMass(0);
     p.SetInitialDisp(1, 1.0);
 
-    p.Integrate(0.0, 40, 0.1);
+    p.Integrate(40);
 
     std::cout << "DampedOscillatorPlotTest output:\n";
     p.PrintMassTimeHistory(1);
@@ -649,7 +649,7 @@ TEST(ProblemTest, MultiBodyBibliographyDataTest) {
                      1 / m1 * ((-c1 - c2) * 14 + c2 * 14));    // xDotDot1
     EXPECT_DOUBLE_EQ(XDot0[5], 1 / m2 * (c2 * 14 - c2 * 14));  // xDotDot1
 
-    EXPECT_FALSE(p.Integrate(0.0, 1.0, 0.001).isError);
+    EXPECT_FALSE(p.Integrate(1.0).isError);
 
     auto e = p.GetMassMinAccel(2);
     ASSERT_FALSE(e.isError);
@@ -716,7 +716,7 @@ TEST(ProblemTest, MultiBodyBibliographyDataTest2) {
     p.SetInitialVel(14.0);
     EXPECT_FALSE(p.FixMass(0).isError);
 
-    EXPECT_FALSE(p.Integrate(0.0, 0.15, 0.05).isError);
+    EXPECT_FALSE(p.Integrate(0.15).isError);
 
     // The velocities we get match with the paper. The acceleration follows the
     // same shape, but the paper doesn't show the units for the acceleration.
@@ -763,7 +763,7 @@ TEST(ProblemTest, MinMaxAccelTest) {
     // Called to prevent "problem must be integrated" error.
     // AccelHistory is then cleared and mocked for the test
     p.Build();
-    p.Integrate(0.0, 0.0, 0.0);
+    p.Integrate(0.0);
     p.AccelHistory.clear();
     ASSERT_EQ(p.AccelHistory.size(), 0);
 
@@ -810,7 +810,7 @@ TEST(ProblemTest, ClearHistoryTest) {
     ASSERT_FALSE(p.SetInitialVel(10).isError);
     ASSERT_FALSE(p.FixMass(0).isError);
 
-    ASSERT_FALSE(p.Integrate(0, 1.0, 0.01).isError);
+    ASSERT_FALSE(p.Integrate(1.0).isError);
 
     // Store some values of state vector and accelerations to compare latter
     ASSERT_TRUE(int(p.XHistory.size()) > 3);
@@ -833,7 +833,7 @@ TEST(ProblemTest, ClearHistoryTest) {
     ASSERT_EQ(p.AccelHistory.size(), 0);
 
     // Integrate again
-    ASSERT_FALSE(p.Integrate(0, 1.0, 0.01).isError);
+    ASSERT_FALSE(p.Integrate(1.0).isError);
     ASSERT_TRUE(p.isIntegrated);
 
     // Compare values
