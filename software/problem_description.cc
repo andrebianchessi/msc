@@ -34,8 +34,27 @@ int ProblemDescription::NumberOfSpringsAndDampers() {
     return this->springs.size() + this->dampers.size();
 };
 
-Maybe<std::shared_ptr<Problem>> ProblemDescription::BuildRandom() {
+bool ProblemDescription::IsOk() {
+    std::vector<Bounded> dna =
+        std::vector<Bounded>(this->NumberOfSpringsAndDampers());
+    auto p = this->BuildFromDNA(dna);
+    if (p.isError) {
+        return false;
+    }
+    auto e = p.val->Integrate(0.0, 0.01, 0.01);
+    return (!e.isError);
+}
+
+Maybe<std::shared_ptr<Problem>> ProblemDescription::BuildFromDNA(
+    std::vector<Bounded> dna) {
     Maybe<std::shared_ptr<Problem>> r;
+
+    if (int(dna.size()) != this->NumberOfSpringsAndDampers()) {
+        r.isError = true;
+        r.errMsg = "dna must be the same size of NumberOfSpringsAndDampers()";
+        return r;
+    }
+
     auto p = std::make_shared<Problem>();
     for (auto m : this->masses) {
         auto e = p->AddMass(m.m, m.px, m.py);
@@ -45,17 +64,19 @@ Maybe<std::shared_ptr<Problem>> ProblemDescription::BuildRandom() {
             return r;
         }
     }
+    int i = 0;
     for (auto s : this->springs) {
-        double k = Random(s.kMin, s.kMax);
+        double k = Unnormalize(dna[i], s.kMin, s.kMax);
         auto e = p->AddSpring(s.m0, s.m1, k);
         if (e.isError) {
             r.isError = true;
             r.errMsg = e.isError;
             return r;
         }
+        i += 1;
     }
     for (auto d : this->dampers) {
-        double c = Random(d.cMin, d.cMax);
+        double c = Unnormalize(dna[i], d.cMin, d.cMax);
         auto e = p->AddDamper(d.m0, d.m1, c);
         if (e.isError) {
             r.isError = true;

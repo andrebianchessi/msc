@@ -15,6 +15,8 @@ using namespace boost::numeric::ublas;
 
 // Represents a 1D system of masses, springs and dampers
 class Problem {
+    friend class ProblemDescription;
+
    public:
     // Standard constructor
     Problem();

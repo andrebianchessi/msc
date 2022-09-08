@@ -173,7 +173,8 @@ cc_library(
   ],
   deps = [
     ":problem",
-    ":utils"
+    ":utils",
+    ":bounded"
   ]
 )
 cc_test(
@@ -247,6 +248,7 @@ cc_library(
   name = "problem_creature",
   srcs = [
     "problem_creature.h",
+    "problem_creature.cc",
   ],
   hdrs = [
     "problem_creature.h",
@@ -255,6 +257,19 @@ cc_library(
     "@com_google_googletest//:gtest_main",
     ":creature",
     ":problem_description",
-    ":bounded"
+    ":bounded",
+    ":utils",
   ]
+)
+cc_test(
+  name = "problem_creature_test",
+  size = "small",
+  srcs = [
+    "problem_creature_test.cc"
+    ],
+  deps = [
+    "@com_google_googletest//:gtest_main",
+    ":problem_creature",
+    ":evolution"
+    ],
 )

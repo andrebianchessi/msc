@@ -2,19 +2,19 @@
 #include <gtest/gtest.h>
 
 #include <memory>
+#include <tuple>
 #include <vector>
 
 #include "maybe.h"
 
-using namespace std;
 // Template class must be child of Creature
 template <typename creature>
 class Evolution {
    public:
-    Evolution(vector<creature>* population);
+    Evolution(std::vector<creature>* population);
 
     // Pointer to vector of creatures which this instance is optimizing
-    vector<creature>* population;
+    std::vector<creature>* population;
 
     // Get creature by index
     creature* GetCreature(int i);
@@ -59,14 +59,14 @@ class Evolution {
     // of all elements is 1.0
     // The numbers are in ascending order, since a higher fitness
     // means a better solution.
-    vector<double> fitness();
+    std::vector<double> fitness();
     FRIEND_TEST(EvolutionTest, fitnessTest);
 
     // Get creatures from the population that will mate
     // A.K.A. "Select Mates" in the literature.
     // This function assumes the population is sorted, i.e. sortPopulation
     // must be called before calling this method;
-    tuple<creature*, creature*> getParents();
+    std::tuple<creature*, creature*> getParents();
     FRIEND_TEST(EvolutionTest, getParentsTest);
 
     // Returns the position (inclusive) in which we separate the creatures

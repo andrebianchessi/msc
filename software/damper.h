@@ -7,7 +7,6 @@ using namespace boost::numeric::ublas;
 
 class Damper {
     friend class Problem;
-    friend class Creature;
 
    public:
     int id;
@@ -17,6 +16,8 @@ class Damper {
     const bounded_matrix<float, 2, 2> GetM();
     // Returns Damping Matrix
     const bounded_matrix<float, 2, 2> GetC();
+
+    double Get_c() { return this->c; };
 
    private:
     // Damper instances can only be constructed by Problem instances

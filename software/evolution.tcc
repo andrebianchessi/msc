@@ -2,16 +2,16 @@
 #include <algorithm>
 #include <iostream>
 #include <memory>
+#include <tuple>
+#include <vector>
 
 #include "creature.h"
 #include "evolution.h"
 #include "maybe.h"
 #include "utils.h"
 
-using namespace std;
-
 template <typename creature>
-Evolution<creature>::Evolution(vector<creature>* population) {
+Evolution<creature>::Evolution(std::vector<creature>* population) {
     this->population = population;
 }
 
@@ -62,8 +62,8 @@ creature* Evolution<creature>::GetCreature(int i) {
 }
 
 template <typename creature>
-vector<double> Evolution<creature>::fitness() {
-    vector<double> costs = vector<double>(this->nFittest());
+std::vector<double> Evolution<creature>::fitness() {
+    std::vector<double> costs = std::vector<double>(this->nFittest());
     double totalCost = 0;
     for (int i = 0; i < this->nFittest(); i++) {
         totalCost += (*this->population)[i].GetCost();
@@ -74,7 +74,7 @@ vector<double> Evolution<creature>::fitness() {
     // higher fitness value -> better
 
     // Start by filing with cost values
-    vector<double> fitness = vector<double>(this->nFittest());
+    std::vector<double> fitness = std::vector<double>(this->nFittest());
     for (int i = 0; i < this->nFittest(); i++) {
         fitness[i] = costs[i];
     }
@@ -107,10 +107,10 @@ vector<double> Evolution<creature>::fitness() {
 }
 
 template <typename creature>
-tuple<creature*, creature*> Evolution<creature>::getParents() {
+std::tuple<creature*, creature*> Evolution<creature>::getParents() {
     // Biased roulette wheel method
-    vector<double> f = this->fitness();
-    vector<double> roulette = vector<double>(this->nFittest());
+    std::vector<double> f = this->fitness();
+    std::vector<double> roulette = std::vector<double>(this->nFittest());
     double accumulated = 0.0;
     for (int i = 0; i < this->nFittest(); i++) {
         roulette[i] = f[i] + accumulated;
@@ -125,7 +125,8 @@ tuple<creature*, creature*> Evolution<creature>::getParents() {
         p2 = it - roulette.begin();
     }
 
-    return make_tuple(&((*this->population)[p1]), &((*this->population)[p2]));
+    return std::make_tuple(&((*this->population)[p1]),
+                           &((*this->population)[p2]));
 };
 
 template <typename creature>
@@ -146,7 +147,8 @@ void Evolution<creature>::mutate() {
     int mutations = 0;
 
     // Set containing [creatureId, dnaPosition] pairs which were mutated
-    set<tuple<int, int>> mutationsDone = set<tuple<int, int>>();
+    std::set<std::tuple<int, int>> mutationsDone =
+        std::set<std::tuple<int, int>>();
     while (mutations < nMutations) {
         // pick random creature (outside best one) and mutate
         int creatureI = RandomInt(1, this->population->size() - 1);
@@ -167,8 +169,8 @@ void Evolution<creature>::step() {
     // Replace less fit of the population
     for (int i = this->endFittest() + 1; i < this->PopSize(); i++) {
         auto parents = this->getParents();
-        creature* p0 = get<0>(parents);
-        creature* p1 = get<1>(parents);
+        creature* p0 = std::get<0>(parents);
+        creature* p1 = std::get<1>(parents);
 
         creature* child0;
         creature* child1;
@@ -199,17 +201,15 @@ Maybe<creature*> Evolution<creature>::Evolve(double stop,
     int i = 1;
     const int maxI = 1000000000;
     if (printProgression) {
-        cout << "generation,cost" << endl;
+        std::cout << "generation,cost" << std::endl;
     }
-    print("abs((fittestCost1 - fittestCost0) / fittestCost0) ",
-          abs((fittestCost1 - fittestCost0) / fittestCost0));
     while (abs((fittestCost1 - fittestCost0) / fittestCost0) > stop) {
         fittestCost0 = fittestCost1;
         this->step();
         fittestCost1 = this->FittestCost();
 
         if (printProgression) {
-            cout << i << "," << fittestCost1 << endl;
+            std::cout << i << "," << fittestCost1 << std::endl;
         }
         if (i == maxI) {
             r.isError = true;

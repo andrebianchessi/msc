@@ -5,6 +5,7 @@
 #pragma once
 #include <vector>
 
+#include "bounded.h"
 #include "maybe.h"
 #include "problem.h"
 
@@ -58,16 +59,26 @@ class ProblemDescription {
 
     void AddSpring(int m0, int m1, double kMin, double kMax);
     void AddDamper(int m0, int m1, double cMin, double cMax);
-    Maybe<std::shared_ptr<Problem>> BuildRandom();
+
+    // The input is a series of normalized values for springs and dampers.
+    // It must have the same length of NumberOfSpringsAndDampers().
+    // The first values correspond to the springs, and the last to the dampers.
+    // Ex:
+    // If the problem has 1 spring and 2 dampers, all with a min of 0 and a max
+    // of 10:
+    // dna = [0,0.5,1.0] -> k0 = 0, c0 = 5, c1 = 10
+    Maybe<std::shared_ptr<Problem>> BuildFromDNA(std::vector<Bounded> dna);
 
     // Returns number of springs + number of dampers
     int NumberOfSpringsAndDampers();
 
-   private:
     std::vector<MassDescription> masses;
     std::vector<SpringDescription> springs;
     std::vector<DamperDescription> dampers;
     std::vector<InitialVelDescription> initialVels;
     std::vector<InitialDispDescription> initialDisps;
     std::vector<int> fixedMasses;
+
+    // Check if the object is valid
+    bool IsOk();
 };

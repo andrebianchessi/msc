@@ -7,7 +7,6 @@ using namespace boost::numeric::ublas;
 
 class Spring {
     friend class Problem;
-    friend class Creature;
 
    public:
     int id;
@@ -17,6 +16,8 @@ class Spring {
     const bounded_matrix<float, 2, 2> GetM();
     // Returns Stiffness Matrix
     const bounded_matrix<float, 2, 2> GetK();
+
+    double Get_k() { return this->k; };
 
    private:
     // Spring instances can only be constructed by Problem instances

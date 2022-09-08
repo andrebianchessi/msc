@@ -7,12 +7,11 @@
 
 #include "bounded.h"
 
-using namespace std;
 class Creature {
    protected:
     // Values that describe this creature.
     // A.K.A. Chromosome, in the literature.
-    vector<Bounded> dna;
+    std::vector<Bounded> dna;
 
    public:
     int DnaSize();

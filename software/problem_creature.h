@@ -5,28 +5,25 @@
 #include "bounded.h"
 #include "creature.h"
 #include "problem_description.h"
-
-using namespace std;
+#include "utils.h"
 
 class ProblemCreature : public Creature {
    public:
     ProblemDescription* problemDescription;
 
-    // Random constructor
-    // Make sure pd->BuildRandom() doesn't return an error
-    ProblemCreature(ProblemDescription* pd) {
-        this->problemDescription = pd;
-        this->dna = vector<Bounded>(pd->NumberOfSpringsAndDampers());
-        auto p = pd->BuildRandom().val;
-        int i = 0;
-        for (auto s : p->springs) {
-            this->dna[i] = s.k;
-        }
-    }
+    // Parameters used to calculate cost
+    double t;      // integration duration
+    double tStep;  // integration time step
 
-    double GetCost() {
-        double xVal = this->GetX();
-        double yVal = this->GetY();
-        return abs(xVal * xVal + yVal * yVal + 2 * xVal + yVal);
-    }
+    // Id of the mass we want to minimize the acceleration
+    int massId;
+
+    // Random constructor. Receives problem description, id of mass
+    // we want to minimize the acceleration and the time parameters
+    // used when integrating the problem.
+    // WARNING: Make sure to first call IsOk() method to check the problem
+    // description.
+    ProblemCreature(ProblemDescription* pd, int massId, double t, double tStep);
+
+    double GetCost();
 };

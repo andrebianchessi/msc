@@ -4,30 +4,37 @@
 
 #include <memory>
 
+#include "bounded.h"
 #include "utils.h"
 
 TEST(ProblemDescriptionTest, MassSpringDamperCreationTest) {
     // Instance to check errors returned by BuildRandom
     ProblemDescription pdErr = ProblemDescription();
 
+    std::vector<Bounded> dna = std::vector<Bounded>(4);
+
     // Invalid damper
     pdErr.AddDamper(0, 0, 0.0, 0.0);
-    ASSERT_TRUE(pdErr.BuildRandom().isError);
+    ASSERT_FALSE(pdErr.IsOk());
+    ASSERT_TRUE(pdErr.BuildFromDNA(dna).isError);
 
     // Invalid string
     pdErr = ProblemDescription();
     pdErr.AddSpring(0, 0, 0.0, 0.0);
-    ASSERT_TRUE(pdErr.BuildRandom().isError);
+    ASSERT_FALSE(pdErr.IsOk());
+    ASSERT_TRUE(pdErr.BuildFromDNA(dna).isError);
 
     // Invalid mass (0.0 mass)
     pdErr = ProblemDescription();
     pdErr.AddMass(0.0, 1, 1);
-    ASSERT_TRUE(pdErr.BuildRandom().isError);
+    ASSERT_FALSE(pdErr.IsOk());
+    ASSERT_TRUE(pdErr.BuildFromDNA(dna).isError);
     // Invalid mass (duplicate location)
     pdErr = ProblemDescription();
     pdErr.AddMass(1.0, 1.0, 1.0);
     pdErr.AddMass(1.0, 1.0, 1.0);
-    ASSERT_TRUE(pdErr.BuildRandom().isError);
+    ASSERT_FALSE(pdErr.IsOk());
+    ASSERT_TRUE(pdErr.BuildFromDNA(dna).isError);
 
     // Instance stationary problem to check success
     ProblemDescription pd = ProblemDescription();
@@ -37,7 +44,8 @@ TEST(ProblemDescriptionTest, MassSpringDamperCreationTest) {
     pd.AddSpring(0, 1, 0.5, 1.0);
     pd.AddDamper(0, 1, 0.5, 1.0);
     pd.AddDamper(0, 1, 0.5, 1.0);
-    auto e0 = pd.BuildRandom();
+    ASSERT_TRUE(pd.IsOk());
+    auto e0 = pd.BuildFromDNA(dna);
     ASSERT_FALSE(e0.isError);
 
     Problem p = (*e0.val);
@@ -52,13 +60,14 @@ TEST(ProblemDescriptionTest, MassSpringDamperCreationTest) {
 
 TEST(ProblemDescriptionTest, DynamicTestWithInitialVel) {
     ProblemDescription pd = ProblemDescription();
+    std::vector<Bounded> dna = std::vector<Bounded>(2);
     pd.AddMass(1.0, 0.0, 0.0);
     pd.AddMass(1.0, 1.0, 0.0);
     pd.AddSpring(0, 1, 0.5, 1.0);
     pd.AddDamper(0, 1, 0.5, 1.0);
     pd.SetFixedMass(0);
     pd.AddInitialVel(1, 10.0);
-    auto e0 = pd.BuildRandom();
+    auto e0 = pd.BuildFromDNA(dna);
     ASSERT_FALSE(e0.isError);
 
     Problem p = (*e0.val);
@@ -79,7 +88,8 @@ TEST(ProblemDescriptionTest, DynamicTestWithInitialDisp) {
     pd.AddDamper(0, 1, 0.5, 1.0);
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, 10.0);
-    auto e0 = pd.BuildRandom();
+    std::vector<Bounded> dna = std::vector<Bounded>(2);
+    auto e0 = pd.BuildFromDNA(dna);
     ASSERT_FALSE(e0.isError);
 
     Problem p = (*e0.val);
@@ -135,7 +145,8 @@ TEST(ProblemDescriptionTest, MultiBodyBibliographyDataTest2) {
     pd.AddDamper(4, 5, c9, c9);
     pd.AddInitialVel(14.0);
     pd.SetFixedMass(0);
-    auto e = pd.BuildRandom();
+    std::vector<Bounded> dna = std::vector<Bounded>(15);
+    auto e = pd.BuildFromDNA(dna);
     EXPECT_FALSE(e.isError);
 
     auto p = e.val;
@@ -148,66 +159,4 @@ TEST(ProblemDescriptionTest, MultiBodyBibliographyDataTest2) {
     e2 = p->GetMassMaxAccel(5);
     ASSERT_FALSE(e2.isError);
     ASSERT_TRUE(0 < e2.val && e2.val < 100);
-}
-
-TEST(ProblemDescriptionTest, CreateMultipleTest) {
-    // Tests creation of multiple Problem instances
-
-    // Create arbitrary pd with a large range for spring and damper constants
-    ProblemDescription pd = ProblemDescription();
-    pd.AddMass(1.0, 0.0, 0.0);
-    pd.AddMass(300, 1.0, 1.0);
-    pd.AddMass(120, 1.0, 0.0);
-    pd.AddMass(150, 1.0, 3.0);
-    pd.AddMass(700, 2.0, 0.0);
-    pd.AddMass(80, 3.0, 0.0);
-    pd.AddSpring(0, 1, 0.0, 1000000);
-    pd.AddSpring(1, 2, 0.0, 1000000);
-    pd.AddSpring(1, 3, 0.0, 1000000);
-    pd.AddSpring(1, 4, 0.0, 1000000);
-    pd.AddDamper(1, 4, 0.0, 1000000);
-    pd.AddSpring(0, 2, 0.0, 1000000);
-    pd.AddDamper(0, 2, 0.0, 1000000);
-    pd.AddSpring(2, 4, 0.0, 1000000);
-    pd.AddDamper(2, 4, 0.0, 1000000);
-    pd.AddSpring(0, 3, 0.0, 1000000);
-    pd.AddDamper(0, 3, 0.0, 1000000);
-    pd.AddSpring(3, 4, 0.0, 1000000);
-    pd.AddDamper(3, 4, 0.0, 1000000);
-    pd.AddSpring(4, 5, 0.0, 1000000);
-    pd.AddDamper(4, 5, 0.0, 1000000);
-    pd.AddInitialVel(14.0);
-    pd.SetFixedMass(0);
-
-    // Get multiple problem instances and check they have different values
-    auto e = pd.BuildRandom();
-    EXPECT_FALSE(e.isError);
-    auto p0 = e.val;
-
-    e = pd.BuildRandom();
-    EXPECT_FALSE(e.isError);
-    auto p1 = e.val;
-
-    e = pd.BuildRandom();
-    EXPECT_FALSE(e.isError);
-    auto p2 = e.val;
-
-    EXPECT_FALSE(p0->Integrate(0.0, 0.15, 0.05).isError);
-    EXPECT_FALSE(p1->Integrate(0.0, 0.15, 0.05).isError);
-    EXPECT_FALSE(p2->Integrate(0.0, 0.15, 0.05).isError);
-
-    auto a0 = p0->GetMassMaxAbsAccel(5);
-    auto a1 = p1->GetMassMaxAbsAccel(5);
-    auto a2 = p2->GetMassMaxAbsAccel(5);
-    EXPECT_FALSE(a0.isError);
-    EXPECT_FALSE(a1.isError);
-    EXPECT_FALSE(a2.isError);
-
-    EXPECT_TRUE(a0.val != a1.val);
-    EXPECT_TRUE(a1.val != a2.val);
-    EXPECT_TRUE(a0.val != a2.val);
-
-    print("a0.val", a0.val);
-    print("a1.val", a1.val);
-    print("a2.val", a2.val);
 }
