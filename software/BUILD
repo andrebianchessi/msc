@@ -40,7 +40,6 @@ cc_test(
     "spring_test.cc"
     ],
   deps = [
-    "@com_google_googletest//:gtest_main",
     ":problem",
     ],
 )
@@ -67,7 +66,6 @@ cc_test(
     "damper_test.cc"
     ],
   deps = [
-    "@com_google_googletest//:gtest_main",
     ":problem",
     ],
 )
@@ -99,7 +97,6 @@ cc_test(
     ],
   deps = [
     ":problem",
-    "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -266,7 +263,7 @@ cc_library(
 )
 cc_test(
   name = "problem_creature_test",
-  size = "medium",
+  size = "small",
   srcs = [
     "problem_creature_test.cc"
     ],
