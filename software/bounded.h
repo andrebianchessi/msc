@@ -10,8 +10,11 @@ class Bounded {
     static constexpr double min = 0.0;
     static constexpr double max = 1.0;
 
-    // Only has empty constructor. Value must be set using Set method.
+    // Empty constructor
     Bounded();
+
+    // Helper constructor
+    static Maybe<Bounded> CreateBounded(double x);
 
     double Get();
     Maybe<Void> Set(double val);
