@@ -48,7 +48,7 @@ TEST(ProblemDescriptionTest, MassSpringDamperCreationTest) {
     auto e0 = pd.BuildFromDNA(dna);
     ASSERT_FALSE(e0.isError);
 
-    Problem p = (*e0.val);
+    Problem p = e0.val;
     ASSERT_FALSE(p.Integrate(0.1).isError);
     auto maxAccel0 = p.GetMassMaxAbsAccel(0);
     ASSERT_FALSE(maxAccel0.isError);
@@ -70,7 +70,7 @@ TEST(ProblemDescriptionTest, DynamicTestWithInitialVel) {
     auto e0 = pd.BuildFromDNA(dna);
     ASSERT_FALSE(e0.isError);
 
-    Problem p = (*e0.val);
+    Problem p = e0.val;
     ASSERT_FALSE(p.Integrate(0.1).isError);
     auto maxAccel0 = p.GetMassMaxAbsAccel(0);
     ASSERT_FALSE(maxAccel0.isError);
@@ -92,7 +92,7 @@ TEST(ProblemDescriptionTest, DynamicTestWithInitialDisp) {
     auto e0 = pd.BuildFromDNA(dna);
     ASSERT_FALSE(e0.isError);
 
-    Problem p = (*e0.val);
+    Problem p = e0.val;
     ASSERT_FALSE(p.Integrate(0.1).isError);
     auto maxAccel0 = p.GetMassMaxAbsAccel(0);
     ASSERT_FALSE(maxAccel0.isError);
@@ -149,14 +149,16 @@ TEST(ProblemDescriptionTest, MultiBodyBibliographyDataTest2) {
     auto e = pd.BuildFromDNA(dna);
     EXPECT_FALSE(e.isError);
 
-    auto p = e.val;
-    EXPECT_FALSE(p->Integrate(0.15).isError);
+    EXPECT_EQ(e.val.X.size(), 12);
 
-    auto e2 = p->GetMassMinAccel(5);
+    auto p = e.val;
+    EXPECT_FALSE(p.Integrate(0.15).isError);
+
+    auto e2 = p.GetMassMinAccel(5);
     ASSERT_FALSE(e2.isError);
     ASSERT_TRUE(-400 < e2.val && e2.val < -350);
 
-    e2 = p->GetMassMaxAccel(5);
+    e2 = p.GetMassMaxAccel(5);
     ASSERT_FALSE(e2.isError);
     ASSERT_TRUE(0 < e2.val && e2.val < 100);
 }

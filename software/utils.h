@@ -23,6 +23,7 @@ double Random(double x0, double x1) {
     return x0 + (x1 - x0) * l;
 }
 
+// Returns a random integer in interval [x0, x1]
 int RandomInt(int x0, int x1) {
     std::random_device rd;   // obtain a random number from hardware
     std::mt19937 gen(rd());  // seed the generator
@@ -56,8 +57,8 @@ void print(T t, Args... args) {
 }
 
 // Returns value in interval [0,1] by normalizing between min and max
-Maybe<std::shared_ptr<Bounded>> Normalize(double val, double min, double max) {
-    Maybe<std::shared_ptr<Bounded>> r;
+Maybe<Bounded> Normalize(double val, double min, double max) {
+    Maybe<Bounded> r;
     if (val < min) {
         r.isError = true;
         r.errMsg = "val must be >=min";
@@ -68,8 +69,7 @@ Maybe<std::shared_ptr<Bounded>> Normalize(double val, double min, double max) {
         r.errMsg = "val must be <=max";
         return r;
     }
-    r.val = std::make_shared<Bounded>();
-    r.val->Set((val - min) / (max - min));
+    r.val.Set((val - min) / (max - min));
     return r;
 }
 

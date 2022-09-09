@@ -33,19 +33,19 @@ TEST(UtilsTest, NormalizeTest) {
 
     auto e = Normalize(0.0, -1.0, 1.0);
     EXPECT_FALSE(e.isError);
-    EXPECT_DOUBLE_EQ(e.val->Get(), 0.5);
+    EXPECT_DOUBLE_EQ(e.val.Get(), 0.5);
 
     e = Normalize(1.0, 1.0, 11.0);
     EXPECT_FALSE(e.isError);
-    EXPECT_DOUBLE_EQ(e.val->Get(), 0.0);
+    EXPECT_DOUBLE_EQ(e.val.Get(), 0.0);
 
     e = Normalize(11.0, 1.0, 11.0);
     EXPECT_FALSE(e.isError);
-    EXPECT_DOUBLE_EQ(e.val->Get(), 1.0);
+    EXPECT_DOUBLE_EQ(e.val.Get(), 1.0);
 
     e = Normalize(0.0, -1.0, 2.0);
     EXPECT_FALSE(e.isError);
-    EXPECT_DOUBLE_EQ(e.val->Get(), 1 / 3.0);
+    EXPECT_DOUBLE_EQ(e.val.Get(), 1 / 3.0);
 }
 
 TEST(UtilsTest, UnnormalizeTest) {

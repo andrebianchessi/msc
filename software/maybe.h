@@ -7,11 +7,26 @@
 #pragma once
 #include <string>
 
-typedef void* Void;
+class Void {
+   public:
+    Void() {}
+};
 
 template <class c>
-struct Maybe {
+class Maybe {
+   public:
     c val;
-    bool isError = false;
-    std::string errMsg = "";
+    bool isError;
+    std::string errMsg;
+    Maybe() {
+        this->isError = false;
+        this->errMsg = "";
+        this->val = c();
+    }
+    Maybe<c>& operator=(const Maybe<c>& rhs) {
+        this->isError = rhs.isError;
+        this->errMsg = rhs.errMsg;
+        this->val = rhs.val;
+        return *this;
+    }
 };

@@ -21,6 +21,12 @@ class Problem {
     // Standard constructor
     Problem();
 
+    // Assignment
+    Problem &operator=(const Problem &rhs);
+
+    // Copy constructor
+    Problem(const Problem &rhs);
+
     // Masses in the problem
     std::vector<Mass> masses;
 
@@ -144,6 +150,8 @@ class Problem {
     // Masses that are fixed, i.e. have always zero velocity
     std::set<Mass *> fixedMasses;
     FRIEND_TEST(ProblemTest, FixMassTest);
+    FRIEND_TEST(ProblemTest, AssignmentTest);
+    FRIEND_TEST(ProblemTest, CopyConstructorTest);
 
     bool massIsFixed(int massId);
 

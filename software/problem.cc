@@ -17,6 +17,47 @@ Problem::Problem() {
     this->isIntegrated = false;
 }
 
+Problem &Problem::operator=(const Problem &rhs) {
+    this->masses = rhs.masses;
+    this->springs = rhs.springs;
+    this->dampers = rhs.dampers;
+    this->MInv = rhs.MInv;
+    this->K = rhs.K;
+    this->C = rhs.C;
+    this->X = rhs.X;
+    this->t = rhs.t;
+    this->XHistory = rhs.XHistory;
+    this->AccelHistory = rhs.AccelHistory;
+    this->initialPositions = rhs.initialPositions;
+    this->fixedMasses = std::set<Mass *>();
+    for (auto m_ptr : rhs.fixedMasses) {
+        this->fixedMasses.insert(this->GetMass(m_ptr->xIndex).val);
+    }
+    this->isBuilt = rhs.isBuilt;
+    this->isIntegrated = rhs.isIntegrated;
+    return *this;
+}
+
+Problem::Problem(const Problem &rhs) {
+    this->masses = rhs.masses;
+    this->springs = rhs.springs;
+    this->dampers = rhs.dampers;
+    this->MInv = rhs.MInv;
+    this->K = rhs.K;
+    this->C = rhs.C;
+    this->X = rhs.X;
+    this->t = rhs.t;
+    this->XHistory = rhs.XHistory;
+    this->AccelHistory = rhs.AccelHistory;
+    this->initialPositions = rhs.initialPositions;
+    this->fixedMasses = std::set<Mass *>();
+    for (auto m_ptr : rhs.fixedMasses) {
+        this->fixedMasses.insert(this->GetMass(m_ptr->xIndex).val);
+    }
+    this->isBuilt = rhs.isBuilt;
+    this->isIntegrated = rhs.isIntegrated;
+}
+
 int Problem::GetDof() const { return this->masses.size(); }
 
 bool Problem::HasMassAt(double px, double py) const {

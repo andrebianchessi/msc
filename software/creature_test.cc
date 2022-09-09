@@ -36,10 +36,13 @@ TEST(CreatureTest, SimpleTest) {
 TEST(CreatureTest, MateAndMutationTest) {
     Bounded x = Bounded();
     Bounded y = Bounded();
-    x.Set(1.0);
 
+    x.Set(1.0);
+    y.Set(0.0);
     C c0 = C(x, y);
+
     x.Set(0.0);
+    y.Set(0.0);
     C c1 = C(x, y);
     EXPECT_DOUBLE_EQ(c0.dna[0].Get(), 1.0);
     EXPECT_DOUBLE_EQ(c0.dna[1].Get(), 0.0);
@@ -63,7 +66,7 @@ TEST(CreatureTest, MateAndMutationTest) {
     EXPECT_TRUE(child1.dna[1].Get() == 0.0);
     EXPECT_TRUE(child0.dna[1].Get() == 0.0);
 
-    c0.Mutate(RandomInt(0, c0.DnaSize()));
+    c0.Mutate(RandomInt(0, c0.DnaSize() - 1));
     // print("dna: ", c0.dna[0].Get(), c0.dna[1].Get());
     bool changed = c0.dna[0].Get() != 1.0 || c0.dna[1].Get() != 0.0;
     EXPECT_TRUE(changed);

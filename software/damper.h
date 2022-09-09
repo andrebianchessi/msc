@@ -1,4 +1,6 @@
 #pragma once
+#include <gtest/gtest.h>
+
 #include <boost/numeric/ublas/matrix.hpp>
 
 #include "mass.h"
@@ -25,4 +27,6 @@ class Damper {
     const Mass* m0;
     const Mass* m1;
     double c;
+    FRIEND_TEST(ProblemTest, AssignmentTest);
+    FRIEND_TEST(ProblemTest, CopyConstructorTest);
 };

@@ -7,8 +7,8 @@
 
 class Bounded {
    public:
-    const double min = 0.0;
-    const double max = 1.0;
+    static constexpr double min = 0.0;
+    static constexpr double max = 1.0;
 
     // Only has empty constructor. Value must be set using Set method.
     Bounded();

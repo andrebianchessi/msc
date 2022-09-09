@@ -55,8 +55,6 @@ class C : public Creature {
     double GetY() { return Unnormalize(this->dna[1], C::xMin, C::xMax); }
 
    private:
-    shared_ptr<Bounded> x;
-    shared_ptr<Bounded> y;
     FRIEND_TEST(CreatureTest, SimpleTest);
     FRIEND_TEST(CreatureTest, MateAndMutationTest);
     FRIEND_TEST(EvolutionTest, MutateTest);

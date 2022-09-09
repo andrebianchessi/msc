@@ -9,6 +9,23 @@ class Mass {
     double py;   // vertical position
     int xIndex;  // global index of horizontal degree of freedom
 
+    // Assignment
+    Mass &operator=(const Mass &rhs) {
+        this->m = rhs.m;
+        this->px = rhs.px;
+        this->py = rhs.py;
+        this->xIndex = rhs.xIndex;
+        return *this;
+    }
+
+    // Copy constructor
+    Mass(const Mass &rhs) {
+        this->m = rhs.m;
+        this->px = rhs.px;
+        this->py = rhs.py;
+        this->xIndex = rhs.xIndex;
+    }
+
    private:
     // Mass instances can only be constructed by Problem instances
     Mass(double m, double px, double py, int xIndex) {

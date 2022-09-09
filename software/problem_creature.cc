@@ -20,14 +20,18 @@ double ProblemCreature::GetCost() {
     // TODO: A function that edits an existing Problem by setting a dna
     // could be slightly better, since BuildFromDNA creates the masses again,
     // for example, which we don't alter at the dna.
-    auto p = this->problemDescription->BuildFromDNA(dna).val;
-    auto e0 = p->Integrate(this->t);
-    if (e0.isError) {
-        throw("Unexpected Integrate error in GetCost");
+    auto p = this->problemDescription->BuildFromDNA(dna);
+    if (p.isError) {
+        throw std::runtime_error("Unexpected BuildFromDNA error in GetCost");
     }
-    auto e1 = p->GetMassMaxAbsAccel(this->massId);
+    auto ei = p.val.Integrate(this->t);
+    if (ei.isError) {
+        throw std::runtime_error("Unexpected Integrate error in GetCost");
+    }
+    auto e1 = p.val.GetMassMaxAbsAccel(this->massId);
     if (e1.isError) {
-        throw("Unexpected GetMassMaxAbsAccel error in GetCost");
+        throw std::runtime_error(
+            "Unexpected GetMassMaxAbsAccel error in GetCost");
     }
     this->getCostCache = e1.val;
     this->hasGetCostCache = true;

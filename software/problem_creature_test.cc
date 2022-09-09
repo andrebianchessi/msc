@@ -29,6 +29,13 @@ TEST(ProblemCreatureTest, SimpleTest) {
     ASSERT_FALSE(c1.hasGetCostCache);
     ASSERT_TRUE(c1.GetCost() > 0.0);
     ASSERT_TRUE(c1.hasGetCostCache);
+
+    std::vector<ProblemCreature> pop = std::vector<ProblemCreature>();
+    pop.push_back(ProblemCreature(&pd, 1, 0.5));
+    pop.push_back(ProblemCreature(&pd, 1, 0.5));
+    Evolution<ProblemCreature> evolution = Evolution<ProblemCreature>(&pop);
+    ASSERT_NO_THROW(evolution.GetCreature(0)->GetCost());
+    ASSERT_NO_THROW(evolution.GetCreature(1)->GetCost());
 }
 
 TEST(ProblemCreatureTest, EvolutionTest) {

@@ -848,3 +848,211 @@ TEST(ProblemTest, ClearHistoryTest) {
         ASSERT_EQ(p.AccelHistory[n][i], AN[i]);
     }
 }
+
+TEST(ProblemTest, AssignmentTest) {
+    Problem p = Problem();
+    ASSERT_FALSE(p.AddMass(1.0, 0.0, 0.0).isError);
+    ASSERT_FALSE(p.AddMass(1.0, 1.0, 0.0).isError);
+    ASSERT_FALSE(p.AddMass(1.0, 2.0, 0.0).isError);
+    ASSERT_FALSE(p.AddSpring(0, 1, 1.0).isError);
+    ASSERT_FALSE(p.AddSpring(1, 2, 1.0).isError);
+    ASSERT_FALSE(p.AddDamper(0, 1, 1.0).isError);
+    ASSERT_FALSE(p.AddDamper(1, 2, 1.0).isError);
+    p.Build();
+    ASSERT_FALSE(p.SetInitialVel(10).isError);
+    ASSERT_FALSE(p.FixMass(0).isError);
+    ASSERT_FALSE(p.Integrate(1.0).isError);
+
+    Problem pA = Problem();
+    pA = p;
+
+    ASSERT_TRUE(p.masses.size() == pA.masses.size());
+    for (int i = 0; i < int(p.masses.size()); i++) {
+        ASSERT_TRUE(p.masses[i].m == pA.masses[i].m);
+        ASSERT_TRUE(p.masses[i].px == pA.masses[i].px);
+        ASSERT_TRUE(p.masses[i].py == pA.masses[i].py);
+        ASSERT_TRUE(p.masses[i].xIndex == pA.masses[i].xIndex);
+    }
+
+    ASSERT_TRUE(p.springs.size() == pA.springs.size());
+    for (int i = 0; i < int(p.springs.size()); i++) {
+        ASSERT_TRUE(p.springs[i].k == pA.springs[i].k);
+        ASSERT_TRUE(p.springs[i].m0->xIndex == pA.springs[i].m0->xIndex);
+        ASSERT_TRUE(p.springs[i].m1->xIndex == pA.springs[i].m1->xIndex);
+    }
+
+    ASSERT_TRUE(p.dampers.size() == pA.dampers.size());
+    for (int i = 0; i < int(p.dampers.size()); i++) {
+        ASSERT_TRUE(p.dampers[i].c == pA.dampers[i].c);
+        ASSERT_TRUE(p.dampers[i].m0->xIndex == pA.dampers[i].m0->xIndex);
+        ASSERT_TRUE(p.dampers[i].m1->xIndex == pA.dampers[i].m1->xIndex);
+    }
+
+    ASSERT_TRUE(p.MInv.size1() == pA.MInv.size1());
+    ASSERT_TRUE(p.MInv.size2() == pA.MInv.size2());
+    for (int i = 0; i < int(p.MInv.size1()); i++) {
+        for (int j = 0; j < int(p.MInv.size2()); j++) {
+            ASSERT_TRUE(p.MInv(i, j) == pA.MInv(i, j));
+        }
+    }
+
+    ASSERT_TRUE(p.K.size1() == pA.K.size1());
+    ASSERT_TRUE(p.K.size2() == pA.K.size2());
+    for (int i = 0; i < int(p.K.size1()); i++) {
+        for (int j = 0; j < int(p.K.size2()); j++) {
+            ASSERT_TRUE(p.K(i, j) == pA.K(i, j));
+        }
+    }
+
+    ASSERT_TRUE(p.C.size1() == pA.C.size1());
+    ASSERT_TRUE(p.C.size2() == pA.C.size2());
+    for (int i = 0; i < int(p.C.size1()); i++) {
+        for (int j = 0; j < int(p.C.size2()); j++) {
+            ASSERT_TRUE(p.C(i, j) == pA.C(i, j));
+        }
+    }
+
+    ASSERT_TRUE(p.X.size() == pA.X.size());
+    for (int i = 0; i < int(p.X.size()); i++) {
+        ASSERT_TRUE(p.X[i] == pA.X[i]);
+    }
+
+    ASSERT_TRUE(p.t.size() == pA.t.size());
+    for (int i = 0; i < int(p.t.size()); i++) {
+        ASSERT_TRUE(p.t[i] == pA.t[i]);
+    }
+
+    ASSERT_TRUE(p.XHistory.size() == pA.XHistory.size());
+    for (int i = 0; i < int(p.XHistory.size()); i++) {
+        ASSERT_TRUE(p.XHistory[i].size() == pA.XHistory[i].size());
+        for (int j = 0; j < int(p.XHistory[i].size()); j++) {
+            ASSERT_TRUE(p.XHistory[i][j] == pA.XHistory[i][j]);
+        }
+    }
+
+    ASSERT_TRUE(p.AccelHistory.size() == pA.AccelHistory.size());
+    for (int i = 0; i < int(p.AccelHistory.size()); i++) {
+        ASSERT_TRUE(p.AccelHistory[i].size() == pA.AccelHistory[i].size());
+        for (int j = 0; j < int(p.AccelHistory[i].size()); j++) {
+            ASSERT_TRUE(p.AccelHistory[i][j] == pA.AccelHistory[i][j]);
+        }
+    }
+
+    for (auto fm : p.fixedMasses) {
+        Maybe<Mass*> mA = pA.GetMass(fm->xIndex);
+        ASSERT_FALSE(mA.isError);
+        ASSERT_TRUE(pA.fixedMasses.find(mA.val) != pA.fixedMasses.end());
+    }
+    for (auto fm : pA.fixedMasses) {
+        Maybe<Mass*> m = p.GetMass(fm->xIndex);
+        ASSERT_FALSE(m.isError);
+        ASSERT_TRUE(p.fixedMasses.find(m.val) != p.fixedMasses.end());
+    }
+
+    ASSERT_TRUE(p.isBuilt == pA.isBuilt);
+    ASSERT_TRUE(p.isIntegrated == pA.isIntegrated);
+}
+
+TEST(ProblemTest, CopyConstructorTest) {
+    // Same as AssignmentTest but using copy constructor
+    Problem p = Problem();
+    ASSERT_FALSE(p.AddMass(1.0, 0.0, 0.0).isError);
+    ASSERT_FALSE(p.AddMass(1.0, 1.0, 0.0).isError);
+    ASSERT_FALSE(p.AddMass(1.0, 2.0, 0.0).isError);
+    ASSERT_FALSE(p.AddSpring(0, 1, 1.0).isError);
+    ASSERT_FALSE(p.AddSpring(1, 2, 1.0).isError);
+    ASSERT_FALSE(p.AddDamper(0, 1, 1.0).isError);
+    ASSERT_FALSE(p.AddDamper(1, 2, 1.0).isError);
+    p.Build();
+    ASSERT_FALSE(p.SetInitialVel(10).isError);
+    ASSERT_FALSE(p.FixMass(0).isError);
+    ASSERT_FALSE(p.Integrate(1.0).isError);
+
+    Problem pC = p;
+
+    ASSERT_TRUE(p.masses.size() == pC.masses.size());
+    for (int i = 0; i < int(p.masses.size()); i++) {
+        ASSERT_TRUE(p.masses[i].m == pC.masses[i].m);
+        ASSERT_TRUE(p.masses[i].px == pC.masses[i].px);
+        ASSERT_TRUE(p.masses[i].py == pC.masses[i].py);
+        ASSERT_TRUE(p.masses[i].xIndex == pC.masses[i].xIndex);
+    }
+
+    ASSERT_TRUE(p.springs.size() == pC.springs.size());
+    for (int i = 0; i < int(p.springs.size()); i++) {
+        ASSERT_TRUE(p.springs[i].k == pC.springs[i].k);
+        ASSERT_TRUE(p.springs[i].m0->xIndex == pC.springs[i].m0->xIndex);
+        ASSERT_TRUE(p.springs[i].m1->xIndex == pC.springs[i].m1->xIndex);
+    }
+
+    ASSERT_TRUE(p.dampers.size() == pC.dampers.size());
+    for (int i = 0; i < int(p.dampers.size()); i++) {
+        ASSERT_TRUE(p.dampers[i].c == pC.dampers[i].c);
+        ASSERT_TRUE(p.dampers[i].m0->xIndex == pC.dampers[i].m0->xIndex);
+        ASSERT_TRUE(p.dampers[i].m1->xIndex == pC.dampers[i].m1->xIndex);
+    }
+
+    ASSERT_TRUE(p.MInv.size1() == pC.MInv.size1());
+    ASSERT_TRUE(p.MInv.size2() == pC.MInv.size2());
+    for (int i = 0; i < int(p.MInv.size1()); i++) {
+        for (int j = 0; j < int(p.MInv.size2()); j++) {
+            ASSERT_TRUE(p.MInv(i, j) == pC.MInv(i, j));
+        }
+    }
+
+    ASSERT_TRUE(p.K.size1() == pC.K.size1());
+    ASSERT_TRUE(p.K.size2() == pC.K.size2());
+    for (int i = 0; i < int(p.K.size1()); i++) {
+        for (int j = 0; j < int(p.K.size2()); j++) {
+            ASSERT_TRUE(p.K(i, j) == pC.K(i, j));
+        }
+    }
+
+    ASSERT_TRUE(p.C.size1() == pC.C.size1());
+    ASSERT_TRUE(p.C.size2() == pC.C.size2());
+    for (int i = 0; i < int(p.C.size1()); i++) {
+        for (int j = 0; j < int(p.C.size2()); j++) {
+            ASSERT_TRUE(p.C(i, j) == pC.C(i, j));
+        }
+    }
+
+    ASSERT_TRUE(p.X.size() == pC.X.size());
+    for (int i = 0; i < int(p.X.size()); i++) {
+        ASSERT_TRUE(p.X[i] == pC.X[i]);
+    }
+
+    ASSERT_TRUE(p.t.size() == pC.t.size());
+    for (int i = 0; i < int(p.t.size()); i++) {
+        ASSERT_TRUE(p.t[i] == pC.t[i]);
+    }
+
+    ASSERT_TRUE(p.XHistory.size() == pC.XHistory.size());
+    for (int i = 0; i < int(p.XHistory.size()); i++) {
+        ASSERT_TRUE(p.XHistory[i].size() == pC.XHistory[i].size());
+        for (int j = 0; j < int(p.XHistory[i].size()); j++) {
+            ASSERT_TRUE(p.XHistory[i][j] == pC.XHistory[i][j]);
+        }
+    }
+
+    ASSERT_TRUE(p.AccelHistory.size() == pC.AccelHistory.size());
+    for (int i = 0; i < int(p.AccelHistory.size()); i++) {
+        ASSERT_TRUE(p.AccelHistory[i].size() == pC.AccelHistory[i].size());
+        for (int j = 0; j < int(p.AccelHistory[i].size()); j++) {
+            ASSERT_TRUE(p.AccelHistory[i][j] == pC.AccelHistory[i][j]);
+        }
+    }
+
+    for (auto fm : p.fixedMasses) {
+        Maybe<Mass*> mA = pC.GetMass(fm->xIndex);
+        ASSERT_FALSE(mA.isError);
+        ASSERT_TRUE(pC.fixedMasses.find(mA.val) != pC.fixedMasses.end());
+    }
+    for (auto fm : pC.fixedMasses) {
+        Maybe<Mass*> m = p.GetMass(fm->xIndex);
+        ASSERT_FALSE(m.isError);
+        ASSERT_TRUE(p.fixedMasses.find(m.val) != p.fixedMasses.end());
+    }
+
+    ASSERT_TRUE(p.isBuilt == pC.isBuilt);
+    ASSERT_TRUE(p.isIntegrated == pC.isIntegrated);
+}

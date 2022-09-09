@@ -67,7 +67,7 @@ class ProblemDescription {
     // If the problem has 1 spring and 2 dampers, all with a min of 0 and a max
     // of 10:
     // dna = [0,0.5,1.0] -> k0 = 0, c0 = 5, c1 = 10
-    Maybe<std::shared_ptr<Problem>> BuildFromDNA(std::vector<Bounded> dna);
+    Maybe<Problem> BuildFromDNA(std::vector<Bounded> dna);
 
     // Returns number of springs + number of dampers
     int NumberOfSpringsAndDampers();

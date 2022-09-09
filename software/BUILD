@@ -29,7 +29,8 @@ cc_library(
   ],
   deps = [
     ":mass",
-    "@boost//:numeric_ublas"
+    "@boost//:numeric_ublas",
+    "@com_google_googletest//:gtest_main"
   ]
 )
 cc_test(
@@ -55,7 +56,8 @@ cc_library(
   ],
   deps = [
     ":mass",
-    "@boost//:numeric_ublas"
+    "@boost//:numeric_ublas",
+    "@com_google_googletest//:gtest_main"
   ]
 )
 cc_test(

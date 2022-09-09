@@ -44,9 +44,8 @@ bool ProblemDescription::IsOk() {
     return true;
 }
 
-Maybe<std::shared_ptr<Problem>> ProblemDescription::BuildFromDNA(
-    std::vector<Bounded> dna) {
-    Maybe<std::shared_ptr<Problem>> r;
+Maybe<Problem> ProblemDescription::BuildFromDNA(std::vector<Bounded> dna) {
+    Maybe<Problem> r;
 
     if (int(dna.size()) != this->NumberOfSpringsAndDampers()) {
         r.isError = true;
@@ -54,9 +53,9 @@ Maybe<std::shared_ptr<Problem>> ProblemDescription::BuildFromDNA(
         return r;
     }
 
-    auto p = std::make_shared<Problem>();
+    Problem p;
     for (auto m : this->masses) {
-        auto e = p->AddMass(m.m, m.px, m.py);
+        auto e = p.AddMass(m.m, m.px, m.py);
         if (e.isError) {
             r.isError = true;
             r.errMsg = e.isError;
@@ -66,7 +65,7 @@ Maybe<std::shared_ptr<Problem>> ProblemDescription::BuildFromDNA(
     int i = 0;
     for (auto s : this->springs) {
         double k = Unnormalize(dna[i], s.kMin, s.kMax);
-        auto e = p->AddSpring(s.m0, s.m1, k);
+        auto e = p.AddSpring(s.m0, s.m1, k);
         if (e.isError) {
             r.isError = true;
             r.errMsg = e.isError;
@@ -76,21 +75,21 @@ Maybe<std::shared_ptr<Problem>> ProblemDescription::BuildFromDNA(
     }
     for (auto d : this->dampers) {
         double c = Unnormalize(dna[i], d.cMin, d.cMax);
-        auto e = p->AddDamper(d.m0, d.m1, c);
+        auto e = p.AddDamper(d.m0, d.m1, c);
         if (e.isError) {
             r.isError = true;
             r.errMsg = e.isError;
             return r;
         }
     }
-    p->Build();
+    p.Build();
 
     for (auto v : this->initialVels) {
         Maybe<Void> e;
         if (v.massId != -1) {
-            e = p->SetInitialVel(v.massId, v.val);
+            e = p.SetInitialVel(v.massId, v.val);
         } else {
-            e = p->SetInitialVel(v.val);
+            e = p.SetInitialVel(v.val);
         }
         if (e.isError) {
             r.isError = true;
@@ -101,9 +100,9 @@ Maybe<std::shared_ptr<Problem>> ProblemDescription::BuildFromDNA(
     for (auto d : this->initialDisps) {
         Maybe<Void> e;
         if (d.massId != -1) {
-            e = p->SetInitialDisp(d.massId, d.val);
+            e = p.SetInitialDisp(d.massId, d.val);
         } else {
-            e = p->SetInitialDisp(d.val);
+            e = p.SetInitialDisp(d.val);
         }
         if (e.isError) {
             r.isError = true;
@@ -114,7 +113,7 @@ Maybe<std::shared_ptr<Problem>> ProblemDescription::BuildFromDNA(
 
     for (auto m : this->fixedMasses) {
         Maybe<Void> e;
-        e = p->FixMass(m);
+        e = p.FixMass(m);
         if (e.isError) {
             r.isError = true;
             r.errMsg = e.isError;
