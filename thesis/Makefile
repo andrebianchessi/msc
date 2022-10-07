@@ -80,12 +80,6 @@ OPTIONS += --filter pandoc-crossref
 OPTIONS += --citeproc
 OPTIONS += -M bibliography=$(BIBFILE)
 OPTIONS += -M link-citations=true
-## download from https://www.zotero.org/styles
-## cf. https://pandoc.org/MANUAL.html#citations
-#OPTIONS += --csl=chicago-author-date-de.csl
-#OPTIONS += --csl=chicago-note-bibliography.csl
-#OPTIONS += --csl=ieee.csl
-#OPTIONS += --csl=oxford-university-press-note.csl
 
 OPTIONS += --listings
 
@@ -124,6 +118,8 @@ $(TMP): %.filled.tex: %.tex $(META)
 ## Build thesis
 pdf: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
 	pandoc ${OPTIONS} -o thesis.pdf $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
+
+html:
 
 ## Clean-up: Remove thesis and temporary (generated) files
 clean:
