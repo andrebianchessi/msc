@@ -8,5 +8,8 @@
 ## Build pdf
 - `make`
 
+## Build html
+- `make html`
+
 ## Cleanup
 - `make clean`
