@@ -8,6 +8,8 @@ http_archive(
 )
 
 # Import Boost
+# The following code is extracted from https://github.com/nelhage/rules_boost
+# and is, therefore, Copyright of Nelson Elhage
 _RULES_BOOST_COMMIT = "652b21e35e4eeed5579e696da0facbe8dba52b1f"
 http_archive(
     name = "com_github_nelhage_rules_boost",
