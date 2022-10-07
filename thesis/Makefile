@@ -105,6 +105,17 @@ OPTIONS += --number-sections
 OPTIONS += -V colorlinks=true
 OPTIONS += --include-in-header=include-header.tex $(AUX_OPTS)
 
+HTML_OPTIONS  = -f markdown
+HTML_OPTIONS += --standalone
+HTML_OPTIONS += --template html/standalone.html
+HTML_OPTIONS += --toc
+HTML_OPTIONS += --toc-depth=2
+HTML_OPTIONS += --metadata-file=metadata.yaml
+HTML_OPTIONS += --filter pandoc-crossref
+HTML_OPTIONS += --citeproc
+HTML_OPTIONS += -M bibliography=$(BIBFILE)
+HTML_OPTIONS += -M link-citations=true
+HTML_OPTIONS += --mathjax
 
 ###############################################################################
 ## Targets
@@ -119,7 +130,8 @@ $(TMP): %.filled.tex: %.tex $(META)
 pdf: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
 	pandoc ${OPTIONS} -o thesis.pdf $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
 
-html:
+html: $(SRC)
+	pandoc $(HTML_OPTIONS) -o thesis.html $(SRC) chapters/references.md
 
 ## Clean-up: Remove thesis and temporary (generated) files
 clean:

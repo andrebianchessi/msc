@@ -279,3 +279,6 @@ cleanthesis.sty
 
 # Generated PDF artifact
 thesis.pdf
+
+# Generated HTML artifact
+thesis.html
