@@ -106,8 +106,7 @@ OPTIONS += -V colorlinks=true
 OPTIONS += --include-in-header=include-header.tex $(AUX_OPTS)
 
 HTML_OPTIONS  = -f markdown
-HTML_OPTIONS += --standalone
-HTML_OPTIONS += --template html/standalone.html
+HTML_OPTIONS += --template html/template.html
 HTML_OPTIONS += --toc
 HTML_OPTIONS += --toc-depth=2
 HTML_OPTIONS += --metadata-file=metadata.yaml
@@ -130,10 +129,10 @@ $(TMP): %.filled.tex: %.tex $(META)
 pdf: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
 	pandoc ${OPTIONS} -o thesis.pdf $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
 
-html: $(SRC)
-	pandoc $(HTML_OPTIONS) -o thesis.html $(SRC) chapters/references.md
+html: $(SRC) $(REFERENCES) html/template.html
+	pandoc $(HTML_OPTIONS) -o html/thesis.html $(SRC) $(REFERENCES)
 
 ## Clean-up: Remove thesis and temporary (generated) files
 clean:
-	rm -rf thesis.pdf $(TMP)
+	rm -rf thesis.pdf html/thesis.html $(TMP)
 
