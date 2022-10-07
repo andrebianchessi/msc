@@ -43,8 +43,6 @@ CSL_FILE = ieee.csl
 
 APPENDIX = chapters/appendix.md
 
-TARGET   = thesis.pdf
-
 
 ###############################################################################
 ## Internal setup (do not change)
@@ -65,7 +63,8 @@ TMP  = $(TMP1) $(TMP2) $(TMP3)
 
 
 ## Pandoc options
-AUX_OPTS = --wrap=preserve
+AUX_OPTS  = --wrap=preserve
+AUX_OPTS += -M cleanthesis=true -M cleanthesisbibfile=$(BIBFILE:%.bib=%)
 
 OPTIONS  = -f markdown
 OPTIONS += --pdf-engine=pdflatex
@@ -110,44 +109,23 @@ OPTIONS += --toc-depth=3
 OPTIONS += --number-sections
 
 OPTIONS += -V colorlinks=true
-
-TEMPLATE_FILES          = $(CLEANTHESIS_TEMPLATE)
-
-
-###############################################################################
-## Main targets (do not change)
-###############################################################################
-
-
-## Simple book layout
-cleanthesis: $(TARGET)
-
-
-## Use Clean Thesis template (https://github.com/derric/cleanthesis)
-cleanthesis: TEMPLATE_FILE    += $(CLEANTHESIS_TEMPLATE)
-cleanthesis: TEMPLATE_REPO    += $(CLEANTHESIS_REPO)
-cleanthesis: TEMPLATE_VERSION += $(CLEANTHESIS_VERSION)
-cleanthesis: AUX_OPTS         += -M cleanthesis=true -M cleanthesisbibfile=$(BIBFILE:%.bib=%)
-cleanthesis: OPTIONS          += --include-in-header=include-header.tex $(AUX_OPTS)
-cleanthesis: $(CLEANTHESIS_TEMPLATE) $(TARGET)
-
-
-## Clean-up: Remove thesis and temporary (generated) files
-clean:
-	rm -rf $(TARGET) $(TMP) $(TEMPLATE_DL_DIR)
+OPTIONS += --include-in-header=include-header.tex $(AUX_OPTS)
 
 
 ###############################################################################
-## Auxiliary targets (do not change)
+## Targets
 ###############################################################################
-
-
-## Build thesis
-${TARGET}: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
-	pandoc ${OPTIONS} -o $@ $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
-
+.DEFAULT_GOAL := pdf
 
 ## Build auxiliary files (title page, frontmatter, backmatter, references)
 $(TMP): %.filled.tex: %.tex $(META)
 	pandoc $(AUX_OPTS) --template=$< --metadata-file=$(META) -o $@ $<
+
+## Build thesis
+pdf: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
+	pandoc ${OPTIONS} -o thesis.pdf $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
+
+## Clean-up: Remove thesis and temporary (generated) files
+clean:
+	rm -rf thesis.pdf $(TMP)
 

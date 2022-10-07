@@ -31,7 +31,7 @@ x_1\\
 $$
 {#eq:springLocalK}
 
-@Eq:springLocalK shows
+@Eq:springLocalK shows test
 
 ### Genetic Algorithm
 
