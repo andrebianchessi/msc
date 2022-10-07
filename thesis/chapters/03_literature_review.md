@@ -1,6 +1,6 @@
 # Literature Review
 
-## Crashworthiness models
+## Crashworthiness models: Masses-Springs-Dampers Systems
 [@Javad]
 
 TODO:
@@ -10,21 +10,19 @@ TODO:
 can be useful (so that other crashworthiness models can be
 optimized quickly)
 
-### Finite element method solution
+### Discrete element method solution to MSDS's
 [@Javad]
 
 ### Genetic Algorithm
 
-## Meta-models used for mechanical optimization
+## Meta-models for mechanical optimization
 [@Driemeier_undated-ub]
 [@Gu2018-rt]
 [@Gu2018-tj]
 [@Lee2022-ju]
 [@Wilt2020-we]
 
-## Regression models
-
-## Physics Informed NN
+## Physics Informed Neural Networks (PINNs)
 [@Nascimento2020-nz]
 
 
