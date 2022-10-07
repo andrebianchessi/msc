@@ -13,6 +13,26 @@ optimized quickly)
 ### Discrete element method solution to MSDS's
 [@Javad]
 
+
+$$
+\begin{bmatrix}
+k & -k\\
+-k & k
+\end{bmatrix}
+\begin{bmatrix}
+x_0\\
+x_1\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+\ddot{x_0}\\
+\ddot{x_1}\\
+\end{bmatrix}
+$$
+{#eq:springLocalK}
+
+@Eq:springLocalK shows
+
 ### Genetic Algorithm
 
 ## Meta-models for mechanical optimization
