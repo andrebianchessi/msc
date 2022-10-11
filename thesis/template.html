@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="materialize/css/materialize.css"  media="screen,projection"/>
+    <link rel="stylesheet" href="style.css">
+    <!--Let browser know website is optimized for mobile-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    </head>
+
+    <body>
+        <div class="row">
+            <div class="col l2 hide-on-med-and-down section" id="chapters">
+                <h6 class="blue-text text-darken-4">Chapters</h6>
+                <div class="toc">
+                    $toc$
+                </div>
+                <br>
+                <p class="center-align"><a href="#title"id="toc-title"><i class="material-icons center">keyboard_double_arrow_up</i></a></p>
+            </div>
+            <div class="col s12 l10 offset-l2 section" id="top">
+                <h1 id="title" class="indigo-text text-darken-4">$title$</h1>
+                <h4 class="indigo-text text-darken-3">$author$</h4>
+                <h5 class="indigo-text text-darken-3">Advisor: $advisor$</h5>
+                <h6 class="grey-text text-darken-3">$university$</h6>
+                <h6 class="grey-text text-darken-3">$program_name$</h6>
+                <h6 class="grey-text text-darken-3">$date$</h6>
+            </div>
+            <div class="col s12 l10 offset-l2 section">$body$</div>
+        </div>
+
+
+        <!--JavaScript at end of body for optimized loading-->
+        <script type="text/javascript" src="materialize/js/materialize.min.js"></script>
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        <script id="MathJax-script" async
+                src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+        </script>
+        <script>
+        </script>
+    </body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="materialize/css/materialize.css"  media="screen,projection"/>
+    <link rel="stylesheet" href="style.css">
+    <!--Let browser know website is optimized for mobile-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    </head>
+
+    <body>
+        <div class="row">
+            <div class="col l2 hide-on-med-and-down section" id="chapters">
+                <h6 class="blue-text text-darken-4">Chapters</h6>
+                <div class="toc">
+                    <ul>
+                    <li><a href="#acronyms"
+                    id="toc-acronyms">Acronyms</a></li>
+                    <li><a href="#introduction"
+                    id="toc-introduction">Introduction</a></li>
+                    <li><a href="#objectives"
+                    id="toc-objectives">Objectives</a></li>
+                    <li><a href="#literature-review"
+                    id="toc-literature-review">Literature Review</a>
+                    <ul>
+                    <li><a
+                    href="#crashworthiness-models-masses-springs-dampers-systems"
+                    id="toc-crashworthiness-models-masses-springs-dampers-systems">Crashworthiness
+                    models: Masses-Springs-Dampers Systems</a>
+                    <ul>
+                    <li><a
+                    href="#discrete-element-method-solution-to-msdss"
+                    id="toc-discrete-element-method-solution-to-msdss">Discrete
+                    element method solution to MSDS’s</a></li>
+                    <li><a href="#genetic-algorithm"
+                    id="toc-genetic-algorithm">Genetic
+                    Algorithm</a></li>
+                    </ul></li>
+                    <li><a
+                    href="#meta-models-for-mechanical-optimization"
+                    id="toc-meta-models-for-mechanical-optimization">Meta-models
+                    for mechanical optimization</a></li>
+                    <li><a
+                    href="#physics-informed-neural-networks-pinns"
+                    id="toc-physics-informed-neural-networks-pinns">Physics
+                    Informed Neural Networks (PINNs)</a></li>
+                    </ul></li>
+                    <li><a href="#methods"
+                    id="toc-methods">Methods</a></li>
+                    <li><a href="#results"
+                    id="toc-results">Results</a></li>
+                    <li><a href="#discussion"
+                    id="toc-discussion">Discussion</a></li>
+                    <li><a href="#references"
+                    id="toc-references">References</a></li>
+                    </ul>
+                </div>
+                <br>
+                <p class="center-align"><a href="#title"id="toc-title"><i class="material-icons center">keyboard_double_arrow_up</i></a></p>
+            </div>
+            <div class="col s12 l10 offset-l2 section" id="top">
+                <h1 id="title" class="indigo-text text-darken-4">Meta-analysis
+of Mechanical Optimization by Genetic Algorithm with
+Physics-Based-Neural-Network-Metamodel</h1>
+                <h4 class="indigo-text text-darken-3">André
+Bianchessi</h4>
+                <h5 class="indigo-text text-darken-3">Advisor: Marcilio
+Alves</h5>
+                <h6 class="grey-text text-darken-3">Universidade de São
+Paulo</h6>
+                <h6 class="grey-text text-darken-3">Programa de
+Pós-Graduação em Engenharia Mecânica</h6>
+                <h6 class="grey-text text-darken-3">2022/10/21</h6>
+            </div>
+            <div class="col s12 l10 offset-l2 section"><h1
+id="acronyms">Acronyms</h1>
+<ul>
+<li><p><strong>GA</strong> Genetic Algorithm.</p></li>
+<li><p><strong>MSDS</strong> “Masses-Springs-Dampers System”, i.e. a
+mechanical system composed of ideal masses, springs and
+dampers.</p></li>
+<li><p><strong>PINN</strong> Physics Informed Neural Network.</p></li>
+</ul>
+<h1 id="introduction">Introduction</h1>
+<p>TODO: write introduction with the following key points</p>
+<ul>
+<li>Explain relevance of mechanical optimizations.</li>
+<li>Show literature examples of metamodels used for genetic algorithm
+optimization.</li>
+<li>Explain that metamodels require a high cost for their training, but
+might accelerate the overall optimization for, once trained, the AI is
+faster than the FEM model. That, however, is not
+trivial/straightforward. It might “not be worth it”.</li>
+<li>Explain that data fit models are only capable of interpolations, and
+not extrapolations</li>
+<li>Introduce PINNs, citing that they’ve been used in studies in many
+areas (CFD, topology opt etc).</li>
+<li>Explain that PINNs are new and promising models because:
+<ul>
+<li>Incorporate physics knowledge into the model, which might increase
+the extrapolation capability</li>
+<li>Can be trained without labeled data; thus don’t require running many
+FEM simulations beforehand.</li>
+</ul></li>
+<li>Explain that this study focuses on exploring the usage of PINNs for
+genetic algorithm optimization. We set out to analyze how much
+performance gain they can provide when compared to traditional methods
+(FEM, discrete simulations), how that changes with respect to the
+system’s complexity, and how they perform if used to simulate conditions
+outside of the ones they were trained on, which could allow models to be
+reused on subsequent optimizations of the same system with different
+initial conditions.</li>
+<li>Highlight that our focus is on exploring Genetic Algorithm + PINN
+optimization, and not necessarily on assessing the benefits of applying
+this technique to a specific problem. We know that results to some case
+studies are not trivially generalizable, but they may still increase our
+understanding on potentials and limitations of this promising new
+technique, provide some insights and new ideas worth pursuing, and
+facilitate future work that might be similar to this one.</li>
+<li>Inspired by lumped crashworthiness models, we chose to optimize
+mass/spring/damper systems. They can easily be made arbitrarily
+simple/complex and require a small implementation overhead, which allows
+us to spend less effort on implementing FEM solvers for example.</li>
+</ul>
+<h1 id="objectives">Objectives</h1>
+<p>This work sets out to:</p>
+<ol type="1">
+<li>Define a few mechanical systems with increasing complexity that are
+comprized of masses, linear springs and linear dampers.</li>
+<li>For each one of the mechanical systems, find the parameters
+(constants of springs and dampers) that minimize the maximum
+acceleration that one of the masses experiences on an impact with a
+given speed. The optimization is done twice for each system using a
+Genetic Algorithm: first using a DES (discrete element simulation) and,
+secondly, a PINN (Physics Informed Neural Network) metamodel to find the
+system’s dynamic response. The PINN metamodels are trained without
+training data.</li>
+<li>Redo the optimizations using the same PINNs, without retraining
+them, but for different impact speeds (both lower and higher).</li>
+<li>Analyze and compare the results obtained.</li>
+</ol>
+<p>Some of the questions we want to answer are:</p>
+<ul>
+<li>For each combination of <em>method to find the system’s dynamic
+response (DES and PINN)</em>, <em>system’s complexity</em> and <em>speed
+of impact (same, lower than, and higher than the one used for PINN
+training)</em>, how did the performance, optimal solution found
+(constants of springs and dampers) and optimal result found (maximum
+acceleration) vary?</li>
+<li>How well did the metamodels perform, i.e. how close to the DES
+results were their predictions, for the impacts with the speed they were
+trained on? How about for the impacts with different speeds?</li>
+<li>How big was the added cost of training the metamodels?</li>
+</ul>
+<h1 id="literature-review">Literature Review</h1>
+<h2
+id="crashworthiness-models-masses-springs-dampers-systems">Crashworthiness
+models: Masses-Springs-Dampers Systems</h2>
+<p><span class="citation" data-cites="Javad">(<a href="#ref-Javad"
+role="doc-biblioref">Marzbanrad and Pahlavani 2011</a>)</span></p>
+<p>TODO:</p>
+<ul>
+<li>Explain why models are used and why they are important.</li>
+<li>Highlight why having an AI that substitutes the whole optimization
+can be useful (so that other crashworthiness models can be optimized
+quickly)</li>
+</ul>
+<h3 id="discrete-element-method-solution-to-msdss">Discrete element
+method solution to MSDS’s</h3>
+<p><span class="citation" data-cites="Javad">(<a href="#ref-Javad"
+role="doc-biblioref">Marzbanrad and Pahlavani 2011</a>)</span></p>
+<p><span id="eq:springLocalK"><span class="math display">\[
+\begin{bmatrix}
+k &amp; -k\\
+-k &amp; k
+\end{bmatrix}
+\begin{bmatrix}
+x_0\\
+x_1\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+\ddot{x_0}\\
+\ddot{x_1}\\
+\end{bmatrix}
+\qquad{(1)}\]</span></span></p>
+<p>Eq. 1 shows test</p>
+<h3 id="genetic-algorithm">Genetic Algorithm</h3>
+<h2 id="meta-models-for-mechanical-optimization">Meta-models for
+mechanical optimization</h2>
+<p><span class="citation" data-cites="Driemeier_undated-ub">(<a
+href="#ref-Driemeier_undated-ub" role="doc-biblioref">Driemeier,
+n.d.</a>)</span> <span class="citation" data-cites="Gu2018-rt">(<a
+href="#ref-Gu2018-rt" role="doc-biblioref">Gu, Chen, and Buehler
+2018</a>)</span> <span class="citation" data-cites="Gu2018-tj">(<a
+href="#ref-Gu2018-tj" role="doc-biblioref">Gu et al. 2018</a>)</span>
+<span class="citation" data-cites="Lee2022-ju">(<a
+href="#ref-Lee2022-ju" role="doc-biblioref">Lee, Zhang, and Gu
+2022</a>)</span> <span class="citation" data-cites="Wilt2020-we">(<a
+href="#ref-Wilt2020-we" role="doc-biblioref">Wilt, Yang, and Gu
+2020</a>)</span></p>
+<h2 id="physics-informed-neural-networks-pinns">Physics Informed Neural
+Networks (PINNs)</h2>
+<p><span class="citation" data-cites="Nascimento2020-nz">(<a
+href="#ref-Nascimento2020-nz" role="doc-biblioref">Nascimento, Fricke,
+and Viana 2020</a>)</span></p>
+<h1 id="methods">Methods</h1>
+<h1 id="results">Results</h1>
+<h1 id="discussion">Discussion</h1>
+<!--
+MIT License
+
+Copyright (c) 2019-2022 Carsten Gips
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<!--
+Do not edit this file!
+
+References are automatically generated from the BibTex file (references.bib)
+... which you should create/maintain using a reference manager.
+-->
+<h1 class="unnumbered" id="references">References</h1>
+<div id="refs" class="references csl-bib-body hanging-indent"
+role="doc-bibliography">
+<div id="ref-Driemeier_undated-ub" class="csl-entry"
+role="doc-biblioentry">
+Driemeier, Larissa. n.d. <span>“On the Use of <span>AI</span> for
+Metamodeling: A Case Study of a <span>3d</span> Bar Structure.”</span>
+</div>
+<div id="ref-Gu2018-rt" class="csl-entry" role="doc-biblioentry">
+Gu, Grace X, Chun-Teh Chen, and Markus J Buehler. 2018. <span>“De Novo
+Composite Design Based on Machine Learning Algorithm.”</span>
+<em>Extreme Mechanics Letters</em> 18 (January): 19–28.
+</div>
+<div id="ref-Gu2018-tj" class="csl-entry" role="doc-biblioentry">
+Gu, Grace X, Chun-Teh Chen, Deon J Richmond, and Markus J Buehler. 2018.
+<span>“Bioinspired Hierarchical Composite Design Using Machine Learning:
+Simulation, Additive Manufacturing, and Experiment.”</span>
+<em>Materials Horizons</em> 5 (5): 939–45.
+</div>
+<div id="ref-Lee2022-ju" class="csl-entry" role="doc-biblioentry">
+Lee, Sangryun, Zhizhou Zhang, and Grace X Gu. 2022. <span>“Generative
+Machine Learning Algorithm for Lattice Structures with Superior
+Mechanical Properties.”</span> <em>Mater Horiz</em> 9 (3): 952–60.
+</div>
+<div id="ref-Javad" class="csl-entry" role="doc-biblioentry">
+Marzbanrad, Javad, and Mostafa Pahlavani. 2011. <span>“A System
+Identification Algorithm for Vehicle Lumped Parameter Model in Crash
+Analysis.”</span> <em>International Journal of Modeling and
+Optimization</em> 1 (January): 163–66. <a
+href="https://doi.org/10.7763/IJMO.2011.V1.29">https://doi.org/10.7763/IJMO.2011.V1.29</a>.
+</div>
+<div id="ref-Nascimento2020-nz" class="csl-entry"
+role="doc-biblioentry">
+Nascimento, Renato G, Kajetan Fricke, and Felipe A C Viana. 2020.
+<span>“A Tutorial on Solving Ordinary Differential Equations Using
+Python and Hybrid Physics-Informed Neural Network.”</span> <em>Eng.
+Appl. Artif. Intell.</em> 96 (November): 103996.
+</div>
+<div id="ref-Wilt2020-we" class="csl-entry" role="doc-biblioentry">
+Wilt, Jackson K, Charles Yang, and Grace X Gu. 2020. <span>“Accelerating
+Auxetic Metamaterial Design with Deep Learning.”</span> <em>Adv. Eng.
+Mater.</em> 22 (5): 1901266.
+</div>
+</div></div>
+        </div>
+
+
+        <!--JavaScript at end of body for optimized loading-->
+        <script type="text/javascript" src="materialize/js/materialize.min.js"></script>
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        <script id="MathJax-script" async
+                src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+        </script>
+        <script>
+        </script>
+    </body>
+</html>

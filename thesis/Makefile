@@ -105,16 +105,16 @@ OPTIONS += --number-sections
 OPTIONS += -V colorlinks=true
 OPTIONS += --include-in-header=include-header.tex $(AUX_OPTS)
 
-HTML_OPTIONS  = -f markdown
-HTML_OPTIONS += --template html/template.html
-HTML_OPTIONS += --toc
-HTML_OPTIONS += --toc-depth=2
-HTML_OPTIONS += --metadata-file=metadata.yaml
-HTML_OPTIONS += --filter pandoc-crossref
-HTML_OPTIONS += --citeproc
-HTML_OPTIONS += -M bibliography=$(BIBFILE)
-HTML_OPTIONS += -M link-citations=true
-HTML_OPTIONS += --mathjax
+WEBSITE_OPTIONS  = -f markdown
+WEBSITE_OPTIONS += --template template.html
+WEBSITE_OPTIONS += --toc --standalone
+WEBSITE_OPTIONS += --toc-depth=3
+WEBSITE_OPTIONS += --metadata-file=metadata.yaml
+WEBSITE_OPTIONS += --filter pandoc-crossref
+WEBSITE_OPTIONS += --citeproc
+WEBSITE_OPTIONS += -M bibliography=$(BIBFILE)
+WEBSITE_OPTIONS += -M link-citations=true
+WEBSITE_OPTIONS += --mathjax
 
 ###############################################################################
 ## Targets
@@ -129,10 +129,10 @@ $(TMP): %.filled.tex: %.tex $(META)
 pdf: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
 	pandoc ${OPTIONS} -o thesis.pdf $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
 
-html: $(SRC) $(REFERENCES) html/template.html
-	pandoc $(HTML_OPTIONS) -o html/thesis.html $(SRC) $(REFERENCES)
+website: $(SRC) $(REFERENCES) template.html
+	pandoc $(WEBSITE_OPTIONS) -o website/index.html $(SRC) $(REFERENCES)
 
 ## Clean-up: Remove thesis and temporary (generated) files
 clean:
-	rm -rf thesis.pdf html/thesis.html $(TMP)
+	rm -rf thesis.pdf website/index.html $(TMP)
 
