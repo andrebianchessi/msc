@@ -130,7 +130,7 @@ pdf: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
 	pandoc ${OPTIONS} -o thesis.pdf $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
 
 website: $(SRC) $(REFERENCES) template.html
-	pandoc $(WEBSITE_OPTIONS) -o website/index.html $(SRC) $(REFERENCES)
+	pandoc $(WEBSITE_OPTIONS) -o website/index.html $(SRC) $(REFERENCES) --csl $(CSL_FILE)
 
 ## Clean-up: Remove thesis and temporary (generated) files
 clean:

@@ -4,5 +4,14 @@
 }
 
 .toc * {
-    color: #039be5 ;
+    color: #039be5; /* light-blue darken-1 */
+}
+
+[role=doc-biblioentry] {
+    vertical-align: middle;
+    margin-top: 20px;
+}
+
+.csl-left-margin {
+    color: #0277bd; /* light-blue darken-3 */
 }
