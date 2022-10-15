@@ -5,6 +5,7 @@
 
 .toc * {
     color: #039be5; /* light-blue darken-1 */
+    margin: 0;
 }
 
 [role=doc-biblioentry] {

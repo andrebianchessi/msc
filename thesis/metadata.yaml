@@ -23,7 +23,7 @@
 
 ---
 ## mandatory (subtitle and header-left are optional)
-title: "Meta-analysis of Mechanical Optimization by Genetic Algorithm with Physics-Based-Neural-Network-Metamodel"
+title: "Meta-analysis of Mechanical Optimization by Genetic Algorithm with Physics-Informed-Neural-Network-Metamodels"
 #subtitle: "From Markdown to LaTeX to PDF"
 author: "André Bianchessi"
 advisor: "Marcilio Alves"
