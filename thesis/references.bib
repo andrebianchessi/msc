@@ -1,137 +1,45 @@
 
-@article{Javad,
-author = {Marzbanrad, Javad and Pahlavani, Mostafa},
-year = {2011},
-month = {01},
-pages = {163-166},
-title = {A System Identification Algorithm for Vehicle Lumped Parameter Model in Crash Analysis},
-volume = {1},
-journal = {International Journal of Modeling and Optimization},
-doi = {10.7763/IJMO.2011.V1.29}
-}
-
-@ARTICLE{Nascimento2020-nz,
-  title    = "A tutorial on solving ordinary differential equations using
-              Python and hybrid physics-informed neural network",
-  author   = "Nascimento, Renato G and Fricke, Kajetan and Viana, Felipe A C",
-  abstract = "We present a tutorial on how to directly implement integration of
-              ordinary differential equations through recurrent neural networks
-              using Python. In order to simplify the implementation, we
-              leveraged modern machine learning frameworks such as TensorFlow
-              and Keras. Besides, offering implementation of basic models (such
-              as multilayer perceptrons and recurrent neural networks) and
-              optimization methods, these frameworks offer powerful automatic
-              differentiation. With all that, the main advantage of our
-              approach is that one can implement hybrid models combining
-              physics-informed and data-driven kernels, where data-driven
-              kernels are used to reduce the gap between predictions and
-              observations. Alternatively, we can also perform model parameter
-              identification. In order to illustrate our approach, we used two
-              case studies. The first one consisted of performing fatigue crack
-              growth integration through Euler's forward method using a hybrid
-              model combining a data-driven stress intensity range model with a
-              physics-based crack length increment model. The second case study
-              consisted of performing model parameter identification of a
-              dynamic two-degree-of-freedom system through Runge--Kutta
-              integration. The examples presented here as well as source codes
-              are all open-source under the GitHub repository
-              https://github.com/PML-UCF/pinn\_code\_tutorial.",
-  journal  = "Eng. Appl. Artif. Intell.",
-  volume   =  96,
-  pages    = "103996",
-  month    =  nov,
-  year     =  2020,
-  keywords = "Physics-informed neural network; Scientific machine learning;
-              Uncertainty quantification; Hybrid model python implementation"
-}
-
-@ARTICLE{Driemeier_undated-ub,
-  title    = "On the use of {AI} for metamodeling: a case study of a {3D} bar
-              structure",
-  author   = "Driemeier, Larissa",
-  abstract = "Reengineering in structural analysis can be seen as a process
-              adopted when the structure needs a redesign to meet performance
-              requirements or when the input parameters need frequent
-              adjustments within a fixed domain. It is particularly challenging
-              when the redesign involves complex structures, optimization, non-
-              deterministic material characteristics, geometric or material
-              nonlinearities. These complex analyzes have high computational
-              costs, that make real-time use difficult and requires
-              sophisticated and expensive software and hardware. One way to
-              overcome these drawbacks is to reengineer applying metamodels
-              calibrated by machine learning approaches. In another words, the
-              use of Artificial Intelligence can reduce the maintenance costs
-              and enable real-time redesign for complex situations. In our
-              study, a metamodel is proposed to analyze 3D nonlinear structures
-              subjected to plastic deformations and large strains, via an
-              artificial neural network. The nonlinearities and the associated
-              snap through and snapback behavior are all dealt with by a net
-              training based on 10,000 Force vs Displacement curves (target
-              outputs) obtained from nonlinear finite element analyses. This
-              interplay between finite element analysis and machine learning is
-              shown here to be a promising technique. The results indicate that
-              the proposed deep neural network is capable to learn the finite
-              element simulation. The presented discussion aims to indicate
-              when the use of AI in the analysis of nonlinear structures is
-              justified."
-}
-
-@ARTICLE{Gu2018-tj,
-  title     = "Bioinspired hierarchical composite design using machine
-               learning: simulation, additive manufacturing, and experiment",
-  author    = "Gu, Grace X and Chen, Chun-Teh and Richmond, Deon J and Buehler,
-               Markus J",
-  abstract  = "A new approach to design hierarchical materials using
-               convolutional neural networks is proposed and validated through
-               additive manufacturing and testing.",
-  journal   = "Materials Horizons",
-  publisher = "The Royal Society of Chemistry",
-  volume    =  5,
+@ARTICLE{Wilt2020-np,
+  title     = "Accelerating auxetic metamaterial design with deep learning",
+  author    = "Wilt, Jackson K and Yang, Charles and Gu, Grace X",
+  abstract  = "Metamaterials can be designed to contain functional gradients
+               with negative Poisson's ratio (NPR) that have counterintuitive
+               behavior compared with monolithic materials. These NPR
+               materials, referred to as auxetics, are relevant to engineering
+               sciences because of their unique mechanical expansion. Previous
+               studies have explored compliant actuators using analytical and
+               numerically derived mechanics of materials principles. However,
+               the control of compliant gradient mechanisms frequently uses
+               complex analytical equations combined with traditional control
+               algorithms, making them difficult to design. To confront the
+               design processes and computational load, herein, machine
+               learning is used to predict errors in compliant auxetic designs
+               based on a mathematically optimal deformation. Finite element
+               analysis and experimental specimens validate the theoretical
+               mechanical behavior of a specific auxetic configuration as well
+               as demonstrate the capabilities of additive manufacturing of
+               graded auxetic materials. Pseudorandomized images and their
+               respective computational deformation results are used to train a
+               regressive model and predict the deviation from optimal
+               behavior. The model predicts the deviation from the desired
+               behavior with a mean average percent error below 5\% for the
+               validation set. Subsequently, a scalable workflow design process
+               connecting the unique performance of auxetics to machine
+               learning design predictions is proposed.",
+  journal   = "Adv. Eng. Mater.",
+  publisher = "Wiley",
+  volume    =  22,
   number    =  5,
-  pages     = "939--945",
-  month     =  aug,
-  year      =  2018
+  pages     = "1901266",
+  month     =  may,
+  year      =  2020,
+  keywords  = "additive manufacturing; auxetic materials; machine learning;
+               metamaterials",
+  copyright = "http://onlinelibrary.wiley.com/termsAndConditions\#vor",
+  language  = "en"
 }
 
-@ARTICLE{Gu2018-rt,
-  title     = "De novo composite design based on machine learning algorithm",
-  author    = "Gu, Grace X and Chen, Chun-Teh and Buehler, Markus J",
-  abstract  = "Composites are widely used to create tunable materials to
-               achieve superior mechanical properties. Brittle materials fail
-               catastrophically in the presence of cracks. Incorporating softer
-               constituents into brittle materials can alleviate stress
-               concentration, leading to tougher and stronger composites.
-               However, searching for the optimal designs of composites is
-               extremely challenging due to the astronomical number of possible
-               material and geometry combinations. Here, we apply machine
-               learning to a composite system and demonstrate its capacity to
-               accurately and efficiently predict mechanical properties
-               including toughness and strength. The method we used
-               incorporates machine learning techniques to generate optimal
-               designs with orders of magnitude better than the mean properties
-               of the input training data, and at a much lower computational
-               cost compared to exhaustive methods. Additionally, the method
-               can further rebuild the detailed performances of the designs,
-               even when this information is lost in the training process. The
-               results demonstrate the ability of machine learning to search
-               for optimal designs with very limited training data. To
-               demonstrate the application of machine learning to composite
-               design, we optimize a large-scale system not tractable by an
-               exhaustive brute force approach and show that it is a promising
-               tool towards composite design. This work offers a new
-               perspective in the exploration of design spaces and accelerating
-               the discovery of new functional, customizable composites.",
-  journal   = "Extreme Mechanics Letters",
-  publisher = "Elsevier",
-  volume    =  18,
-  pages     = "19--28",
-  month     =  jan,
-  year      =  2018,
-  keywords  = "Composites; Finite elements; Machine learning; Mechanical
-               properties; Optimization"
-}
-
-@ARTICLE{Lee2022-ju,
+@ARTICLE{Lee2022-uz,
   title    = "Generative machine learning algorithm for lattice structures with
               superior mechanical properties",
   author   = "Lee, Sangryun and Zhang, Zhizhou and Gu, Grace X",
@@ -172,42 +80,280 @@ doi = {10.7763/IJMO.2011.V1.29}
   language = "en"
 }
 
-@ARTICLE{Wilt2020-we,
-  title     = "Accelerating auxetic metamaterial design with deep learning",
-  author    = "Wilt, Jackson K and Yang, Charles and Gu, Grace X",
-  abstract  = "Metamaterials can be designed to contain functional gradients
-               with negative Poisson's ratio (NPR) that have counterintuitive
-               behavior compared with monolithic materials. These NPR
-               materials, referred to as auxetics, are relevant to engineering
-               sciences because of their unique mechanical expansion. Previous
-               studies have explored compliant actuators using analytical and
-               numerically derived mechanics of materials principles. However,
-               the control of compliant gradient mechanisms frequently uses
-               complex analytical equations combined with traditional control
-               algorithms, making them difficult to design. To confront the
-               design processes and computational load, herein, machine
-               learning is used to predict errors in compliant auxetic designs
-               based on a mathematically optimal deformation. Finite element
-               analysis and experimental specimens validate the theoretical
-               mechanical behavior of a specific auxetic configuration as well
-               as demonstrate the capabilities of additive manufacturing of
-               graded auxetic materials. Pseudorandomized images and their
-               respective computational deformation results are used to train a
-               regressive model and predict the deviation from optimal
-               behavior. The model predicts the deviation from the desired
-               behavior with a mean average percent error below 5\% for the
-               validation set. Subsequently, a scalable workflow design process
-               connecting the unique performance of auxetics to machine
-               learning design predictions is proposed.",
-  journal   = "Adv. Eng. Mater.",
-  publisher = "Wiley",
-  volume    =  22,
+@PHDTHESIS{Gu2012-ru,
+  title  = "Bioinspired algorithmic-driven design of additively manufactured
+            composites",
+  author = "Gu, Grace X",
+  year   =  2012
+}
+
+@ARTICLE{Gu2018-uk,
+  title     = "De novo composite design based on machine learning algorithm",
+  author    = "Gu, Grace X and Chen, Chun-Teh and Buehler, Markus J",
+  abstract  = "Composites are widely used to create tunable materials to
+               achieve superior mechanical properties. Brittle materials fail
+               catastrophically in the presence of cracks. Incorporating softer
+               constituents into brittle materials can alleviate stress
+               concentration, leading to tougher and stronger composites.
+               However, searching for the optimal designs of composites is
+               extremely challenging due to the astronomical number of possible
+               material and geometry combinations. Here, we apply machine
+               learning to a composite system and demonstrate its capacity to
+               accurately and efficiently predict mechanical properties
+               including toughness and strength. The method we used
+               incorporates machine learning techniques to generate optimal
+               designs with orders of magnitude better than the mean properties
+               of the input training data, and at a much lower computational
+               cost compared to exhaustive methods. Additionally, the method
+               can further rebuild the detailed performances of the designs,
+               even when this information is lost in the training process. The
+               results demonstrate the ability of machine learning to search
+               for optimal designs with very limited training data. To
+               demonstrate the application of machine learning to composite
+               design, we optimize a large-scale system not tractable by an
+               exhaustive brute force approach and show that it is a promising
+               tool towards composite design. This work offers a new
+               perspective in the exploration of design spaces and accelerating
+               the discovery of new functional, customizable composites.",
+  journal   = "Extreme Mechanics Letters",
+  publisher = "Elsevier",
+  volume    =  18,
+  pages     = "19--28",
+  month     =  jan,
+  year      =  2018,
+  keywords  = "Composites; Finite elements; Machine learning; Mechanical
+               properties; Optimization"
+}
+
+@ARTICLE{Gu2018-tf,
+  title     = "Bioinspired hierarchical composite design using machine
+               learning: simulation, additive manufacturing, and experiment",
+  author    = "Gu, Grace X and Chen, Chun-Teh and Richmond, Deon J and Buehler,
+               Markus J",
+  abstract  = "A new approach to design hierarchical materials using
+               convolutional neural networks is proposed and validated through
+               additive manufacturing and testing.",
+  journal   = "Materials Horizons",
+  publisher = "The Royal Society of Chemistry",
+  volume    =  5,
   number    =  5,
-  pages     = "1901266",
+  pages     = "939--945",
+  month     =  aug,
+  year      =  2018
+}
+
+@ARTICLE{Driemeier_undated-za,
+  title    = "On the use of {AI} for metamodeling: a case study of a {3D} bar
+              structure",
+  author   = "Driemeier, Larissa",
+  abstract = "Reengineering in structural analysis can be seen as a process
+              adopted when the structure needs a redesign to meet performance
+              requirements or when the input parameters need frequent
+              adjustments within a fixed domain. It is particularly challenging
+              when the redesign involves complex structures, optimization, non-
+              deterministic material characteristics, geometric or material
+              nonlinearities. These complex analyzes have high computational
+              costs, that make real-time use difficult and requires
+              sophisticated and expensive software and hardware. One way to
+              overcome these drawbacks is to reengineer applying metamodels
+              calibrated by machine learning approaches. In another words, the
+              use of Artificial Intelligence can reduce the maintenance costs
+              and enable real-time redesign for complex situations. In our
+              study, a metamodel is proposed to analyze 3D nonlinear structures
+              subjected to plastic deformations and large strains, via an
+              artificial neural network. The nonlinearities and the associated
+              snap through and snapback behavior are all dealt with by a net
+              training based on 10,000 Force vs Displacement curves (target
+              outputs) obtained from nonlinear finite element analyses. This
+              interplay between finite element analysis and machine learning is
+              shown here to be a promising technique. The results indicate that
+              the proposed deep neural network is capable to learn the finite
+              element simulation. The presented discussion aims to indicate
+              when the use of AI in the analysis of nonlinear structures is
+              justified."
+}
+
+@ARTICLE{Nascimento2020-xp,
+  title    = "A tutorial on solving ordinary differential equations using
+              Python and hybrid physics-informed neural network",
+  author   = "Nascimento, Renato G and Fricke, Kajetan and Viana, Felipe A C",
+  abstract = "We present a tutorial on how to directly implement integration of
+              ordinary differential equations through recurrent neural networks
+              using Python. In order to simplify the implementation, we
+              leveraged modern machine learning frameworks such as TensorFlow
+              and Keras. Besides, offering implementation of basic models (such
+              as multilayer perceptrons and recurrent neural networks) and
+              optimization methods, these frameworks offer powerful automatic
+              differentiation. With all that, the main advantage of our
+              approach is that one can implement hybrid models combining
+              physics-informed and data-driven kernels, where data-driven
+              kernels are used to reduce the gap between predictions and
+              observations. Alternatively, we can also perform model parameter
+              identification. In order to illustrate our approach, we used two
+              case studies. The first one consisted of performing fatigue crack
+              growth integration through Euler's forward method using a hybrid
+              model combining a data-driven stress intensity range model with a
+              physics-based crack length increment model. The second case study
+              consisted of performing model parameter identification of a
+              dynamic two-degree-of-freedom system through Runge--Kutta
+              integration. The examples presented here as well as source codes
+              are all open-source under the GitHub repository
+              https://github.com/PML-UCF/pinn\_code\_tutorial.",
+  journal  = "Eng. Appl. Artif. Intell.",
+  volume   =  96,
+  pages    = "103996",
+  month    =  nov,
+  year     =  2020,
+  keywords = "Physics-informed neural network; Scientific machine learning;
+              Uncertainty quantification; Hybrid model python implementation"
+}
+
+@ARTICLE{Mostafa2011-kc,
+  title    = "A System Identification Algorithm for Vehicle Lumped",
+  author   = "Mostafa, Marzbanrad, Javad And",
+  abstract = "This study has investigated a vehicle lumped parameter model
+              (LPM) in frontal crash. There are several ways for determining
+              spring and damper characteristics and type of problem shall be
+              considered as system identification. This study use genetic
+              algorithm (GA) procedure, being an effective procedure in case of
+              optimization issues, for optimizing errors, between target data
+              (experimental data) and calculated results (being obtained by
+              analytical solving). In this study analyzed model in 5-DOF then
+              compared our results with 5-DOF serial model. In this paper, the
+              solution method of crash equations for lumped parameter is
+              investigated in discrete analysis method and presented a general
+              solution with the help of numerical solution.",
+  journal  = "International Journal of Modeling and Optimization",
+  volume   =  1,
+  pages    = "163--166",
+  month    =  jan,
+  year     =  2011
+}
+
+@ARTICLE{Zhang2021-vj,
+  title    = "Physics-informed deep learning for digital materials",
+  author   = "Zhang, Zhizhou and Gu, Grace X",
+  abstract = "In this work, a physics-informed neural network (PINN) designed
+              specifically for analyzing digital materials is introduced. This
+              proposed machine learning (ML) model can be trained free of
+              ground truth data by adopting the minimum energy criteria as its
+              loss function. Results show that our energy-based PINN reaches
+              similar accuracy as supervised ML models. Adding a hinge loss on
+              the Jacobian can constrain the model to avoid erroneous
+              deformation gradient caused by the nonlinear logarithmic strain.
+              Lastly, we discuss how the strain energy of each material element
+              at each numerical integration point can be calculated parallelly
+              on a GPU. The algorithm is tested on different mesh densities to
+              evaluate its computational efficiency which scales linearly with
+              respect to the number of nodes in the system. This work provides
+              a foundation for encoding physical behaviors of digital materials
+              directly into neural networks, enabling label-free learning for
+              the design of next-generation composites.",
+  journal  = "Theoretical and Applied Mechanics Letters",
+  volume   =  11,
+  number   =  1,
+  pages    = "100220",
+  month    =  jan,
+  year     =  2021,
+  keywords = "Physics-informed neural networks; Machine learning; Finite
+              element analysis; Digital materials; Computational mechanics"
+}
+
+@ARTICLE{Zhang2022-jp,
+  title    = "Efficient pneumatic actuation modeling using hybrid physics-based
+              and data-driven framework",
+  author   = "Zhang, Zhizhou and Jin, Zeqing and Gu, Grace X",
+  abstract = "Summary Soft robotics, characterized by structural compliance,
+              offers advantages when handling fragile objects and interacting
+              with humans. Modeling the mechanical behavior of soft robots,
+              however, is often overlooked in previous studies due to the
+              difficulty of capturing their nonlinear deformation. In this
+              work, we present a highly efficient predictor for pneumatic
+              actuation utilizing a combination of data-driven surrogate
+              modeling and physics-based optimization. This hybrid methodology
+              explicitly captures the nonlinear mechanics of pneumatic
+              components, which greatly accelerates the searching of static
+              equilibrium, and thus help elucidate how the overall grasping
+              system will interact with the environment. We have additively
+              manufactured and tested a robotic device on various objects.
+              Results show that our model can predict pneumatic actuation very
+              closely matching to that of the experiments with orders of
+              magnitude faster computational speed than traditional numerical
+              simulations. Moreover, the proposed framework can be extended to
+              model various soft robotic devices with nonlinear actuation
+              components.",
+  journal  = "Cell Reports Physical Science",
+  volume   =  3,
+  number   =  4,
+  pages    = "100842",
+  month    =  apr,
+  year     =  2022,
+  keywords = "pneumatic actuator; soft robotics; finite element method; neural
+              network; machine learning"
+}
+
+@BOOK{Thuerey2021-ut,
+  title     = "Physics-based Deep Learning",
+  author    = "Thuerey, Nils and Holl, Philipp and Mueller, Maximilian and
+               Schnell, Patrick and Trost, Felix and Um, Kiwon",
+  publisher = "WWW",
+  year      =  2021
+}
+
+@BOOK{Haupt2004-hj,
+  title     = "Practical Genetic Algorithms",
+  author    = "Haupt, Randy L and Haupt, Sue Ellen and Haupt, Sue Ellen Autor",
+  abstract  = "Randy Haupt and Sue Ellen Haupt, both affiliated with The
+               Pennsylvania State University Applied Research Laboratory,
+               emphasize practical applications rather than theory in this
+               second edition of a book/CD- ROM guide for practicing
+               scientists, engineers, economists, artists, and others
+               interested in the basics of genetic algorithms (GAs). This
+               edition contains code, in both MATLAB and High-Performance
+               Fortran, on the CD-ROM, plus expanded information on methods for
+               improving GA performance, and a new chapter on other artificial
+               intelligence methods of optimization such as simulated annealing
+               and ant colony optimization. Chapter exercises allow the book to
+               be used as a text. Annotation : 2004 Book News, Inc., Portland,
+               OR (booknews.com).",
+  publisher = "Wiley",
   month     =  may,
-  year      =  2020,
-  keywords  = "additive manufacturing; auxetic materials; machine learning;
-               metamaterials",
-  copyright = "http://onlinelibrary.wiley.com/termsAndConditions\#vor",
+  year      =  2004,
   language  = "en"
+}
+
+@MISC{Lam2021-gp,
+  title     = "Continuous Genetic Algorithm - Part 1",
+  author    = "Lam, H K",
+  abstract  = "This video is about Continuous Genetic Algorithm - Part 1",
+  publisher = "Youtube",
+  month     =  nov,
+  year      =  2021,
+  keywords  = "imovie; GA; BGA; CGA; iMovie; Genetic Algorithm; Working
+               Principle; optimisation; optimization; binary genetic algorithm;
+               schema; schemata; minimisation; minimization; maxmisation;
+               maxmization; metaheuristic; meta heuristic; population-based
+               algorithms; search algorithm; global search algorithms;
+               biologically inspired algorithms; natural inspired; continue
+               genetic algorithms; example; numerical examples; crossover;
+               mutation; population; random search; search algorithms; machine;
+               learning; real-coded"
+}
+
+@MISC{Lam2021-hg,
+  title     = "Continuous Genetic Algorithm - Part 2",
+  author    = "Lam, H K",
+  abstract  = "This video is about Continuous Genetic Algorithm - Part 2",
+  publisher = "Youtube",
+  month     =  nov,
+  year      =  2021,
+  keywords  = "imovie; GA; BGA; CGA; iMovie; Genetic Algorithm; Working
+               Principle; optimisation; optimization; binary genetic algorithm;
+               schema; schemata; minimisation; minimization; maxmisation;
+               maxmization; metaheuristic; meta heuristic; population-based
+               algorithms; search algorithm; global search algorithms;
+               biologically inspired algorithms; natural inspired; continue
+               genetic algorithms; example; numerical examples; crossover;
+               mutation; population; random search; search algorithms; machine;
+               learning; real-coded"
 }
