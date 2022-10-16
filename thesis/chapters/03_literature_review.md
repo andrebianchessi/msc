@@ -1,7 +1,7 @@
 # Literature Review
 
 ## Crashworthiness models: Masses-Springs-Dampers Systems
-[Mostafa2011-kc]
+[@Mostafa2011-kc]
 
 TODO:
 
@@ -10,8 +10,8 @@ TODO:
 can be useful (so that other crashworthiness models can be
 optimized quickly)
 
-### Discrete element method solution to MSDS's
-[Mostafa2011-kc]
+## Discrete element method solution to MSDS's
+[@Mostafa2011-kc]
 
 
 $$
@@ -33,7 +33,7 @@ $$
 
 @Eq:springLocalK shows test
 
-### Genetic Algorithm
+## Genetic Algorithm
 
 ## Meta-models for mechanical optimization
 [@Driemeier_undated-za]
