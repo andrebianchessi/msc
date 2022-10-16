@@ -30,7 +30,8 @@ META = metadata.yaml
 
 ## Add chapters here inh the order they appear with
 ## SRC += chapters/XX_chapter.md
-SRC  = chapters/00_acronyms.md
+SRC  = chapters/000_source_code.md
+SRC += chapters/001_acronyms.md
 SRC += chapters/01_motivation.md
 SRC += chapters/02_objectives.md
 SRC += chapters/03_literature_review.md
