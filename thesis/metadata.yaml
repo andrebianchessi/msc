@@ -22,6 +22,7 @@
 
 
 ---
+version: "0.0"
 ## mandatory (subtitle and header-left are optional)
 title: "Meta-analysis of Mechanical Optimization by Genetic Algorithm with Physics-Informed-Neural-Network-Metamodels"
 #subtitle: "From Markdown to LaTeX to PDF"
