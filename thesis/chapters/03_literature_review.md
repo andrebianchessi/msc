@@ -1,7 +1,7 @@
 # Literature Review
 
 ## Crashworthiness models: Masses-Springs-Dampers Systems
-[@Javad]
+[Mostafa2011-kc]
 
 TODO:
 
@@ -11,7 +11,7 @@ can be useful (so that other crashworthiness models can be
 optimized quickly)
 
 ### Discrete element method solution to MSDS's
-[@Javad]
+[Mostafa2011-kc]
 
 
 $$
@@ -36,13 +36,13 @@ $$
 ### Genetic Algorithm
 
 ## Meta-models for mechanical optimization
-[@Driemeier_undated-ub]
-[@Gu2018-rt]
-[@Gu2018-tj]
-[@Lee2022-ju]
-[@Wilt2020-we]
+[@Driemeier_undated-za]
+[@Gu2018-uk]
+[@Gu2018-tf]
+[@Lee2022-uz]
+[@Wilt2020-np]
 
 ## Physics Informed Neural Networks (PINNs)
-[@Nascimento2020-nz]
+[@Nascimento2020-xp]
 
 

@@ -38,7 +38,7 @@ successful cases in the literature [@Wilt2020-np, @Lee2022-uz, @Gu2012-ru,
 
 What we have not found in the literature, however, are in depth analyses of how
 the efficiency of metamodel-based-GA optimization changes with respect to the problem's complexity and the ML model used.
-After all, there's also a cost associated with training the metamodel. Can in be that, in some cases, we'd need to calculate the cost function $$1$$M times to train a metamodel, but would only calculate it $$10$$k times in the GA? In those cases, using a metamodel would not make sense.
+After all, there's also a cost associated with training the metamodel. Can in be that, in some cases, we'd need to calculate the cost function $1$M times to train a metamodel, but would only calculate it $10$k times in the GA? In those cases, using a metamodel would not make sense.
 
 Physics-Based Machine Learning is a promising field of research that has been quickly growing,
 and has already shown great results when used in metamodel-based-GA [@Zhang2021-vj, @Zhang2022-jp]. Physics-Informed-Neural-Networks (PINNs) are
