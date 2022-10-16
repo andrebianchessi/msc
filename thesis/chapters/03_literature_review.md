@@ -16,12 +16,21 @@ optimized quickly)
 
 $$
 \begin{bmatrix}
-k & -k\\
--k & k
+k_{01} & -k_{01}\\
+-k_{01} & k_{01}
 \end{bmatrix}
 \begin{bmatrix}
 x_0\\
 x_1\\
+\end{bmatrix}
++
+\begin{bmatrix}
+b_{01} & -b_{01}\\
+-b_{01} & b_{01}
+\end{bmatrix}
+\begin{bmatrix}
+\dot{x_0}\\
+\dot{x_1}\\
 \end{bmatrix}
 =
 \begin{bmatrix}
