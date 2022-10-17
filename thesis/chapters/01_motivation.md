@@ -34,20 +34,47 @@ function. For cases in which the cost function itself is a model (i.e. and
 approximation of the reality) such as a FEMs, the ML models
 used to approximate them can be called *metamodels*. There are many very
 successful cases in the literature [@Wilt2020-np; @Lee2022-uz; @Gu2012-ru;
-@Gu2018-uk; @Gu2018-tf; @Driemeier_undated-za].
+@Gu2018-uk; @Gu2018-tf; @Driemeier_undated-za]. In this text, we use MMGA to
+refer to GAs which use metamodels to calculate the cost function, and NMMGAs to
+refer to GAs which don't.
 
 What we have not found in the literature, however, are in depth analyses of how
-the efficiency of metamodel-based-GA optimization changes with respect to the problem's complexity and the ML model used.
-After all, there's also a cost associated with training the metamodel. Can in be that, in some cases, we'd need to calculate the cost function $1$M times to train a metamodel, but would only calculate it $10$k times in the GA? In those cases, using a metamodel would not make sense.
+the efficiency of MMGAs change with respect to the problem's complexity and the
+ML models used. After all, there's also a cost associated with training the
+metamodels. Can in be that, in some cases, we'd need to calculate the cost
+function $1$M times to train a metamodel, but would only calculate it $10$k
+times in the NMMGA? In those cases, using a metamodel would not make sense.
 
-Physics-Based Machine Learning is a promising field of research that has been quickly growing,
-and has already shown great results when used in metamodel-based-GA [@Zhang2021-vj; @Zhang2022-jp]. Physics-Informed-Neural-Networks (PINNs) are
-Neural Networks (NNs) which have physics knowledge embedded into their loss-function. This allows them to be trained without labeled data. Thus, it's possible to train, for example, a metamodel to an expensive FEM simulation without needing to run the FEM simulation multiple times beforehand. This way, PINNs might be ideal to metamodel-based-GA applied to problems which have expensive cost functions.
+Physics-Based Machine Learning is a promising field of research that has been
+quickly growing, and has already shown great results when used in
+MMGA [@Zhang2021-vj; @Zhang2022-jp].
+Physics-Informed-Neural-Networks (PINNs) are Neural Networks (NNs) which have
+physics knowledge embedded into their loss-function. This allows them to be
+trained without labeled data. Thus, it's possible to train, for example, a
+metamodel to an expensive FEM simulation without needing to run the FEM
+simulation multiple times beforehand. This way, PINNs might be ideal to
+MMGA applied to problems which have expensive cost functions.
 
-Also, given that they're trained without labeled data, PINNs might have better extrapolation capabilities than NNs. This characteristic might make then perform well even on a very large domain of possible solutions, which is exactly the cases in which GAs excel.
+Also, given that they're trained without labeled data, PINNs might have better
+extrapolation capabilities than NNs. This characteristic might make then perform
+well even on a very large domain of possible solutions, which is exactly the
+cases in which GAs excel.
 
-In this work, we set out to analyze how much performance improvement can be obtained for a GA applied to mechanical systems when PINN metamodels are used; and how that varies with respect to the system's and metamodel's complexity. We also want to investigate the extrapolation capabilities of PINNs in this technique, i.e. how they perform when evaluating conditions much different than the ones they were trained on.
+In this work, we set out to analyze how much performance improvement can be
+obtained for a GA applied to mechanical systems when PINN metamodels are used;
+and how that varies with respect to the system's and metamodel's complexity. We
+also want to investigate the extrapolation capabilities of PINNs in this
+technique, i.e. how they perform when evaluating conditions much different than
+the ones they were trained on.
 
-Note that our focus is not to investigate this technique applied to a specific problem, but of the technique itself. We know that results to some case studies are not trivially generalizable, but they may still increase our understanding on potentials and limitations of this promising new technique, provide some insights and new ideas worth pursuing, and facilitate future work that might be similar to this one.
+Note that our focus is not to investigate this technique applied to a specific
+problem, but of the technique itself. We know that results to some case studies
+are not trivially generalizable, but they may still increase our understanding
+on potentials and limitations of this promising new technique, provide some
+insights and new ideas worth pursuing, and facilitate future work that might be
+similar to this one.
 
-For this reason, we only analyze Mass-Spring-Damper Systems (MSDSs). Solvers for these systems require a small implementation overhead, which allows us to spend less effort on implementing FEM solvers for example. Besides, it's easy to generate arbitrarily simple/complex systems of this kind.
+For this reason, we only analyze Mass-Spring-Damper Systems (MSDSs). Solvers for
+these systems require a small implementation overhead, which allows us to spend
+less effort on implementing FEM solvers for example. Besides, it's easy to
+generate arbitrarily simple/complex systems of this kind.

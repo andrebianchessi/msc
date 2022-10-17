@@ -6,6 +6,10 @@
 
 - **GA** Genetic Algorithm.
 
+- **MMGA** Genetic Algorithm which uses a metamodel to calculate the cost function.
+
+- **NMMGA** Genetic Algorithm which doesn't use a metamodel to calculate the cost function.
+
 - **ML** Machine Learning.
 
 - **MSDS** "Masses-Springs-Dampers System", i.e. a mechanical system composed of ideal masses, springs and dampers.

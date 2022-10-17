@@ -106,7 +106,7 @@ OPTIONS += --number-sections
 OPTIONS += -V colorlinks=true
 OPTIONS += --include-in-header=include-header.tex $(AUX_OPTS)
 
-WEBSITE_OPTIONS  = -f markdown
+WEBSITE_OPTIONS  = -f markdown+implicit_figures
 WEBSITE_OPTIONS += --template template.html
 WEBSITE_OPTIONS += --toc --standalone
 WEBSITE_OPTIONS += --toc-depth=3
@@ -131,7 +131,7 @@ pdf: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
 	pandoc ${OPTIONS} -o thesis.pdf $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
 
 website: $(SRC) $(REFERENCES) template.html
-	pandoc $(WEBSITE_OPTIONS) -o website/index.html $(SRC) $(REFERENCES) --csl $(CSL_FILE)
+	cp -r ./figs/ ./website/figs && pandoc $(WEBSITE_OPTIONS) -o website/index.html $(SRC) $(REFERENCES) --csl $(CSL_FILE)
 
 ## Clean-up: Remove thesis and temporary (generated) files
 clean:
