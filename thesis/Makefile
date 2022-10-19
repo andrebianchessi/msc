@@ -110,6 +110,7 @@ WEBSITE_OPTIONS  = -f markdown+implicit_figures
 WEBSITE_OPTIONS += --template template.html
 WEBSITE_OPTIONS += --toc --standalone
 WEBSITE_OPTIONS += --toc-depth=3
+WEBSITE_OPTIONS += --number-sections
 WEBSITE_OPTIONS += --metadata-file=metadata.yaml
 WEBSITE_OPTIONS += --filter pandoc-crossref
 WEBSITE_OPTIONS += --citeproc
@@ -131,7 +132,7 @@ pdf: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
 	pandoc ${OPTIONS} -o thesis.pdf $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
 
 website: $(SRC) $(REFERENCES) template.html
-	cp -r ./figs/ ./website/figs && pandoc $(WEBSITE_OPTIONS) -o website/index.html $(SRC) $(REFERENCES) --csl $(CSL_FILE)
+	cp -r figs/ website/ && pandoc $(WEBSITE_OPTIONS) -o website/index.html $(SRC) $(REFERENCES) --csl $(CSL_FILE)
 
 ## Clean-up: Remove thesis and temporary (generated) files
 clean:

@@ -1,5 +1,5 @@
 # Source Code
-All of this work's source code (including all images,text and code)
+All of this work's source code (including all images, text and code)
 is available at [github.com/andrebianchessi/msc](https://github.com/andrebianchessi/msc)
 under an MIT open source license.
 

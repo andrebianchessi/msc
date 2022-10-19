@@ -41,3 +41,8 @@ table {
     margin-right: auto !important;
     width: 50% !important;
 }
+
+.sourceCode pre {
+    display: flex;
+    justify-content: center;
+}

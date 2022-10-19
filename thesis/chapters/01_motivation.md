@@ -1,4 +1,4 @@
-# Motivation
+# Motivation {#sec:motivation}
 Optimization algorithms are widely spread in all areas of modern Engineering industry.
 They allow for reduction of costs and increase of efficiency and effectiveness of
 solutions. The exponential growth in computational power in the recent years has
