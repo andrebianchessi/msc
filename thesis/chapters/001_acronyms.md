@@ -1,6 +1,6 @@
 # Acronyms
 
-- **DES** Discrete Element Simulation, i.e. a dynamic simulation of a system comprized of ideal masses, springs and dampers in which the equations of motion have been determined simply with Newton's second law.
+- **DEM** Discrete Element Method, i.e. a dynamic simulation of a system comprized of ideal masses, linear springs and linear dampers in which the equations of motion have been determined simply with Newton's second law.
 
 - **FEM** Finite Element Method.
 
@@ -12,7 +12,7 @@
 
 - **ML** Machine Learning.
 
-- **MSDS** One-dimensional Masses-Springs-Dampers System, i.e. a one dimensional mechanical system composed of ideal masses, springs and dampers.
+- **MSDS** One-dimensional Masses-Springs-Dampers System, i.e. a one dimensional mechanical system composed of ideal masses, linear springs and linear dampers.
 
 - **NN** Artificial Neural Network (ML model).
 
