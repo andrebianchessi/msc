@@ -273,6 +273,9 @@ backmatter.filled.tex
 # Temporary files
 tmp/
 
+# Vs Code
+.vscode/
+
 # Template files
 eisvogel.tex
 cleanthesis.sty
