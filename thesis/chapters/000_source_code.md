@@ -5,5 +5,5 @@ under an MIT open source license.
 
 The thesis text is written in [pandoc](https://pandoc.org/), and is compiled
 into *pdf* format and also a website.
-The website can be accessed [here TODO: Website not yet setup](https://),
-and the pdf can be downloaded [here TODO: pdf url not yet setup](https://).
+The website can be accessed [here](https://msc-thesis-d91c9.web.app/),
+and the pdf can be downloaded [here](https://msc-thesis-d91c9.web.app/thesis.pdf).

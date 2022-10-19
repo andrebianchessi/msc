@@ -4,6 +4,7 @@
     - `brew install pandoc`
 - pandoc-crossref
     - `brew install pandoc-crossref`
+- Firebase cli configured
 
 ## Build pdf
 - `make`

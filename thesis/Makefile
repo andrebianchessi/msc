@@ -131,10 +131,16 @@ $(TMP): %.filled.tex: %.tex $(META)
 pdf: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
 	pandoc ${OPTIONS} -o thesis.pdf $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
 
-website: $(SRC) $(REFERENCES) template.html
+website: pdf template.html
 	cp -r figs/ website/ && pandoc $(WEBSITE_OPTIONS) -o website/index.html $(SRC) $(REFERENCES) --csl $(CSL_FILE)
+
+deploySetup: pdf website
+	cp -r thesis.pdf website/
+
+deploy: deploySetup
+	firebase deploy --only hosting
 
 ## Clean-up: Remove thesis and temporary (generated) files
 clean:
-	rm -rf thesis.pdf website/index.html $(TMP)
+	rm -rf thesis.pdf website/index.html website/thesis.pdf website/figs/ $(TMP)
 

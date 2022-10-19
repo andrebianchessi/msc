@@ -276,6 +276,9 @@ tmp/
 # Vs Code
 .vscode/
 
+# Firebase
+.firebase/
+
 # Template files
 eisvogel.tex
 cleanthesis.sty
