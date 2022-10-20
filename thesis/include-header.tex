@@ -26,4 +26,5 @@
 %% We cannot put the `\usepackage{cleanthesis}` also in titlepage.tex since Pandoc
 %% tries to read the local cleanthesis.sty.
 \usepackage{cleanthesis}
+\newcommand{\passthrough}[1]{\lstset{mathescape=false}#1\lstset{mathescape=true}}
 %------------------------------------- Include Clean Thesis Style ------------------

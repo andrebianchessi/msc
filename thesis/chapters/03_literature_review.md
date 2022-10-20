@@ -600,6 +600,52 @@ X|_{t=0.1} =
 \end{bmatrix}
 $$
 
+### Usage in code
+
+At the code's [repository](https://github.com/andrebianchessi/msc), the file
+```software/problem_test.cc``` contains many examples of how the software we
+implemented can be used. @Mostafa2011-kc was extensively used as reference for
+implementing test cases.
+
+Basically, we first initialize a `Problem` object. Then, we use the `AddMass`,
+`AddSpring` and `AddDampers` methods to add masses, springs and dampers to the
+problem. Then, the `Build` method must be called. The methods `SetInitialDisp`
+and `SetInitialVel` can then be used to set initial displacements and velocities
+to masses. Lastly, the `FixMass` is used to set masses as fixed, i.e. make so
+that they have always zero displacement. Finally, the `Integrate` method can be called.
+
+Some post processing methods available are:
+
+- `PrintMassTimeHistory`, which prints to `stdout` the time series of one specific mass's displacement, speed and acceleration. This can, then, be plotted in any csv plotting tool.
+- `GetMassMaxAbsAccel` returns max. absolute value of acceleration of a specific mass.
+- `GetMassMaxAccel` returns max. value of acceleration of a specific mass.
+- `GetMassMinAccel` returns min. value of acceleration of a specific mass.
+
+For more details, see the `software/problem.h` file.
+
+#### Example
+
+```{.cpp caption="Example of using Problem class to perform dynamic simulation. Source: software/problem_test.cc DampedOscillatorPlotTest"}
+    Problem p = Problem();
+    p.AddMass(1.0, 0.0, 0.0);
+
+    p.AddMass(20.0, 1.0, 0.0);
+    p.AddSpring(0, 1, 30.0);
+    p.AddDamper(0, 1, 2.9);
+    p.Build();
+    p.FixMass(0);
+    p.SetInitialDisp(1, 1.0);
+
+    p.Integrate(40);
+
+    std::cout << "DampedOscillatorPlotTest output:\n";
+    p.PrintMassTimeHistory(1);
+```
+<div class="largeFig">
+![Plot of output of damped oscillator simulation example. Created with chart-studio.plotly.com/](figs/dampedOsc.png){#fig:dampedOsc width=100%}
+</div>
+
+
 ## Genetic Algorithm
 
 ## Meta-models for mechanical optimization

@@ -26,6 +26,15 @@ figure {
     padding-right: 5%;
 }
 
+.largeFig figure {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100% !important;
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
 img {
     max-width:100% !important;
     max-height:100% !important;
