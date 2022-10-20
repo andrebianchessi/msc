@@ -26,11 +26,12 @@ figure {
     padding-right: 5%;
 }
 
-.largeFig figure {
+.largeFig > figure {
     display: block;
     margin-left: auto;
     margin-right: auto;
-    width: 100% !important;
+    max-width:100%;
+    height:auto;
     padding-left: 5%;
     padding-right: 5%;
 }

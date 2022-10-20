@@ -642,7 +642,7 @@ For more details, see the `software/problem.h` file.
     p.PrintMassTimeHistory(1);
 ```
 <div class="largeFig">
-![Plot of output of damped oscillator simulation example. Created with chart-studio.plotly.com/](figs/dampedOsc.png){#fig:dampedOsc width=100%}
+![Plot of output of damped oscillator simulation example. Created with chart-studio.plotly.com](figs/dampedOsc.png){#fig:dampedOsc width=100%}
 </div>
 
 
