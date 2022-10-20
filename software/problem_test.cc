@@ -449,6 +449,115 @@ TEST(ProblemTest, IntegrateStationaryTest) {
     }
 }
 
+TEST(ProblemTest, IntegrateSignTest) {
+    // m0 -- m1
+    // m1 has initial positive displacement
+    // Expected: m1 will have initial negative speed
+
+    Problem p = Problem();
+    p.AddMass(1.0, 0.0, 0.0);
+    p.AddMass(2.0, 1.0, 1.0);
+    p.AddSpring(0, 1, 1.0);
+    p.Build();
+
+    p.FixMass(0);
+    p.SetInitialDisp(1, 10);
+
+    p.Integrate(1.0);
+
+    ASSERT_EQ(p.t.size(), p.XHistory.size());
+    ASSERT_TRUE(p.XHistory[1][p.GetMassVelIndex(1)] < 0);
+}
+
+TEST(ProblemTest, AddSpringAndDamperOrderTest) {
+    // Integrates problems that should have the same results. The only
+    // difference is that the springs/damper/masses were added in different
+    // order
+
+    Problem p0 = Problem();
+    int fixedMassId0 = p0.AddMass(1.0, 0.0, 0.0).val;        // 1
+    int initialDispMassId0 = p0.AddMass(2.0, 1.0, 1.0).val;  // 2
+    p0.AddSpring(0, 1, 1.0);                                 // 0,1
+    p0.AddDamper(1, 0, 2.0);                                 // 1,0
+    p0.Build();
+    p0.FixMass(fixedMassId0);
+    p0.SetInitialDisp(initialDispMassId0, 10);
+    p0.Integrate(1.0);
+
+    Problem p1 = Problem();
+    int initialDispMassId1 = p1.AddMass(2.0, 1.0, 1.0).val;  // 2
+    int fixedMassId1 = p1.AddMass(1.0, 0.0, 0.0).val;        // 1
+    p1.AddSpring(0, 1, 1.0);                                 // 0,1
+    p1.AddDamper(0, 1, 2.0);                                 // 0,1
+    p1.Build();
+    p1.FixMass(fixedMassId1);
+    p1.SetInitialDisp(initialDispMassId1, 10);
+    p1.Integrate(1.0);
+
+    Problem p2 = Problem();
+    int initialDispMassId2 = p2.AddMass(2.0, 1.0, 1.0).val;  // 2
+    int fixedMassId2 = p2.AddMass(1.0, 0.0, 0.0).val;        // 1
+    p2.AddSpring(1, 0, 1.0);                                 // 1,0
+    p2.AddDamper(1, 0, 2.0);                                 // 1,0
+    p2.Build();
+    p2.FixMass(fixedMassId2);
+    p2.SetInitialDisp(initialDispMassId2, 10);
+    p2.Integrate(1.0);
+
+    Problem p3 = Problem();
+    int fixedMassId3 = p3.AddMass(1.0, 0.0, 0.0).val;        // 1
+    int initialDispMassId3 = p3.AddMass(2.0, 1.0, 1.0).val;  // 2
+    p3.AddSpring(1, 0, 1.0);                                 // 1,0
+    p3.AddDamper(0, 1, 2.0);                                 // 0,1
+    p3.Build();
+    p3.FixMass(fixedMassId3);
+    p3.SetInitialDisp(initialDispMassId3, 10);
+    p3.Integrate(1.0);
+
+    // Assert initial speed is negative
+    ASSERT_TRUE(p0.XHistory[1][p0.GetMassVelIndex(1)] < 0);
+
+    // Assert all have same history length
+    ASSERT_TRUE(p0.XHistory.size() == p1.XHistory.size());
+    ASSERT_TRUE(p0.XHistory.size() == p2.XHistory.size());
+    ASSERT_TRUE(p0.XHistory.size() == p3.XHistory.size());
+
+    for (int i = 0; i < int(p0.XHistory.size()) - 1; i++) {
+        ASSERT_DOUBLE_EQ(p0.XHistory[i][p0.GetMassDispIndex(fixedMassId0)],
+                         p1.XHistory[i][p1.GetMassDispIndex(fixedMassId1)]);
+        ASSERT_DOUBLE_EQ(p0.XHistory[i][p0.GetMassVelIndex(fixedMassId0)],
+                         p1.XHistory[i][p1.GetMassVelIndex(fixedMassId1)]);
+        ASSERT_DOUBLE_EQ(
+            p0.XHistory[i][p0.GetMassDispIndex(initialDispMassId0)],
+            p1.XHistory[i][p1.GetMassDispIndex(initialDispMassId1)]);
+        ASSERT_DOUBLE_EQ(
+            p0.XHistory[i][p0.GetMassVelIndex(initialDispMassId0)],
+            p1.XHistory[i][p1.GetMassVelIndex(initialDispMassId1)]);
+
+        ASSERT_DOUBLE_EQ(p0.XHistory[i][p0.GetMassDispIndex(fixedMassId0)],
+                         p2.XHistory[i][p2.GetMassDispIndex(fixedMassId2)]);
+        ASSERT_DOUBLE_EQ(p0.XHistory[i][p0.GetMassVelIndex(fixedMassId0)],
+                         p2.XHistory[i][p2.GetMassVelIndex(fixedMassId2)]);
+        ASSERT_DOUBLE_EQ(
+            p0.XHistory[i][p0.GetMassDispIndex(initialDispMassId0)],
+            p2.XHistory[i][p2.GetMassDispIndex(initialDispMassId2)]);
+        ASSERT_DOUBLE_EQ(
+            p0.XHistory[i][p0.GetMassVelIndex(initialDispMassId0)],
+            p2.XHistory[i][p2.GetMassVelIndex(initialDispMassId2)]);
+
+        ASSERT_DOUBLE_EQ(p0.XHistory[i][p0.GetMassDispIndex(fixedMassId0)],
+                         p3.XHistory[i][p3.GetMassDispIndex(fixedMassId3)]);
+        ASSERT_DOUBLE_EQ(p0.XHistory[i][p0.GetMassVelIndex(fixedMassId0)],
+                         p3.XHistory[i][p3.GetMassVelIndex(fixedMassId3)]);
+        ASSERT_DOUBLE_EQ(
+            p0.XHistory[i][p0.GetMassDispIndex(initialDispMassId0)],
+            p3.XHistory[i][p3.GetMassDispIndex(initialDispMassId3)]);
+        ASSERT_DOUBLE_EQ(
+            p0.XHistory[i][p0.GetMassVelIndex(initialDispMassId0)],
+            p3.XHistory[i][p3.GetMassVelIndex(initialDispMassId3)]);
+    }
+}
+
 // Helper function that gets half the period of oscillation of the system
 // Expects a setup in the following form:
 //  p.AddMass(1.0,0.0,0.0);
