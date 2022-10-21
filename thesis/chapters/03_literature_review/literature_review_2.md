@@ -97,7 +97,7 @@ We implemented uniform random mutation, which means that to perform a mutation w
 2. Choose a random position of the DNA
 3. Let $a$ and $b$ be the minimum and maximum value acceptable for this position at the DNA. Replace the value at that position with a random number in the interval $[a,b]$
 
-The number of mutations we perform is determined by the *mutation rate* hyperparameter. If the population is of size $p$, the *survival rate* is $s$ and the creatures' DNA is of size $d$, the number of mutations that will be performed is given by $\text{mutation rate}p(1-s)d$.
+The number of mutations we perform is determined by the *mutation rate* hyperparameter. If the population is of size $p$, the *survival rate* is $s$ and the creatures' DNA is of size $d$, the number of mutations that will be performed is given by $\text{(*mutation rate*)}p(1-s)d$.
 
 The idea behind this is that we allow us only to mutate the children. Thus, there are $p(1-s)$ creatures that can suffer mutation. Each has $d$ DNA slots. Hence, there are $p(1-s)d$ DNA slots we can mutate. We multiply that by the *mutation rate*, which is a number between $0$ and $1$, and get the number of DNA slots we'll mutate.
 
@@ -180,12 +180,12 @@ $$
 [1,0.61] \rightarrow [0.62, 0.38]
 $$
 
-Lastly, we accumulate the values, so that they're always growing:
+Lastly, we accumulate the values, so that they're always growing.
 $$
 [0.62, 0.38] \rightarrow [0.62, 1]
 $$
 
-Now, to select a parent we create a random number between $0$ and $1$. If the random number is $<=0.62$, we select the first creature as parent. Else, we select the second.
+Now, to select a parent we create a random number between $0$ and $1$. If the random number is $<=0.62$, we select the first creature as parent. Else, we select the second. We then pick another random number to choose the other parent.
 In cases when the same parent is selected twice by chance, we take the next parent.
 
 #### Mate {.unnumbered}
