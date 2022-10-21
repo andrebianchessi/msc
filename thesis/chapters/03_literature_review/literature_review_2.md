@@ -194,8 +194,8 @@ For the random number $\beta = 0.1$, the DNAs of the children would be:
 
 $$
 \begin{aligned}
-[0.1\cdot(-0.9) + (1-0.1)\cdot(-0.2), 0.1\cdot(0.2) + (1-0.1)\cdot(0.2)] = [-0.27, 0.2]\\
-[0.1\cdot(-0.2) + (1-0.1)\cdot(-0.9), 0.1\cdot(0.2) + (1-0.1)\cdot(0.2)] = [-0.83, 0.2]
+&[0.1\cdot(-0.9) + (1-0.1)\cdot(-0.2), 0.1\cdot(0.2) + (1-0.1)\cdot(0.2)] = [-0.27, 0.2]\\
+&[0.1\cdot(-0.2) + (1-0.1)\cdot(-0.9), 0.1\cdot(0.2) + (1-0.1)\cdot(0.2)] = [-0.83, 0.2]
 \end{aligned}
 $$
 

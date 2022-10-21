@@ -46,6 +46,10 @@ mjx-container {
     overflow-y: hidden;
     white-space: nowrap;
 }
+mjx-math {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
 ::-webkit-scrollbar {
     width: 20px;
   }
