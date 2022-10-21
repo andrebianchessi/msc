@@ -346,6 +346,8 @@ $$
 
 We can always multiply both sides by $M^{-1}$, since $M$ is a diagonal matrix with strictly positive numbers in the diagonal. This way, the system's ODE is defined by the two following equations:
 $$
+\begin{aligned}
+&
 X =
 \begin{bmatrix}
 x_0\\
@@ -369,7 +371,8 @@ x_n\\
 \vdots\\
 \ddot{x_n}
 \end{bmatrix}
-\quad\quad\text{ and }\quad\quad
+\\\\
+&
 \begin{bmatrix}
 \ddot{x_0}\\
 \ddot{x_1}\\
@@ -395,6 +398,7 @@ C
 \dot{x_n}
 \end{bmatrix}
 \right)
+\end{aligned}
 $$
 {#eq:ode}
 
