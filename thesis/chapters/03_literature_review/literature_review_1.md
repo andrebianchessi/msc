@@ -549,7 +549,7 @@ $$
 
 #### Implementation {.unnumbered}
 
-The class [Problem (~/software/problem.h)](https://github.com/andrebianchessi/msc/blob/7cf80c4f85161acef1c2946262259ad1c3e8f4af/software/problem.h#L17) and the other classes it references encapsulates all the logic related to the dynamic simulation of MSDSs.
+The [Problem (~/software/problem.h)](https://github.com/andrebianchessi/msc/blob/7cf80c4f85161acef1c2946262259ad1c3e8f4af/software/problem.h#L17) class, together with other classes it references, encapsulates all the logic related to the dynamic simulation of MSDSs.
 
 #### Usage {.unnumbered}
 
