@@ -21,7 +21,7 @@ The main sources this section is based on are [@Haupt2004-hj; @Lam2021-gp;
 
 The [Evolve (~/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L203) method is the top-level-function which executes the GA optimization. It basically performs the initial sorting of the population, checks for convergence and successively calls the [step (~/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L175) method, which performs one iteration of optimization of the population.
 
-### GA steps {.unnumbered}
+### GA steps
 
 #### Choose DNA that represents creature {.unnumbered}
 
@@ -107,7 +107,7 @@ This logic is implemented at the [mutate (~/software/evolution.tcc)](https://git
 
 At this stage we choose to stop if the algorithm has converged, i.e. the value of the loss function of the fittest creature is practically the same it was on the previous iteration, or if too many iterations have been tried but the algorithm still hasn't converged.
 
-### GA steps illustrative example {.unnumbered}
+### GA steps illustrative example
 
 Suppose we want to find the value of $\{x,y\}$ in the region $x \in [-2,2]$ and $y \in [-2,2]$ that minimizes the function
 
@@ -223,3 +223,5 @@ The final population becomes:
 $$
 [[-0.9, 0.2], [-0.2, 0.2], [-0.27, 0.7], [-0.83, 0.2]]
 $$
+
+### Usage in code
