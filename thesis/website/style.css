@@ -37,9 +37,8 @@ table {
     width: 50% !important;
 }
 
-.sourceCode pre {
-    display: flex;
-    justify-content: center;
+pre {
+    overflow: scroll;
 }
 
 mjx-container {
