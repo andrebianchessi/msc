@@ -208,17 +208,18 @@ TEST(EvolutionTest, MutateTest) {
     }
 
     // 4 creatures with 2 dna slots each
-    // 1 is not mutated (elitism)
-    // 3 remain -> 6 slots
-    // 0.5 mutation rate -> 3 changes
-    ASSERT_EQ(changeCount, 3);
+    // with a survival rate of 50%, 2 children will be created
+    // only the children can suffer mutations (elitism)
+    // 2 creatures -> 4 slots
+    // 0.5 mutation rate -> 2 changes
+    ASSERT_EQ(changeCount, 2);
 
-    // Repeat for different mutation rates: 2/3
+    // Repeat for different mutation rates: 1/4
     for (int i = 0; i < ev.PopSize(); i++) {
         ev.GetCreature(i)->dna[0].val = -99.0;
         ev.GetCreature(i)->dna[1].val = -99.0;
     }
-    ev.mutationRate = 2 / 3.0;
+    ev.mutationRate = 1 / 4.0;
     ev.mutate();
     ASSERT_DOUBLE_EQ(ev.GetCreature(0)->dna[0].val, -99.0);
     ASSERT_DOUBLE_EQ(ev.GetCreature(0)->dna[1].val, -99.0);
@@ -231,7 +232,7 @@ TEST(EvolutionTest, MutateTest) {
             changeCount += 1;
         }
     }
-    ASSERT_EQ(changeCount, 4);
+    ASSERT_EQ(changeCount, 1);
 
     // Repeat for different mutation rates: 0%
     for (int i = 0; i < ev.PopSize(); i++) {

@@ -547,8 +547,7 @@ $$
 
 ### Usage in code
 
-At the code's [repository](https://github.com/andrebianchessi/msc), the file
-```software/problem_test.cc``` contains many examples of how the software we
+[software/problem_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/problem_test.cc) contains many examples of how the software we
 implemented can be used. @Mostafa2011-kc was extensively used as reference for
 implementing test cases.
 
@@ -566,11 +565,12 @@ Some post processing methods available are:
 - `GetMassMaxAccel` returns max. value of acceleration of a specific mass.
 - `GetMassMinAccel` returns min. value of acceleration of a specific mass.
 
-For more details, see the `software/problem.h` file.
+For more details, see the [software/problem.h](https://github.com/andrebianchessi/msc/blob/main/software/problem.h).
 
 #### Example
+[DampedOscillatorPlotTest](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/problem_test.cc#L684)
 
-```{.cpp caption="Example of using Problem class to perform dynamic simulation. Source: software/problem_test.cc DampedOscillatorPlotTest"}
+```{.cpp caption="Example of using Problem class to perform dynamic simulation."}
     Problem p = Problem();
     p.AddMass(1.0, 0.0, 0.0);
 

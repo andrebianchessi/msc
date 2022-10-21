@@ -17,7 +17,7 @@ void Creature::Mutate(int i) {
 }
 
 void Creature::Mate(Creature& c1, Creature* child0, Creature* child1) {
-    // Randcliff blending method
+    // Radcliff blending method
     // Haupt, Randy L., Sue Ellen Haupt, and Sue Ellen Autor Haupt. 2004.
     // Practical Genetic Algorithms. Wiley.
     double beta;

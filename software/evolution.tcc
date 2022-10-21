@@ -145,9 +145,9 @@ void Evolution<creature>::mutate() {
     }
 
     // Total number of slots that can be mutated
-    // (the fittest creature is not mutated)
+    // (the fittest creatures are not mutated)
     int nDnaSlots =
-        (this->population->size() - 1) * ((*this->population)[0].DnaSize());
+        this->population->size() * (1-this->survival) * ((*this->population)[0].DnaSize());
     // target num of mutations
     int nMutations = int(nDnaSlots * this->mutationRate);
     // current mutation count
