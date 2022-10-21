@@ -7,35 +7,30 @@ before. Still, the complexity of the problems we tackle increases even
 faster than the available computational power. Thus, advancements in optimization
 techniques are also mandated.
 In this work, we turn our attention to optimization by Genetic Algorithms (GAs)
-applied to mechanical systems. *The genetic algorithm is an optimization and search technique based on the principles of genetics and natural selection* [@Haupt2004-hj]. Some of its advantages, when compared to gradient base methods, are [@Haupt2004-hj]:
-- Doesn’t require derivative information
-- Simultaneously searches from a wide sampling of the cost surface
-- Deals with a large number of variables
-- Is well suited for parallel computers
-- Optimizes variables with extremely complex cost surfaces (they can jump out of local minima)
+applied to mechanical systems. These algorithms are based on principles of genetics and evolution, and are well suited for the optimization of problems which deal with a large amount of variables and have multiple local minima.
 
-However, a caveat GA has is that it needs to constantly evaluate the *cost
-function* (i.e. the function that returns quality of a possible solution) of the
-whole population (i.e. a set of possible solutions) at every iteration. For
+However, a caveat GA has is that it needs to constantly evaluate the *loss
+function* (i.e. the function that an optimization problem seeks to minimize) of
+the whole population (i.e. a set of possible solutions) at every iteration. For
 example, when using GA to minimize the maximum displacement a structure suffers
 at a specific condition, it's necessary to calculate the structure's
-displacement multiple times, with Finite Element Method (FEM), for example, at each
-iteration of the algorithm. Thus, for expensive cost functions, the algorithm's
-computational cost is proportional to the *cost function*'s cost. This might
-make the algorithm too expensive if the cost function is found, for example,
-using a very refined FEM simulation.
+displacement multiple times, with Finite Element Method (FEM), for example, at
+each iteration of the algorithm. Thus, for expensive loss functions, the
+algorithm's computational cost is proportional to the loss function's cost.
+This might make the algorithm too expensive if the loss function is found, for
+example, using a very refined FEM simulation.
 
 With this in mind, many recent studies have researched using Machine Learning
 (ML) models in conjunction with GA to increase the efficiency of optimizations
-of problems which have costly cost functions. The basic idea is to train a model
-which approximate the cost function but has a much smaller computational cost;
+of problems which have costly loss functions. The basic idea is to train a model
+which approximate the loss function but has a much smaller computational cost;
 and use it to calculate the cost in the GA, instead of the original cost
-function. For cases in which the cost function itself is a model (i.e. and
+function. For cases in which the loss function itself is a model (i.e. and
 approximation of the reality) such as a FEMs, the ML models
 used to approximate them can be called *metamodels*. There are many very
 successful cases in the literature [@Wilt2020-np; @Lee2022-uz; @Gu2012-ru;
 @Gu2018-uk; @Gu2018-tf; @Driemeier_undated-za]. In this text, we use MMGA to
-refer to GAs which use metamodels to calculate the cost function, and NMMGAs to
+refer to GAs which use metamodels to calculate the loss function, and NMMGAs to
 refer to GAs which don't.
 
 What we have not found in the literature, however, are in depth analyses of how
@@ -53,7 +48,7 @@ physics knowledge embedded into their loss-function. This allows them to be
 trained without labeled data. Thus, it's possible to train, for example, a
 metamodel to an expensive FEM simulation without needing to run the FEM
 simulation multiple times beforehand. This way, PINNs might be ideal to
-MMGA applied to problems which have expensive cost functions.
+MMGA applied to problems which have expensive loss functions.
 
 Also, given that they're trained without labeled data, PINNs might have better
 extrapolation capabilities than NNs. This characteristic might make then perform

@@ -6,9 +6,9 @@
 
 - **GA** Genetic Algorithm.
 
-- **MMGA** Genetic Algorithm which uses a metamodel to calculate the cost function.
+- **MMGA** Genetic Algorithm which uses a metamodel to calculate the loss function.
 
-- **NMMGA** Genetic Algorithm which doesn't use a metamodel to calculate the cost function.
+- **NMMGA** Genetic Algorithm which doesn't use a metamodel to calculate the loss function.
 
 - **ML** Machine Learning.
 
