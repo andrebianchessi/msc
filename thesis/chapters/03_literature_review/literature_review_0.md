@@ -31,11 +31,11 @@ performance of each algorithm for different system's complexities.
 To summarize, the following pseudo-code illustrates our basic workflow:
 ```{.python caption="Illustration of how we generated the data to compare MMGA and NMMGA"}
 for complexity in [1,2,3 ... ]:
-    for algorithm in ["MMGA", "NMMGA"]:
-        for random_seed in [1,2,3 ...]:
-            problem = NewRandomProblem(complexity, random_seed)
-            results = Optimize(problem, algorithm)
-            SaveResultsToAnalyzeLater(complexity, algorithm, results)
+  for algorithm in ["MMGA", "NMMGA"]:
+    for random_seed in [1,2,3 ...]:
+      problem = NewRandomProblem(complexity, random_seed)
+      results = Optimize(problem, algorithm)
+      SaveResultsToAnalyzeLater(complexity, algorithm, results)
 ```
 
 Inspired by crashworthiness models, we chose that **the problems we would
