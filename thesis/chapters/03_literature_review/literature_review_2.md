@@ -224,4 +224,8 @@ $$
 [[-0.9, 0.2], [-0.2, 0.2], [-0.27, 0.7], [-0.83, 0.2]]
 $$
 
-### Usage in code
+### Software
+
+#### Implementation {.unnumbered}
+
+#### Usage {.unnumbered}

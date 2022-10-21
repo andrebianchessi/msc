@@ -1,4 +1,4 @@
-## Discrete element method solution to MSDS's
+## Discrete element method solution to MSDSs
 
 ### Local Matrices
 @Fig:discreteElementSimple shows the simplest system that contains ideal masses,
@@ -545,7 +545,13 @@ X|_{t=0.1} =
 \end{bmatrix}
 $$
 
-### Usage in code
+### Software
+
+#### Implementation {.unnumbered}
+
+The class [Problem (~/software/problem.h)](https://github.com/andrebianchessi/msc/blob/7cf80c4f85161acef1c2946262259ad1c3e8f4af/software/problem.h#L17) and the other classes it references encapsulates all the logic related to the dynamic simulation of MSDSs.
+
+#### Usage {.unnumbered}
 
 [~/software/problem_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/problem_test.cc) contains many examples of how the software we
 implemented can be used. @Mostafa2011-kc was extensively used as reference for
