@@ -39,6 +39,7 @@ SRC += chapters/03_literature_review/literature_review_1.md
 SRC += chapters/03_literature_review/literature_review_2.md
 SRC += chapters/03_literature_review/literature_review_3.md
 SRC += chapters/03_literature_review/literature_review_4.md
+SRC += chapters/03_literature_review/literature_review_5.md
 SRC += chapters/04_methods.md
 SRC += chapters/05_results.md
 SRC += chapters/06_discussion.md
