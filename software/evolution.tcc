@@ -146,8 +146,8 @@ void Evolution<creature>::mutate() {
 
     // Total number of slots that can be mutated
     // (the fittest creatures are not mutated)
-    int nDnaSlots =
-        this->population->size() * (1-this->survival) * ((*this->population)[0].DnaSize());
+    int nDnaSlots = this->population->size() * (1 - this->survival) *
+                    (DnaSize((*this->population)[0]));
     // target num of mutations
     int nMutations = int(nDnaSlots * this->mutationRate);
     // current mutation count
@@ -161,10 +161,10 @@ void Evolution<creature>::mutate() {
         // The fittest ones do not suffer mutation
         int creatureI =
             RandomInt(this->endFittest() + 1, this->population->size() - 1);
-        int dnaI = RandomInt(0, (*this->population)[creatureI].DnaSize() - 1);
+        int dnaI = RandomInt(0, DnaSize((*this->population)[creatureI]) - 1);
         auto pair = std::tuple<int, int>(creatureI, dnaI);
         if (mutationsDone.find(pair) == mutationsDone.end()) {
-            (*this->population)[creatureI].Mutate(dnaI);
+            Mutate((*this->population)[creatureI], dnaI);
             mutations += 1;
             mutationsDone.insert(pair);
         }
@@ -191,7 +191,7 @@ void Evolution<creature>::step() {
             child1 = child1;
         }
 
-        p0->Mate(*p1, child0, child1);
+        Mate(*p0, *p1, child0, child1);
     }
 
     this->mutate();

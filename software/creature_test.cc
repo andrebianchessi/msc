@@ -24,7 +24,7 @@ TEST(CreatureTest, SimpleTest) {
     x.Set(0.0);
     EXPECT_DOUBLE_EQ(c0.dna[0].Get(), 1.0);
 
-    EXPECT_EQ(c0.DnaSize(), 2);
+    EXPECT_EQ(DnaSize(c0), 2);
 
     // f(x,y) = x^2 + y^2 + 2x + y
     // f(2,-2) = 2^2 + (-2)^2 + 2*2 -2
@@ -59,14 +59,14 @@ TEST(CreatureTest, MateAndMutationTest) {
     C child0 = C(x, y);
     C child1 = C(x, y);
 
-    c0.Mate(c1, &child0, &child1);
+    Mate(c0, c1, &child0, &child1);
 
     EXPECT_TRUE(0.0 <= child0.dna[0].Get() && child0.dna[0].Get() <= 1.0);
     EXPECT_TRUE(0.0 <= child1.dna[0].Get() && child0.dna[0].Get() <= 1.0);
     EXPECT_TRUE(child1.dna[1].Get() == 0.0);
     EXPECT_TRUE(child0.dna[1].Get() == 0.0);
 
-    c0.Mutate(RandomInt(0, c0.DnaSize() - 1));
+    Mutate(c0, RandomInt(0, DnaSize(c0) - 1));
     // print("dna: ", c0.dna[0].Get(), c0.dna[1].Get());
     bool changed = c0.dna[0].Get() != 1.0 || c0.dna[1].Get() != 0.0;
     EXPECT_TRUE(changed);
@@ -95,12 +95,12 @@ TEST(CreatureTest, GetCostCacheTest) {
     ASSERT_TRUE(p1.hasGetCostCache);
     ASSERT_TRUE(child0.hasGetCostCache);
     ASSERT_TRUE(child1.hasGetCostCache);
-    p0.Mate(p1, &child0, &child1);
+    Mate(p0, p1, &child0, &child1);
     ASSERT_TRUE(p0.hasGetCostCache);
     ASSERT_TRUE(p1.hasGetCostCache);
     ASSERT_FALSE(child0.hasGetCostCache);
     ASSERT_FALSE(child1.hasGetCostCache);
 
-    p0.Mutate(RandomInt(0, c0.DnaSize()));
+    Mutate(p0, RandomInt(0, DnaSize(c0)));
     ASSERT_FALSE(p0.hasGetCostCache);
 }
