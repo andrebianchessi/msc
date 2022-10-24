@@ -1,6 +1,7 @@
 # Literature Review
 
-## Problems we optimized: Crashworthiness models
+## Problems we optimized: Crashworthiness models {#sec:problemsWeSolved}
+
 Crashworthiness models are models of vehicles used to analyze the safety of
 their occupants in a crash. @Fig:crashworthiness shows an example. They can be
 very elaborate, but very simple ones are also used on initial phases of vehicle
