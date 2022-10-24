@@ -126,7 +126,16 @@ TEST(ProblemCreatureTest, EvolutionUntilConvergenceTest) {
 
     Evolution<ProblemCreature> evolution = Evolution<ProblemCreature>(&pop);
     double cost0 = evolution.FittestCost();
-    auto p = evolution.Evolve(0.10, false);
+    auto p = evolution.Evolve(0.1, true);
     ASSERT_FALSE(p.isError);
     ASSERT_TRUE(evolution.FittestCost() <= cost0);
+
+    Problem best = pd.BuildFromDNA(evolution.GetCreature(0)->dna).val;
+    print("k1: ", best.springs[0].Get_k());
+    print("k2: ", best.springs[1].Get_k());
+    print("k3: ", best.springs[2].Get_k());
+    print("k4: ", best.springs[3].Get_k());
+    print("c4: ", best.dampers[0].Get_c());
+    print("k5: ", best.springs[4].Get_k());
+    print("c5: ", best.dampers[1].Get_c());
 }
