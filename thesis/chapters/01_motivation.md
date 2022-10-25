@@ -31,7 +31,7 @@ and use it to calculate the loss in the GA, instead of the original loss
 function. For cases in which the loss function itself is a model (i.e. and
 approximation) such as a FEM simulation, the ML models used to approximate them
 can be called *metamodels*. There are many very successful cases in the
-literature [@Wilt2020-np; @Lee2022-uz; @Gu2012-ru; @Gu2018-uk; @Gu2018-tf;
+literature [@Lee2022-uz; @Gu2012-ru; @Gu2018-uk; @Gu2018-tf;
 @Driemeier_undated-za]. In this text, we use MMGA to refer to GAs which use
 metamodels to calculate the loss function, and NMMGAs to refer to GAs which
 don't.

@@ -47,7 +47,7 @@ SRC += chapters/06_discussion.md
 BIBFILE = references.bib
 CSL_FILE = ieee.csl
 
-APPENDIX = chapters/appendix.md
+# APPENDIX = chapters/appendix.md
 
 
 ###############################################################################
