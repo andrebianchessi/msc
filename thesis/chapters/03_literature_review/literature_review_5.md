@@ -171,3 +171,5 @@ for i in range (100000):
 
 The output of the above script is ```-4.9999 9.9999 0.0``` which is, up to
 numerical precision, exactly like the analytical solution.
+
+@Thuerey2021-ut is an excellent source that covers, in great depth and breadth, the fundamentals of physics based models and the usage of more sophisticated models such as deep neural networks.
