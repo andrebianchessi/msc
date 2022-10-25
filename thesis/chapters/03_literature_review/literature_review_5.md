@@ -7,7 +7,7 @@ which are described by partial differential equations.
 The problems we choose to solve are very simple, but they great for illustrating
 the basic principles.
 
-### Machine Learning brief introduction {.unnumbered}
+### Introduction to Machine Learning {.unnumbered}
 
 Consider the data in @tbl:mlExample.
 
@@ -91,7 +91,7 @@ Since we're just using an example to illustrate the principles of ML, we chose a
 2. Choose loss function that has the model's parameters (in our example those were just $a$ and $b$) as arguments, and measures, using the data we have available, how well our model's predictions match the expected outputs
 3. Minimize the loss function to find the optimal parameters for the model
 
-### Physics-Informed Machine Learning brief introduction {.unnumbered}
+### Introduction to Physics-Informed Machine Learning {.unnumbered}
 
 What if instead of having values for $t$ and $y$, we had an expression for $\ddot{y}$, the second time derivative of $y$?
 For example: Consider a ball that is thrown upwards with an initial velocity of $10$m/s. With $y$ as the height of the ball and considering $10$m/s$^2$ as gravity's acceleration, the physical equation that governs this motion is:
