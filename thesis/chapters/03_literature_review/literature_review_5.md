@@ -69,7 +69,7 @@ def grad(a,b):
 a = 1
 b = 1
 l = 0.00001
-for i in range (1000000):
+for i in range (10000000):
     g = grad(a,b)
     a = a - l*g[0]
     b = b - l*g[1]
@@ -77,7 +77,7 @@ for i in range (1000000):
 print(a,b)
 ```
 
-The listing above outputs $a = 0.099$ and $b = 0.033$, which have less than $0.1\%$ relative error to the analytical solution.
+The listing above outputs $a = 0.0999$ and $b = 0.0333$, which is, up to numerical precision, exactly like the analytical solution.
 
 Thus, we find that our model has the following expression, which yields results very close to @tbl:mlExample:
 
