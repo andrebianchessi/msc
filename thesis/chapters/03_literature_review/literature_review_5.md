@@ -1,2 +1,2 @@
-## Physics Informed Neural Networks (PINNs)
+## Physics-Informed Machine Learning
 [@Nascimento2020-xp]

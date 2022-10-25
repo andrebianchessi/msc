@@ -8,9 +8,8 @@ springs and dampers) that minimize the maximum acceleration that one of the
 masses - the one farthest from impact - experiences on an impact with a given
 speed. The optimization is done twice for each system using Genetic Algorithms:
 first by performing Explicit Time Integration (ETE) of equations found with a
-Discrete Element Method (DEM) and, secondly, by using a PINN (Physics Informed
-Neural Network) metamodel that approximates the system's dynamic response. The
-PINN metamodels are trained without labeled (ground truth) data; the physics
+Discrete Element Method (DEM) and, secondly, by using a PIM (Physics-Informed Machine Learning Model) metamodel that approximates the system's dynamic response. The
+PIM metamodels are trained without labeled (ground truth) data; the physics
 equations are embedded into their training.
 3. Redo the optimizations using the same metamodels, without retraining them,
 but for different impact speeds (both lower and higher).

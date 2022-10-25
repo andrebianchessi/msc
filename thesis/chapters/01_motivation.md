@@ -45,23 +45,23 @@ times in the NMMGA? In those cases, using a metamodel would not make sense.
 
 Physics-Based Machine Learning is a promising field of research that has been
 quickly growing, and has already shown great results when used in MMGA
-[@Zhang2021-vj; @Zhang2022-jp]. Physics-Informed-Neural-Networks (PINNs) are
-Neural Networks (NNs) which are trained with physics knowledge embedded into
+[@Zhang2021-vj; @Zhang2022-jp]. Physics-Informed Machine Learning Models (PIMs) are
+Machine Learning models which are trained with physics knowledge embedded into the
 loss function. This allows them to be trained without labeled data. Thus, it's
 possible to train, for example, a metamodel to an expensive FEM simulation
 without needing to run the FEM simulation multiple times beforehand. This way,
-PINNs might be ideal to MMGA applied to problems which have expensive loss
+PIMs might be ideal to MMGA applied to problems which have expensive loss
 functions.
 
-Also, given that they're trained without labeled data, PINNs might have better
+Also, given that they're trained without labeled data, PIMs might have better
 extrapolation capabilities than NNs. This characteristic might make then perform
 well even on a very large domain of possible solutions, which is exactly the
 cases in which GAs excel.
 
 In this work, we set out to analyze how much performance improvement can be
-obtained for a GA applied to mechanical systems when PINN metamodels are used;
+obtained for a GA applied to mechanical systems when PIM metamodels are used;
 and how that varies with respect to the system's and metamodel's complexity. We
-also want to investigate the extrapolation capabilities of PINNs in this
+also want to investigate the extrapolation capabilities of PIMs in this
 technique, i.e. how they perform when evaluating conditions much different than
 the ones they were trained on.
 

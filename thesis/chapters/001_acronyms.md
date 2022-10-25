@@ -20,4 +20,4 @@
 
 - **ODE** Ordinary Differential Equation.
 
-- **PINN** Physics Informed Neural Network.
+- **PIM** Physics Informed Machine Learning Model.

@@ -52,7 +52,7 @@ We chose to optimize only these kind of problems because:
 
 - As explained in @sec:motivation, our focus is not to study the algorithms applied to a specific problem, but to study the algorithms themselves.
 - Implementing a solver to this kind of problem is much simpler than, for example, a FEM solver.
-- The physics equations which describe these systems, which were used in the PINN metamodels, are relatively simple.
+- The physics equations which describe these systems, which were used in the PIM metamodels, are relatively simple.
 - It's easy to create a problem with arbitrary complexity. @Fig:MsdsExamples shows examples of why that is true: to increase a system's complexity, we can always add more masses/springs/dampers. Also, for a given configuration of springs and dampers, we can easily create infinite amount of problems by picking random mass values.
 - By creating a problem with enough complexity, we can have systems which are highly non-linear.
 
