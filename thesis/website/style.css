@@ -1,6 +1,16 @@
 #chapters{
-    position: fixed;
-    
+    top: 0;
+    bottom:0;
+    position:fixed;
+    overflow-y:scroll;
+    overflow-x: hidden;
+}
+
+ul {
+    padding-left:10px;
+}
+ul ul{
+padding-left:20px;
 }
 
 .toc * {
