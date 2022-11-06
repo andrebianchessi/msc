@@ -12,6 +12,9 @@
 
 template <typename creature>
 Evolution<creature>::Evolution(std::vector<creature>* population) {
+    static_assert(
+        std::is_base_of<Creature, creature>::value,
+        "Evolution<creature> creature not derived from Creature class");
     this->population = population;
 }
 
