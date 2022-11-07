@@ -146,3 +146,70 @@ TEST(LinRegTest, operatorTest) {
                       5.0 * x2 + 6.0;
     ASSERT_DOUBLE_EQ(v.val, expected);
 }
+
+TEST(LinRegTest, coefficientAtTest) {
+    Maybe<LinReg> m = LinReg::NewLinReg(2, 2);
+    ASSERT_FALSE(m.isError);
+    LinReg lr = m.val;
+
+    std::vector<int> powers = {0, 0, 0};
+    ASSERT_TRUE(lr.CoefficientAt(powers).isError);
+
+    powers = {-1, 0};
+    ASSERT_TRUE(lr.CoefficientAt(powers).isError);
+    powers = {0, -1};
+    ASSERT_TRUE(lr.CoefficientAt(powers).isError);
+
+    powers = {0, 0};
+    Maybe<int> c = lr.CoefficientAt(powers);
+    ASSERT_FALSE(c.isError);
+    ASSERT_DOUBLE_EQ(c.val, 0.0);
+
+    // x1^2*x2^0
+    lr.coefficients->children[0]->children[0]->a = 1.0;
+
+    // x1^1*x2^1
+    lr.coefficients->children[1]->children[0]->a = 2.0;
+
+    // x1^1*x2^0
+    lr.coefficients->children[1]->children[1]->a = 3.0;
+
+    // x1^0*x2^2
+    lr.coefficients->children[2]->children[0]->a = 4.0;
+
+    // x1^0*x2^1
+    lr.coefficients->children[2]->children[1]->a = 5.0;
+
+    // x1^0*x2^0
+    lr.coefficients->children[2]->children[2]->a = 6.0;
+
+    powers = {2, 0};
+    c = lr.CoefficientAt(powers);
+    ASSERT_FALSE(c.isError);
+    ASSERT_DOUBLE_EQ(c.val, 1.0);
+
+    powers = {1, 1};
+    c = lr.CoefficientAt(powers);
+    ASSERT_FALSE(c.isError);
+    ASSERT_DOUBLE_EQ(c.val, 2.0);
+
+    powers = {1, 0};
+    c = lr.CoefficientAt(powers);
+    ASSERT_FALSE(c.isError);
+    ASSERT_DOUBLE_EQ(c.val, 3.0);
+
+    powers = {0, 2};
+    c = lr.CoefficientAt(powers);
+    ASSERT_FALSE(c.isError);
+    ASSERT_DOUBLE_EQ(c.val, 4.0);
+
+    powers = {0, 1};
+    c = lr.CoefficientAt(powers);
+    ASSERT_FALSE(c.isError);
+    ASSERT_DOUBLE_EQ(c.val, 5.0);
+
+    powers = {0, 0};
+    c = lr.CoefficientAt(powers);
+    ASSERT_FALSE(c.isError);
+    ASSERT_DOUBLE_EQ(c.val, 6.0);
+}

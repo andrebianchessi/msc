@@ -80,8 +80,17 @@ class LinReg {
     // Grad({1,1}, 1) -> 3.0*2*x2 = 3*2*1 = 6
     double Grad(int i, std::vector<double>* X);
 
+    // Returns the coefficient for the powers of the inputs
+    // Ex:
+    // y(x1,x2) = 1.0*x1^2 + 2.0*x1*x2 + 3.0*x2^2 + 4.0*2x1 + 5.0*x2 + 6.0
+    // CoefficientAt({0,0}) -> 6.0
+    // CoefficientAt({2,0}) -> 1.0
+    // CoefficientAt({1,1}) -> 2.0
+    Maybe<int> CoefficientAt(std::vector<int> powers);
+
    private:
     FRIEND_TEST(LinRegTest, coefficientsTest);
+    FRIEND_TEST(LinRegTest, coefficientAtTest);
     FRIEND_TEST(LinRegTest, operatorTest);
     Node* coefficients;
 };

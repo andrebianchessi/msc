@@ -79,3 +79,39 @@ Maybe<double> LinReg::operator()(std::vector<double>* X) {
     r.val = dfs(this->coefficients, -1, X);
     return r;
 };
+
+Maybe<int> LinReg::CoefficientAt(std::vector<int> powers) {
+    Maybe<int> r;
+
+    if (int(powers.size()) > this->XSize) {
+        r.isError = true;
+        r.errMsg = "powers must be same length of X";
+        return r;
+    }
+
+    int pSum = 0;
+    for (int i = 0; i < int(powers.size()); i++) {
+        if (powers[i] < 0) {
+            r.isError = true;
+            r.errMsg = "powers must be >=0";
+            return r;
+        }
+        pSum += powers[i];
+    }
+    if (pSum > this->order) {
+        r.isError = true;
+        r.errMsg = "sum of powers larger than order of regression";
+        return r;
+    }
+
+    Node* n = this->coefficients;
+    int pIndex = 0;
+    int childrenIndex;
+    while (pIndex < int(powers.size())) {
+        childrenIndex = n->l - powers[pIndex];
+        n = n->children[childrenIndex];
+        pIndex += 1;
+    }
+    r.val = n->a;
+    return r;
+}
