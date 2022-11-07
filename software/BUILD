@@ -273,3 +273,33 @@ cc_test(
     ":evolution"
     ],
 )
+
+cc_library(
+  name = "linear_regression",
+  srcs = [
+    "linear_regression.h",
+    "linear_regression.cc",
+  ],
+  hdrs = [
+    "linear_regression.h",
+  ],
+  deps = [
+    "@boost//:math",
+    "@boost//:lexical_cast",
+    ":maybe",
+    "@com_google_googletest//:gtest_main",
+    ":utils"
+  ]
+)
+
+cc_test(
+  name = "linear_regression_test",
+  srcs = [
+    "linear_regression_test.cc",
+  ],
+  deps = [
+    ":linear_regression",
+    "@com_google_googletest//:gtest_main",
+    ":utils"
+  ]
+)
