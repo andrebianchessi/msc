@@ -18,28 +18,28 @@ TEST(LinRegTest, ConstructorTest) {
     // y() = a
     lr = LinReg::NewLinReg(0, 0);
     ASSERT_FALSE(lr.isError);
-    ASSERT_EQ(lr.val.nTerms, 1);
+    ASSERT_EQ(lr.val.nTerms(), 1);
 
     // y(x1, ... , x10) = k
     lr = LinReg::NewLinReg(10, 0);
     ASSERT_FALSE(lr.isError);
-    ASSERT_EQ(lr.val.nTerms, 1);
+    ASSERT_EQ(lr.val.nTerms(), 1);
 
     // y(x1, ... , x10) = a*x1 + ... + j*x10 + k
     lr = LinReg::NewLinReg(10, 1);
     ASSERT_FALSE(lr.isError);
-    ASSERT_EQ(lr.val.nTerms, 11);
+    ASSERT_EQ(lr.val.nTerms(), 11);
 
     // y(x1,x2) = x1^2 + x1*x2 + x2^2 + x1 + x2 + k
     lr = LinReg::NewLinReg(2, 2);
     ASSERT_FALSE(lr.isError);
-    ASSERT_EQ(lr.val.nTerms, 6);
+    ASSERT_EQ(lr.val.nTerms(), 6);
 
     // y(x1,x2) = x1^3 + x1^2*x2 + x1*x2^2 + x2^3 + x1^2 + x1*x2 + x2^2 + x1 +
     // x2 + k
     lr = LinReg::NewLinReg(2, 3);
     ASSERT_FALSE(lr.isError);
-    ASSERT_EQ(lr.val.nTerms, 10);
+    ASSERT_EQ(lr.val.nTerms(), 10);
 }
 
 TEST(LinRegTest, coefficientsTest) {

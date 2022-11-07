@@ -65,7 +65,7 @@ class LinReg {
     //  nTerms = 1
     int XSize;
     int order;
-    int nTerms;
+    int nTerms();
 
     // Initializes regression considering all coefficients = 0
     // Ex:

@@ -15,6 +15,8 @@ int polyTerms(int nVars, int maxOrder) {
         boost::math::binomial_coefficient<double>(nVars + maxOrder, maxOrder));
 }
 
+int LinReg::nTerms() { return polyTerms(this->XSize, this->order); }
+
 Maybe<LinReg> LinReg::NewLinReg(int XSize, int order) {
     Maybe<LinReg> r;
     if (XSize < 0 || order < 0) {
@@ -25,7 +27,6 @@ Maybe<LinReg> LinReg::NewLinReg(int XSize, int order) {
     LinReg lr;
     lr.XSize = XSize;
     lr.order = order;
-    lr.nTerms = polyTerms(XSize, order);
 
     lr.coefficients = new Node();
     lr.coefficients->l = order;
