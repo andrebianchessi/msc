@@ -73,12 +73,15 @@ class LinReg {
     static Maybe<LinReg> NewLinReg(int XSize, int order);
     Maybe<double> operator()(std::vector<double>* X);
 
-    // Returns the component i of the gradient at X
+    // Returns the derivative with respect to di-th x
     // Ex:
     // y(x1,x2) = 1.0*x1^2 + 3.0*x2^2 + 0.1
-    // Grad({1,1}, 0) -> 1.0*2*x1 = 1*2*1 = 2
-    // Grad({1,1}, 1) -> 3.0*2*x2 = 3*2*1 = 6
-    Maybe<double> Grad(int di, std::vector<double>* X);
+    // D({1,1}, 0) -> 1.0*2*x1 = 1*2*1 = 2
+    // D({1,1}, 1) -> 3.0*2*x2 = 3*2*1 = 6
+    Maybe<double> D(int di, std::vector<double>* X);
+
+    // Returns the second derivative, similar to LinReg::D
+    Maybe<double> D2(int di, std::vector<double>* X);
 
     // Returns the coefficient for the powers of the inputs
     // Ex:
@@ -92,7 +95,8 @@ class LinReg {
     FRIEND_TEST(LinRegTest, coefficientsTest);
     FRIEND_TEST(LinRegTest, coefficientAtTest);
     FRIEND_TEST(LinRegTest, operatorTest);
-    FRIEND_TEST(LinRegTest, gradTest);
+    FRIEND_TEST(LinRegTest, DTest);
+    FRIEND_TEST(LinRegTest, D2Test);
     Node* coefficients;
 };
 

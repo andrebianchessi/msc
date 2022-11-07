@@ -214,21 +214,21 @@ TEST(LinRegTest, coefficientAtTest) {
     ASSERT_DOUBLE_EQ(c.val, 6.0);
 }
 
-TEST(LinRegTest, gradTest) {
+TEST(LinRegTest, DTest) {
     Maybe<LinReg> m = LinReg::NewLinReg(2, 2);
     ASSERT_FALSE(m.isError);
     LinReg lr = m.val;
 
     std::vector<double> X = {1.0, 2.0};
-    auto v = lr.Grad(0, &X);
+    auto v = lr.D(0, &X);
     ASSERT_FALSE(v.isError);
     ASSERT_DOUBLE_EQ(v.val, 0.0);
-    v = lr.Grad(1, &X);
+    v = lr.D(1, &X);
     ASSERT_FALSE(v.isError);
     ASSERT_DOUBLE_EQ(v.val, 0.0);
 
-    ASSERT_TRUE(lr.Grad(2, &X).isError);
-    ASSERT_TRUE(lr.Grad(-1, &X).isError);
+    ASSERT_TRUE(lr.D(2, &X).isError);
+    ASSERT_TRUE(lr.D(-1, &X).isError);
 
     // x1^2*x2^0
     lr.coefficients->children[0]->children[0]->a = 1.0;
@@ -252,13 +252,62 @@ TEST(LinRegTest, gradTest) {
     double x2 = 17.0;
     X = {x1, x2};
 
-    v = lr.Grad(0, &X);
+    v = lr.D(0, &X);
     ASSERT_FALSE(v.isError);
     double d1Expected = 1.0 * 2 * x1 + 2.0 * x2 + 3.0;
     ASSERT_DOUBLE_EQ(v.val, d1Expected);
 
-    v = lr.Grad(1, &X);
+    v = lr.D(1, &X);
     ASSERT_FALSE(v.isError);
     double d2Expected = 2.0 * x1 + 4.0 * 2 * x2 + 5.0;
     ASSERT_DOUBLE_EQ(v.val, d2Expected);
+}
+
+TEST(LinRegTest, D2Test) {
+    Maybe<LinReg> m = LinReg::NewLinReg(2, 2);
+    ASSERT_FALSE(m.isError);
+    LinReg lr = m.val;
+
+    std::vector<double> X = {1.0, 2.0};
+    auto v = lr.D2(0, &X);
+    ASSERT_FALSE(v.isError);
+    ASSERT_DOUBLE_EQ(v.val, 0.0);
+    v = lr.D2(1, &X);
+    ASSERT_FALSE(v.isError);
+    ASSERT_DOUBLE_EQ(v.val, 0.0);
+
+    ASSERT_TRUE(lr.D2(2, &X).isError);
+    ASSERT_TRUE(lr.D2(-1, &X).isError);
+
+    // x1^2*x2^0
+    lr.coefficients->children[0]->children[0]->a = 1.0;
+
+    // x1^1*x2^1
+    lr.coefficients->children[1]->children[0]->a = 2.0;
+
+    // x1^1*x2^0
+    lr.coefficients->children[1]->children[1]->a = 3.0;
+
+    // x1^0*x2^2
+    lr.coefficients->children[2]->children[0]->a = 4.0;
+
+    // x1^0*x2^1
+    lr.coefficients->children[2]->children[1]->a = 5.0;
+
+    // x1^0*x2^0
+    lr.coefficients->children[2]->children[2]->a = 6.0;
+
+    double x1 = 9.0;
+    double x2 = 17.0;
+    X = {x1, x2};
+
+    v = lr.D2(0, &X);
+    ASSERT_FALSE(v.isError);
+    double dd1Expected = 1.0 * 2;
+    ASSERT_DOUBLE_EQ(v.val, dd1Expected);
+
+    v = lr.D2(1, &X);
+    ASSERT_FALSE(v.isError);
+    double dd2Expected = 4.0 * 2;
+    ASSERT_DOUBLE_EQ(v.val, dd2Expected);
 }

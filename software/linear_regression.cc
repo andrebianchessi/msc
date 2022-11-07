@@ -81,7 +81,7 @@ Maybe<double> LinReg::operator()(std::vector<double>* X) {
     return r;
 };
 
-double dfsGrad(Node* n, int di, int index, std::vector<double>* X) {
+double dfsD(Node* n, int di, int index, std::vector<double>* X) {
     if (n->IsLeaf()) {
         if (index != di) {
             return n->a * std::pow(X->at(index), n->e);
@@ -94,22 +94,22 @@ double dfsGrad(Node* n, int di, int index, std::vector<double>* X) {
     double sumOfChildren = 0;
     for (int c = 0; c < int(n->children.size()); c++) {
         if (index == -1) {
-            sumOfChildren += dfsGrad(n->children[c], di, index + 1, X);
+            sumOfChildren += dfsD(n->children[c], di, index + 1, X);
         } else {
             if (index != di) {
                 sumOfChildren += std::pow(X->at(index), n->e) *
-                                 dfsGrad(n->children[c], di, index + 1, X);
+                                 dfsD(n->children[c], di, index + 1, X);
             } else {
                 if (n->e != 0) {
                     sumOfChildren += n->e * std::pow(X->at(index), n->e - 1) *
-                                     dfsGrad(n->children[c], di, index + 1, X);
+                                     dfsD(n->children[c], di, index + 1, X);
                 }
             }
         }
     }
     return sumOfChildren;
 }
-Maybe<double> LinReg::Grad(int di, std::vector<double>* X) {
+Maybe<double> LinReg::D(int di, std::vector<double>* X) {
     Maybe<double> r;
     if (int(X->size()) != this->XSize) {
         r.isError = true;
@@ -121,7 +121,52 @@ Maybe<double> LinReg::Grad(int di, std::vector<double>* X) {
         r.errMsg = "invalid i";
         return r;
     }
-    r.val = dfsGrad(this->coefficients, di, -1, X);
+    r.val = dfsD(this->coefficients, di, -1, X);
+    return r;
+}
+
+double dfsD2(Node* n, int di, int index, std::vector<double>* X) {
+    if (n->IsLeaf()) {
+        if (index != di) {
+            return n->a * std::pow(X->at(index), n->e);
+        }
+        if (n->e <= 1) {
+            return 0;
+        }
+        return n->a * n->e * (n->e - 1) * std::pow(X->at(index), n->e - 2);
+    }
+    double sumOfChildren = 0;
+    for (int c = 0; c < int(n->children.size()); c++) {
+        if (index == -1) {
+            sumOfChildren += dfsD2(n->children[c], di, index + 1, X);
+        } else {
+            if (index != di) {
+                sumOfChildren += std::pow(X->at(index), n->e) *
+                                 dfsD2(n->children[c], di, index + 1, X);
+            } else {
+                if (n->e >= 2) {
+                    sumOfChildren += n->e * (n->e - 1) *
+                                     std::pow(X->at(index), n->e - 2) *
+                                     dfsD2(n->children[c], di, index + 1, X);
+                }
+            }
+        }
+    }
+    return sumOfChildren;
+}
+Maybe<double> LinReg::D2(int di, std::vector<double>* X) {
+    Maybe<double> r;
+    if (int(X->size()) != this->XSize) {
+        r.isError = true;
+        r.errMsg = "X of invalid length";
+        return r;
+    }
+    if (di < 0 || di >= this->XSize) {
+        r.isError = true;
+        r.errMsg = "invalid i";
+        return r;
+    }
+    r.val = dfsD2(this->coefficients, di, -1, X);
     return r;
 }
 
