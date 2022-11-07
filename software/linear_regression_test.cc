@@ -311,3 +311,69 @@ TEST(LinRegTest, D2Test) {
     double dd2Expected = 4.0 * 2;
     ASSERT_DOUBLE_EQ(v.val, dd2Expected);
 }
+
+TEST(LinRegTest, DAndD2Test) {
+    // Similar to DTest and D2Test, but with a more complex polynomial
+    Maybe<LinReg> m = LinReg::NewLinReg(3, 3);
+    ASSERT_FALSE(m.isError);
+    LinReg lr = m.val;
+
+    std::vector<double> X = {1.0, 2.0, 3.0};
+
+    // I only setup a few parameters, for simplicity
+
+    // x1^3
+    lr.coefficients->children[0]->children[0]->children[0]->a = 5.0;
+
+    // x2^3
+    lr.coefficients->children[3]->children[0]->children[0]->a = 7.0;
+
+    // x3^3
+    lr.coefficients->children[3]->children[3]->children[0]->a = 9.0;
+
+    // x1^2*x2
+    lr.coefficients->children[1]->children[0]->children[0]->a = 13.0;
+
+    // x2^2*x3
+    lr.coefficients->children[3]->children[1]->children[0]->a = 17.0;
+
+    // x1*x3^2
+    lr.coefficients->children[2]->children[2]->children[0]->a = 19.0;
+
+    // y(x1,x2,x3) = 5*x1^3 + 7*x2^3 + 9*x3^3 + 13*x1^2*x2 + 17*x2^2*x3 +
+    // 19*x1*x3^2
+    double x1 = 9.0;
+    double x2 = 17.0;
+    double x3 = 21.0;
+    X = {x1, x2, x3};
+
+    auto d = lr.D(0, &X);
+    ASSERT_FALSE(d.isError);
+    double d1Expected = 3 * 5 * x1 * x1 + 2 * 13 * x1 * x2 + 19 * x3 * x3;
+    ASSERT_DOUBLE_EQ(d.val, d1Expected);
+
+    d = lr.D(1, &X);
+    ASSERT_FALSE(d.isError);
+    double d2Expected = 3 * 7 * x2 * x2 + 13 * x1 * x1 + 2 * 17 * x2 * x3;
+    ASSERT_DOUBLE_EQ(d.val, d2Expected);
+
+    d = lr.D(2, &X);
+    ASSERT_FALSE(d.isError);
+    double d3Expected = 3 * 9 * x3 * x3 + 17 * x2 * x2 + 2 * 19 * x1 * x3;
+    ASSERT_DOUBLE_EQ(d.val, d3Expected);
+
+    auto dd = lr.D2(0, &X);
+    ASSERT_FALSE(dd.isError);
+    double dd1Expected = 2 * 3 * 5 * x1 + 2 * 13 * x2;
+    ASSERT_DOUBLE_EQ(dd.val, dd1Expected);
+
+    dd = lr.D2(1, &X);
+    ASSERT_FALSE(dd.isError);
+    double dd2Expected = 2 * 3 * 7 * x2 + 2 * 17 * x3;
+    ASSERT_DOUBLE_EQ(dd.val, dd2Expected);
+
+    dd = lr.D2(2, &X);
+    ASSERT_FALSE(dd.isError);
+    double dd3Expected = 2 * 3 * 9 * x3 + 2 * 19 * x1;
+    ASSERT_DOUBLE_EQ(dd.val, dd3Expected);
+}

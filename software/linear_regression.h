@@ -97,6 +97,7 @@ class LinReg {
     FRIEND_TEST(LinRegTest, operatorTest);
     FRIEND_TEST(LinRegTest, DTest);
     FRIEND_TEST(LinRegTest, D2Test);
+    FRIEND_TEST(LinRegTest, DAndD2Test);
     Node* coefficients;
 };
 
