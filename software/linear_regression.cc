@@ -60,11 +60,11 @@ double dfs(Node* n, int index, std::vector<double>* X) {
     }
     double sumOfChildren = 0;
     for (int c = 0; c < int(n->children.size()); c++) {
-        if (index != -1) {
+        if (index == -1) {
+            sumOfChildren += dfs(n->children[c], index + 1, X);
+        } else {
             sumOfChildren += std::pow(X->at(index), n->e) *
                              dfs(n->children[c], index + 1, X);
-        } else {
-            sumOfChildren += dfs(n->children[c], index + 1, X);
         }
     }
     return sumOfChildren;
@@ -79,6 +79,50 @@ Maybe<double> LinReg::operator()(std::vector<double>* X) {
     r.val = dfs(this->coefficients, -1, X);
     return r;
 };
+
+double dfsGrad(Node* n, int di, int index, std::vector<double>* X) {
+    if (n->IsLeaf()) {
+        if (index != di) {
+            return n->a * std::pow(X->at(index), n->e);
+        }
+        if (n->e == 0) {
+            return 0;
+        }
+        return n->a * n->e * std::pow(X->at(index), n->e - 1);
+    }
+    double sumOfChildren = 0;
+    for (int c = 0; c < int(n->children.size()); c++) {
+        if (index == -1) {
+            sumOfChildren += dfsGrad(n->children[c], di, index + 1, X);
+        } else {
+            if (index != di) {
+                sumOfChildren += std::pow(X->at(index), n->e) *
+                                 dfsGrad(n->children[c], di, index + 1, X);
+            } else {
+                if (n->e != 0) {
+                    sumOfChildren += n->e * std::pow(X->at(index), n->e - 1) *
+                                     dfsGrad(n->children[c], di, index + 1, X);
+                }
+            }
+        }
+    }
+    return sumOfChildren;
+}
+Maybe<double> LinReg::Grad(int di, std::vector<double>* X) {
+    Maybe<double> r;
+    if (int(X->size()) != this->XSize) {
+        r.isError = true;
+        r.errMsg = "X of invalid length";
+        return r;
+    }
+    if (di < 0 || di >= this->XSize) {
+        r.isError = true;
+        r.errMsg = "invalid i";
+        return r;
+    }
+    r.val = dfsGrad(this->coefficients, di, -1, X);
+    return r;
+}
 
 Maybe<int> LinReg::CoefficientAt(std::vector<int> powers) {
     Maybe<int> r;
