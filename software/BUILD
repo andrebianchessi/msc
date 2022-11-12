@@ -275,13 +275,13 @@ cc_test(
 )
 
 cc_library(
-  name = "linear_regression",
+  name = "polynomial",
   srcs = [
-    "linear_regression.h",
-    "linear_regression.cc",
+    "polynomial.h",
+    "polynomial.cc",
   ],
   hdrs = [
-    "linear_regression.h",
+    "polynomial.h",
   ],
   deps = [
     "@boost//:math",
@@ -293,12 +293,12 @@ cc_library(
 )
 
 cc_test(
-  name = "linear_regression_test",
+  name = "polynomial_test",
   srcs = [
-    "linear_regression_test.cc",
+    "polynomial_test.cc",
   ],
   deps = [
-    ":linear_regression",
+    ":polynomial",
     "@com_google_googletest//:gtest_main",
     ":utils"
   ]
