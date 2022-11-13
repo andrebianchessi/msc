@@ -72,7 +72,7 @@ class Node {
     bool IsLeaf() { return this->children.size() == 0; }
 
    private:
-    FRIEND_TEST(PolyTest, NodeTest);
+    FRIEND_TEST(NodeTest, AddChildTest);
     int childrenI;  // index of first non empty index at children vector
     Node* AddChild(int exp, int parentsExpSum, int nChildren);
 };
@@ -130,21 +130,39 @@ class Poly {
     // similar to Poly::Dxi
     Maybe<double> DDxi(int i, std::vector<double>* X);
 
-    // Returns the coefficient for the powers of the inputs
+    // Sets the coefficients at target vector
     // Ex:
-    // P = 1.0*x1^2 + 2.0*x1*x2 + 3.0*x2^2 + 4.0*2x1 + 5.0*x2 + 6.0
-    // CoefficientAt({0,0}) -> 6.0
-    // CoefficientAt({2,0}) -> 1.0
-    // CoefficientAt({1,1}) -> 2.0
-    Maybe<int> CoefficientAt(std::vector<int> powers);
+    // X = {1,1}
+    // P = 1.0x^2 + 2.0xy + 3.0x + 4.0y^2 + 5.0y + 6.0
+    // target will be set to {1,2,3,4,5,6}
+    Maybe<Void> GetCoefficients(std::vector<double>* target);
+
+    // Get the derivatives with respect to each coefficient
+    // Ex:
+    // X = {7,8}
+    // P = 1.0x^2 + 2.0xy + 3.0x + 4.0y^2 + 5.0y + 6.0
+    // target will be set to {7^2, 7*8, 7, 8^2, 8, 1.0}
+    Maybe<Void> GetD(std::vector<double>* X, std::vector<double>* target);
+
+    // Multiplies this instance by k
+    // Ex:
+    // P = x^2 + x + 1
+    // P.Multiply(9)
+    // P = 9*(x^2 + x + 1)
+    void Multiply(double k);
 
    private:
-    FRIEND_TEST(PolyTest, constructorTest);
-    FRIEND_TEST(PolyTest, operatorTest);
+    friend class PolyTest;
+    FRIEND_TEST(PolyConstructorTest, constructorTest);
     FRIEND_TEST(PolyTest, dfsTest);
-    FRIEND_TEST(PolyTest, DxiTest);
-    FRIEND_TEST(PolyTest, DDxiTest);
     Node* coefficients;
+
+    // Number that multiplies this polynomial
+    // Note that we consider that this is part of each coefficient
+    // Ex:
+    // P = 7*(3x^2 + 4x + 5)
+    // The coefficients are: 7*3, 7*4, 7*5
+    double k;
 };
 
 double dfs(Node* node, int nodeTreeDepth, std::vector<double>* X);

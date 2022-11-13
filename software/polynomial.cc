@@ -53,19 +53,20 @@ Maybe<Poly> Poly::NewPoly(int n, int order, double coefficients) {
         return r;
     }
 
-    Poly lr;
-    lr.n = n;
-    lr.order = order;
+    Poly p;
+    p.k = 1;
+    p.n = n;
+    p.order = order;
 
     // create root node
     // the root node will have order+1 children
     Node* root = new Node(order + 1);
-    lr.coefficients = root;
+    p.coefficients = root;
 
     // We now perform BFS, "layer by layer"
     // each layer is a depth in the coefficients tree.
     std::queue<Node*> q;
-    q.push(lr.coefficients);
+    q.push(p.coefficients);
     for (int treeDepth = 0; treeDepth <= n; treeDepth++) {
         for (int qI = q.size(); qI > 0; qI--) {
             Node* currentNode = q.front();
@@ -97,7 +98,7 @@ Maybe<Poly> Poly::NewPoly(int n, int order, double coefficients) {
         }
     }
 
-    r.val = lr;
+    r.val = p;
     return r;
 };
 
@@ -125,7 +126,7 @@ Maybe<double> Poly::operator()(std::vector<double>* X) {
     for (int c = 0; c < int(root->children.size()); c++) {
         sumOfChildren += dfs(root->children[c], 1, X);
     }
-    r.val = sumOfChildren;
+    r.val = this->k * sumOfChildren;
     return r;
 };
 
@@ -180,7 +181,7 @@ Maybe<double> Poly::Dxi(int i, std::vector<double>* X) {
     for (int c = 0; c < int(root->children.size()); c++) {
         sumOfChildren += dfsDxi(i, root->children[c], 1, X);
     }
-    r.val = sumOfChildren;
+    r.val = this->k * sumOfChildren;
     return r;
 }
 
@@ -224,6 +225,70 @@ Maybe<double> Poly::DDxi(int i, std::vector<double>* X) {
     for (int c = 0; c < int(root->children.size()); c++) {
         sumOfChildren += dfsDDxi(i, root->children[c], 1, X);
     }
-    r.val = sumOfChildren;
+    r.val = this->k * sumOfChildren;
     return r;
 }
+
+// Auxiliary DFS recursive function used on GetD
+void dfsGetD(std::vector<double>* X, double parentsProduct, Node* thisNode,
+             int thisNodeTreeDepth, int* i, std::vector<double>* target) {
+    const double currentProduct =
+        parentsProduct * std::pow(X->at(thisNodeTreeDepth - 1), thisNode->exp);
+    if (thisNode->IsLeaf()) {
+        target->at(*i) = currentProduct;
+        *i = *i + 1;
+        return;
+    }
+    for (int c = 0; c < int(thisNode->children.size()); c++) {
+        dfsGetD(X, currentProduct, thisNode->children[c], thisNodeTreeDepth + 1,
+                i, target);
+    }
+}
+Maybe<Void> Poly::GetD(std::vector<double>* X, std::vector<double>* target) {
+    Maybe<Void> r;
+    if (int(target->size()) != this->nTerms()) {
+        r.isError = true;
+        r.errMsg = "target must have same length as the number of terms";
+        return r;
+    }
+    if (int(X->size()) != this->n) {
+        r.isError = true;
+        r.errMsg = "X of invalid length";
+        return r;
+    }
+
+    int i = 0;
+    for (int c = 0; c < int(this->coefficients->children.size()); c++) {
+        dfsGetD(X, 1, this->coefficients->children[c], 1, &i, target);
+    }
+    return r;
+}
+
+// Auxiliary DFS recursive function used on GetCoefficients
+void dfsGetCoefficients(double polynomialK, Node* thisNode, int* i,
+                        std::vector<double>* target) {
+    if (thisNode->IsLeaf()) {
+        target->at(*i) = polynomialK * thisNode->a;
+        *i = *i + 1;
+        return;
+    }
+    for (int c = 0; c < int(thisNode->children.size()); c++) {
+        dfsGetCoefficients(polynomialK, thisNode->children[c], i, target);
+    }
+}
+Maybe<Void> Poly::GetCoefficients(std::vector<double>* target) {
+    Maybe<Void> r;
+    if (int(target->size()) != this->nTerms()) {
+        r.isError = true;
+        r.errMsg = "target must have same length as the number of terms";
+        return r;
+    }
+    int i = 0;
+    for (int c = 0; c < int(this->coefficients->children.size()); c++) {
+        dfsGetCoefficients(this->k, this->coefficients->children[c], &i,
+                           target);
+    }
+    return r;
+}
+
+void Poly::Multiply(double k) { this->k = k; }
