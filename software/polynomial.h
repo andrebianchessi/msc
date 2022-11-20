@@ -128,7 +128,32 @@ class Poly {
 
     // Returns the second derivative with respect to the i-th variable,
     // similar to Poly::Dxi
-    Maybe<double> DDxi(int i, std::vector<double>* X);
+    Maybe<double> D2xi(int i, std::vector<double>* X);
+
+    // Get the derivatives with respect to each coefficient
+    // Ex:
+    // X = {7,8}
+    // P = 1.0x^2 + 2.0xy + 3.0x + 4.0y^2 + 5.0y + 6.0
+    // target will be set to {7^2, 7*8, 7, 8^2, 8, 1.0}
+    Maybe<Void> Da(std::vector<double>* X, std::vector<double>* target);
+
+    // Get the derivatives with respect to each coefficient of the derivative
+    // with respect to the i-th variable
+    // Ex:
+    // P = x^2 + xy + x + y^2 + y + 1
+    // Dx0 = 2*x + y + 1
+    // DaDx0 = [x, y, 1, 0, 0, 0]
+    Maybe<Void> DaDxi(int i, std::vector<double>* X,
+                      std::vector<double>* target);
+
+    // Get the derivatives with respect to each coefficient of the second
+    // derivative with respect to the i-th variable
+    // Ex: P = x^2 + xy + x + y^2 + y + 1
+    // Dx0 = 2*x + y + 1
+    // D2x0 = 2
+    // DaD2xi = [2, 0, 0, 0, 0, 0]
+    Maybe<Void> DaD2xi(int i, std::vector<double>* X,
+                       std::vector<double>* target);
 
     // Sets the coefficients at target vector
     // Ex:
@@ -136,13 +161,6 @@ class Poly {
     // P = 1.0x^2 + 2.0xy + 3.0x + 4.0y^2 + 5.0y + 6.0
     // target will be set to {1,2,3,4,5,6}
     Maybe<Void> GetCoefficients(std::vector<double>* target);
-
-    // Get the derivatives with respect to each coefficient
-    // Ex:
-    // X = {7,8}
-    // P = 1.0x^2 + 2.0xy + 3.0x + 4.0y^2 + 5.0y + 6.0
-    // target will be set to {7^2, 7*8, 7, 8^2, 8, 1.0}
-    Maybe<Void> GetD(std::vector<double>* X, std::vector<double>* target);
 
     // Multiplies this instance by k
     // Ex:

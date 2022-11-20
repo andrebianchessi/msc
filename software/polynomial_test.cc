@@ -207,51 +207,51 @@ TEST_F(PolyTest, DxiTest) {
     ASSERT_DOUBLE_EQ(eval.val, d2Expected * 5);
 }
 
-TEST_F(PolyTest, DDxiTest) {
+TEST_F(PolyTest, D2xiTest) {
     std::vector<double> X = {1.0, 2.0};
 
-    auto eval = n2o2Zeros.DDxi(0, &X);
+    auto eval = n2o2Zeros.D2xi(0, &X);
     ASSERT_FALSE(eval.isError);
     ASSERT_DOUBLE_EQ(eval.val, 0.0);
-    eval = n2o2Zeros.DDxi(1, &X);
+    eval = n2o2Zeros.D2xi(1, &X);
     ASSERT_FALSE(eval.isError);
     ASSERT_DOUBLE_EQ(eval.val, 0.0);
 
-    ASSERT_TRUE(n2o2Zeros.DDxi(2, &X).isError);
-    ASSERT_TRUE(n2o2Zeros.DDxi(-1, &X).isError);
+    ASSERT_TRUE(n2o2Zeros.D2xi(2, &X).isError);
+    ASSERT_TRUE(n2o2Zeros.D2xi(-1, &X).isError);
 
     double x1 = 9.0;
     double x2 = 17.0;
     X = {x1, x2};
 
-    eval = n2o2.DDxi(0, &X);
+    eval = n2o2.D2xi(0, &X);
     ASSERT_FALSE(eval.isError);
     double dd1Expected = 1.0 * 2;
     ASSERT_DOUBLE_EQ(eval.val, dd1Expected);
 
-    eval = n2o2.DDxi(1, &X);
+    eval = n2o2.D2xi(1, &X);
     ASSERT_FALSE(eval.isError);
     double dd2Expected = 4.0 * 2;
     ASSERT_DOUBLE_EQ(eval.val, dd2Expected);
 
     n2o2.Multiply(5.0);
-    eval = n2o2.DDxi(0, &X);
+    eval = n2o2.D2xi(0, &X);
     ASSERT_FALSE(eval.isError);
     ASSERT_DOUBLE_EQ(eval.val, dd1Expected * 5);
-    eval = n2o2.DDxi(1, &X);
+    eval = n2o2.D2xi(1, &X);
     ASSERT_FALSE(eval.isError);
     ASSERT_DOUBLE_EQ(eval.val, dd2Expected * 5);
 }
 
-TEST_F(PolyTest, GetDTest) {
+TEST_F(PolyTest, DaTest) {
     std::vector<double> X = {1.0, 2.0};
     auto coefs = std::vector<double>(1);
-    auto r = n2o2Zeros.GetD(&X, &coefs);
+    auto r = n2o2Zeros.Da(&X, &coefs);
     ASSERT_TRUE(r.isError);
 
     X = {1.0};
     coefs = std::vector<double>(6);
-    r = n2o2Zeros.GetD(&X, &coefs);
+    r = n2o2Zeros.Da(&X, &coefs);
     ASSERT_TRUE(r.isError);
 
     double x = 17.0;
@@ -259,7 +259,7 @@ TEST_F(PolyTest, GetDTest) {
     X = {x, y};
     coefs = std::vector<double>(6);
     n2o2Zeros.Multiply(10);  // Should not change anything
-    r = n2o2Zeros.GetD(&X, &coefs);
+    r = n2o2Zeros.Da(&X, &coefs);
     ASSERT_FALSE(r.isError);
     // P = 10*(0*x^2 + 0*xy + 0*x + 0*y^2 + 0*y + 0)
     ASSERT_DOUBLE_EQ(coefs[0], x * x);
@@ -270,6 +270,113 @@ TEST_F(PolyTest, GetDTest) {
     ASSERT_DOUBLE_EQ(coefs[5], 1);
 }
 
+TEST_F(PolyTest, DaDxiTest) {
+    std::vector<double> X = {1.0, 2.0};
+    auto coefs = std::vector<double>(1);
+
+    auto r = n2o2Zeros.DaDxi(0, &X, &coefs);
+    ASSERT_TRUE(r.isError);
+
+    X = {1.0};
+    coefs = std::vector<double>(6);
+    r = n2o2Zeros.DaDxi(0, &X, &coefs);
+    ASSERT_TRUE(r.isError);
+
+    X = {1.0, 2.0};
+    coefs = std::vector<double>(6);
+    r = n2o2Zeros.DaDxi(-1, &X, &coefs);
+    ASSERT_TRUE(r.isError);
+    r = n2o2Zeros.DaDxi(2, &X, &coefs);
+    ASSERT_TRUE(r.isError);
+
+    // Should not change any of the results,
+    // as we're testing the derivatives with respect to the coeffs
+    n2o2.Multiply(5);
+    double x = 9.0;
+    double y = 17.0;
+    X = {x, y};
+
+    auto eval = n2o2.DaDxi(0, &X, &coefs);
+    ASSERT_FALSE(eval.isError);
+    // P = 1 * x^2 + 2 * xy + 3 * x + 4 * y^2 + 5 * y + 6 * 1
+    // Dx0 = d/dx(P) = 1 * 2x + 2 * y + 3 * 1
+    // DaDx0 = [2*x, y, 1]
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(coefs[0], 2.0 * x);
+    ASSERT_DOUBLE_EQ(coefs[1], y);
+    ASSERT_DOUBLE_EQ(coefs[2], 1.0);
+    ASSERT_DOUBLE_EQ(coefs[3], 0);
+    ASSERT_DOUBLE_EQ(coefs[4], 0);
+    ASSERT_DOUBLE_EQ(coefs[5], 0);
+
+    eval = n2o2.DaDxi(1, &X, &coefs);
+    ASSERT_FALSE(eval.isError);
+    // P = 1 * x^2 + 2 * xy + 3 * x + 4 * y^2 + 5 * y + 6 * 1
+    // Dx1 = d/dy(P) = 1 * 0 + 2 * x + 3 * 0 + 4 * 2y + 5 * 1 + 6 * 0
+    // DaDx0 = [0, x, 0, 2y, 1, 0]
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(coefs[0], 0);
+    ASSERT_DOUBLE_EQ(coefs[1], x);
+    ASSERT_DOUBLE_EQ(coefs[2], 0);
+    ASSERT_DOUBLE_EQ(coefs[3], 2 * y);
+    ASSERT_DOUBLE_EQ(coefs[4], 1);
+    ASSERT_DOUBLE_EQ(coefs[5], 0);
+}
+
+TEST_F(PolyTest, DaD2xiTest) {
+    std::vector<double> X = {1.0, 2.0};
+    auto coefs = std::vector<double>(1);
+
+    auto r = n2o2Zeros.DaD2xi(0, &X, &coefs);
+    ASSERT_TRUE(r.isError);
+
+    X = {1.0};
+    coefs = std::vector<double>(6);
+    r = n2o2Zeros.DaD2xi(0, &X, &coefs);
+    ASSERT_TRUE(r.isError);
+
+    X = {1.0, 2.0};
+    coefs = std::vector<double>(6);
+    r = n2o2Zeros.DaD2xi(-1, &X, &coefs);
+    ASSERT_TRUE(r.isError);
+    r = n2o2Zeros.DaD2xi(2, &X, &coefs);
+    ASSERT_TRUE(r.isError);
+
+    // Should not change any of the results,
+    // as we're testing the derivatives with respect to the coeffs
+    n2o2.Multiply(5);
+    double x = 9.0;
+    double y = 17.0;
+    X = {x, y};
+
+    auto eval = n2o2.DaD2xi(0, &X, &coefs);
+    ASSERT_FALSE(eval.isError);
+    // P = 1 * x^2 + 2 * xy + 3 * x + 4 * y^2 + 5 * y + 6 * 1
+    // Dx0 = d/dx(P) = 1 * 2x + 2 * y + 3 * 1
+    // D2x0 = d2/dx2(P) = 1 * 2
+    // DaDx0 = [2, 0, 0, 0, 0, 0]
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(coefs[0], 2.0);
+    ASSERT_DOUBLE_EQ(coefs[1], 0);
+    ASSERT_DOUBLE_EQ(coefs[2], 0);
+    ASSERT_DOUBLE_EQ(coefs[3], 0);
+    ASSERT_DOUBLE_EQ(coefs[4], 0);
+    ASSERT_DOUBLE_EQ(coefs[5], 0);
+
+    eval = n2o2.DaD2xi(1, &X, &coefs);
+    ASSERT_FALSE(eval.isError);
+    // P = 1 * x^2 + 2 * xy + 3 * x + 4 * y^2 + 5 * y + 6 * 1
+    // Dx1 = d/dy(P) = 1 * 0 + 2 * x + 3 * 0 + 4 * 2y + 5 * 1 + 6 * 0
+    // D2x1 = d2/dy2(P) = 1 * 0 + 2 * 0 + 3 * 0 + 4 * 2 + 5 * 0 + 6 * 0
+    // DaDx0 = [0, x, 0, 2y, 1, 0]
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(coefs[0], 0);
+    ASSERT_DOUBLE_EQ(coefs[1], 0);
+    ASSERT_DOUBLE_EQ(coefs[2], 0);
+    ASSERT_DOUBLE_EQ(coefs[3], 2);
+    ASSERT_DOUBLE_EQ(coefs[4], 0);
+    ASSERT_DOUBLE_EQ(coefs[5], 0);
+}
 TEST_F(PolyTest, GetCoefficientsTest) {
     auto coefs = std::vector<double>(1);
     auto r = n2o2Zeros.GetCoefficients(&coefs);
