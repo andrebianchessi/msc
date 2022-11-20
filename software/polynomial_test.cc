@@ -99,6 +99,14 @@ TEST(PolyConstructorTest, constructorTest) {
     ASSERT_EQ(p.coefficients->children[2]->children[0]->children.size(), 0);
     ASSERT_EQ(p.coefficients->children[2]->children[1]->children.size(), 0);
     ASSERT_EQ(p.coefficients->children[2]->children[2]->children.size(), 0);
+
+    ASSERT_EQ(p.leafNodes.size(), 6);
+    ASSERT_EQ(p.leafNodes[0], p.coefficients->children[0]->children[0]);
+    ASSERT_EQ(p.leafNodes[1], p.coefficients->children[1]->children[0]);
+    ASSERT_EQ(p.leafNodes[2], p.coefficients->children[1]->children[1]);
+    ASSERT_EQ(p.leafNodes[3], p.coefficients->children[2]->children[0]);
+    ASSERT_EQ(p.leafNodes[4], p.coefficients->children[2]->children[1]);
+    ASSERT_EQ(p.leafNodes[5], p.coefficients->children[2]->children[2]);
 }
 
 class PolyTest : public testing::Test {
@@ -420,4 +428,28 @@ TEST_F(PolyTest, GetCoefficientsTest) {
     ASSERT_DOUBLE_EQ(coefs[3], 4 * 19);
     ASSERT_DOUBLE_EQ(coefs[4], 5 * 19);
     ASSERT_DOUBLE_EQ(coefs[5], 6 * 19);
+}
+
+TEST_F(PolyTest, SetCoefficientsTest) {
+    auto coefsToSet = std::vector<double>(1);
+    auto r = n2o2Zeros.GetCoefficients(&coefsToSet);
+    ASSERT_TRUE(r.isError);
+
+    coefsToSet = std::vector<double>(7);
+    r = n2o2Zeros.GetCoefficients(&coefsToSet);
+    ASSERT_TRUE(r.isError);
+
+    coefsToSet = std::vector<double>{9, 10, 11, 12, 13, 14};
+    r = n2o2Zeros.SetCoefficients(&coefsToSet);
+    ASSERT_FALSE(r.isError);
+
+    auto coefsSet = std::vector<double>(6);
+    r = n2o2Zeros.GetCoefficients(&coefsSet);
+    ASSERT_FALSE(r.isError);
+    ASSERT_DOUBLE_EQ(coefsSet[0], 9);
+    ASSERT_DOUBLE_EQ(coefsSet[1], 10);
+    ASSERT_DOUBLE_EQ(coefsSet[2], 11);
+    ASSERT_DOUBLE_EQ(coefsSet[3], 12);
+    ASSERT_DOUBLE_EQ(coefsSet[4], 13);
+    ASSERT_DOUBLE_EQ(coefsSet[5], 14);
 }

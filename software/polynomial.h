@@ -104,7 +104,7 @@ class Poly {
     // P = x^2 + xy + x + y^2 + y + 1 -> order = 2
     // P = x + y + z + 1 -> oder = 1
     int order;
-    int nTerms();  // returns number of terms the polynomial has
+    int nTerms;  // number of terms the polynomial has
 
     // Constructor
     // Arguments are the number of variables, the order of the polynomial
@@ -157,10 +157,16 @@ class Poly {
 
     // Sets the coefficients at target vector
     // Ex:
-    // X = {1,1}
     // P = 1.0x^2 + 2.0xy + 3.0x + 4.0y^2 + 5.0y + 6.0
     // target will be set to {1,2,3,4,5,6}
     Maybe<Void> GetCoefficients(std::vector<double>* target);
+
+    // Sets the coefficients of the polynomial with the values provided
+    // Ex:
+    // coefficients = {5,6,7,8,9,10}
+    // P will be set to:
+    // P = 5x^2 + 6xy + 7x + 8y^2 + 9y + 10*1
+    Maybe<Void> SetCoefficients(std::vector<double>* coefficients);
 
     // Multiplies all coefficients by k
     // Ex:
@@ -174,6 +180,9 @@ class Poly {
     FRIEND_TEST(PolyConstructorTest, constructorTest);
     FRIEND_TEST(PolyTest, dfsTest);
     Node* coefficients;
+
+    // vector to quickly access the leaf nodes (which contain the coefficients)
+    std::vector<Node*> leafNodes;
 
     // Number that multiplies this polynomial
     // Note that we consider that this is part of each coefficient

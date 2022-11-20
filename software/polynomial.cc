@@ -27,13 +27,6 @@ Node* Node::AddChild(int exp, int parentsExpSum, int nChildren) {
     return child;
 }
 
-int Poly::nTerms() {
-    // Source:
-    // https://mathoverflow.net/questions/225953/number-of-polynomial-terms-for-certain-degree-and-certain-number-of-variables/225963#225963?newreg=2a0208ceb740461d8eaa21e304b0e341
-    return int(boost::math::binomial_coefficient<double>(this->n + this->order,
-                                                         this->order));
-}
-
 int nChilds(int nodeParentsExpSum, int nodeExp, int polyOrder,
             int nodeTreeDepth, int nVars) {
     if (nodeTreeDepth == nVars) {
@@ -57,11 +50,18 @@ Maybe<Poly> Poly::NewPoly(int n, int order, double coefficients) {
     p.k = 1;
     p.n = n;
     p.order = order;
+    // Source:
+    // https://mathoverflow.net/questions/225953/number-of-polynomial-terms-for-certain-degree-and-certain-number-of-variables/225963#225963?newreg=2a0208ceb740461d8eaa21e304b0e341
+    p.nTerms =
+        int(boost::math::binomial_coefficient<double>(p.n + p.order, p.order));
 
     // create root node
     // the root node will have order+1 children
     Node* root = new Node(order + 1);
     p.coefficients = root;
+
+    p.leafNodes = std::vector<Node*>(p.nTerms);
+    int leafNodesI = 0;
 
     // We now perform BFS, "layer by layer"
     // each layer is a depth in the coefficients tree.
@@ -74,6 +74,8 @@ Maybe<Poly> Poly::NewPoly(int n, int order, double coefficients) {
 
             if (treeDepth == n) {
                 currentNode->a = coefficients;
+                p.leafNodes[leafNodesI] = currentNode;
+                leafNodesI += 1;
             } else {
                 // Number of children current node will have
                 // their exps will go from 0 to `currentNodeChildren-1`
@@ -246,7 +248,7 @@ void dfsDa(std::vector<double>* X, double parentsProduct, Node* thisNode,
 }
 Maybe<Void> Poly::Da(std::vector<double>* X, std::vector<double>* target) {
     Maybe<Void> r;
-    if (int(target->size()) != this->nTerms()) {
+    if (int(target->size()) != this->nTerms) {
         r.isError = true;
         r.errMsg = "target must have same length as the number of terms";
         return r;
@@ -291,7 +293,7 @@ void dfsDaDxi(int i, std::vector<double>* X, double parentsProduct,
 Maybe<Void> Poly::DaDxi(int i, std::vector<double>* X,
                         std::vector<double>* target) {
     Maybe<Void> r;
-    if (int(target->size()) != this->nTerms()) {
+    if (int(target->size()) != this->nTerms) {
         r.isError = true;
         r.errMsg = "target must have same length as the number of terms";
         return r;
@@ -341,7 +343,7 @@ void dfsDaD2xi(int i, std::vector<double>* X, double parentsProduct,
 Maybe<Void> Poly::DaD2xi(int i, std::vector<double>* X,
                          std::vector<double>* target) {
     Maybe<Void> r;
-    if (int(target->size()) != this->nTerms()) {
+    if (int(target->size()) != this->nTerms) {
         r.isError = true;
         r.errMsg = "target must have same length as the number of terms";
         return r;
@@ -364,29 +366,29 @@ Maybe<Void> Poly::DaD2xi(int i, std::vector<double>* X,
     return r;
 }
 
-// Auxiliary DFS recursive function used on GetCoefficients
-void dfsGetCoefficients(double polynomialK, Node* thisNode, int* i,
-                        std::vector<double>* target) {
-    if (thisNode->IsLeaf()) {
-        target->at(*i) = polynomialK * thisNode->a;
-        *i = *i + 1;
-        return;
-    }
-    for (int c = 0; c < int(thisNode->children.size()); c++) {
-        dfsGetCoefficients(polynomialK, thisNode->children[c], i, target);
-    }
-}
 Maybe<Void> Poly::GetCoefficients(std::vector<double>* target) {
     Maybe<Void> r;
-    if (int(target->size()) != this->nTerms()) {
+    if (int(target->size()) != this->nTerms) {
         r.isError = true;
         r.errMsg = "target must have same length as the number of terms";
         return r;
     }
-    int i = 0;
-    for (int c = 0; c < int(this->coefficients->children.size()); c++) {
-        dfsGetCoefficients(this->k, this->coefficients->children[c], &i,
-                           target);
+    for (int i = 0; i < this->nTerms; i++) {
+        print("this->leafNodes[i]->exp", this->leafNodes[i]->exp);
+        (*target)[i] = this->leafNodes[i]->a * this->k;
+    }
+    return r;
+}
+
+Maybe<Void> Poly::SetCoefficients(std::vector<double>* target) {
+    Maybe<Void> r;
+    if (int(target->size()) != this->nTerms) {
+        r.isError = true;
+        r.errMsg = "target must have same length as the number of terms";
+        return r;
+    }
+    for (int i = 0; i < this->nTerms; i++) {
+        this->leafNodes[i]->a = target->at(i);
     }
     return r;
 }
