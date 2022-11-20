@@ -162,11 +162,11 @@ class Poly {
     // target will be set to {1,2,3,4,5,6}
     Maybe<Void> GetCoefficients(std::vector<double>* target);
 
-    // Multiplies this instance by k
+    // Multiplies all coefficients by k
     // Ex:
-    // P = x^2 + x + 1
+    // P = 1*x^2 + 1*x + 1*1
     // P.Multiply(9)
-    // P = 9*(x^2 + x + 1)
+    // P = 9*x^2 + 9*x + 9*1
     void Multiply(double k);
 
    private:

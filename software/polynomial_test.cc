@@ -402,7 +402,7 @@ TEST_F(PolyTest, GetCoefficientsTest) {
     n2o2Twos.Multiply(17);
     r = n2o2Twos.GetCoefficients(&coefs);
     ASSERT_FALSE(r.isError);
-    // P = 10*(2*x^2 + 2*xy + 2*x + 2*y^2 + 2*y + 2)
+    // P = 17*(2*x^2 + 2*xy + 2*x + 2*y^2 + 2*y + 2)
     ASSERT_DOUBLE_EQ(coefs[0], 2 * 17);
     ASSERT_DOUBLE_EQ(coefs[1], 2 * 17);
     ASSERT_DOUBLE_EQ(coefs[2], 2 * 17);
