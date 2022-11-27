@@ -303,3 +303,29 @@ cc_test(
     ":utils"
   ]
 )
+
+cc_library(
+  name = "model",
+  srcs = [
+    "model.h",
+    "model.cc",
+  ],
+  hdrs = [
+    "model.h",
+  ],
+  deps = [
+    ":maybe"
+  ]
+)
+
+cc_test(
+  name = "model_test",
+  srcs = [
+    "model_test.cc"
+  ],
+  deps = [
+    ":model",
+    "@com_google_googletest//:gtest_main",
+    ":utils"
+  ]
+)
