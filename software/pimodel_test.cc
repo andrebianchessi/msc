@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "bounded.h"
+#include "utils.h"
 
 class PimodelTest : public testing::Test {
    public:
@@ -19,7 +20,7 @@ class PimodelTest : public testing::Test {
         this->pd.AddMass(1.0, 0.0, 0.0);
         this->pd.AddMass(1.0, 1.0, 0.0);
         this->pd.AddSpring(0, 1, 0.5, 1.0);
-        this->pd.AddDamper(0, 1, 0.5, 1.0);
+        this->pd.AddDamper(0, 1, 10, 50);
         this->pd.SetFixedMass(0);
         this->pd.AddInitialDisp(1, 10.0);
         std::vector<Bounded> dna = std::vector<Bounded>(2);
@@ -136,4 +137,13 @@ TEST_F(PimodelTest, GetParametersTest) {
     params = std::vector<double>(9);
     r = model.GetParameters(&params);
     ASSERT_TRUE(r.isError);
+}
+
+TEST_F(PimodelTest, LossTest) {
+    // The polynomial of each mass will be of order 1:
+    // x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
+    // x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
+    Pimodel model = Pimodel(&this->pd, 1.0, 2, 1);
+
+    double loss = model.Loss();
 }

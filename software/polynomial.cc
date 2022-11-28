@@ -374,7 +374,6 @@ Maybe<Void> Poly::GetCoefficients(std::vector<double>* target) {
         return r;
     }
     for (int i = 0; i < this->nTerms; i++) {
-        print("this->leafNodes[i]->exp", this->leafNodes[i]->exp);
         (*target)[i] = this->leafNodes[i]->a * this->k;
     }
     return r;

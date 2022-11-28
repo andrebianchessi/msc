@@ -32,13 +32,11 @@ class Pimodel : public Model {
 
     int nParameters() override;
 
-    // Auxiliary function used inside Loss()
-    void LossDfs(std::vector<double>* tkc, int tkcIndex, double* loss);
-
    private:
     FRIEND_TEST(PimodelTest, ConstructorTest);
     FRIEND_TEST(PimodelTest, GetParametersTest);
     FRIEND_TEST(PimodelTest, SetParametersTest);
+    FRIEND_TEST(PimodelTest, LossTest);
     int massIndex;
 
     ProblemDescription* p;
@@ -61,6 +59,8 @@ class Pimodel : public Model {
     Maybe<Void> SetParameters(std::vector<double>* parameters) override;
 
     double Loss() override;
+    // Auxiliary function used inside Loss()
+    void LossDfs(std::vector<double>* tkc, int tkcIndex, double* loss);
 
     std::vector<double> LossGradient() override;
 };
