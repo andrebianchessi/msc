@@ -69,6 +69,12 @@ class ProblemDescription {
     // dna = [0,0.5,1.0] -> k0 = 0, c0 = 5, c1 = 10
     Maybe<Problem> BuildFromDNA(std::vector<Bounded> dna);
 
+    // Similar to BuildFromDNA(std::vector<Bounded> dna),
+    // but input is not normalized. Be careful when using this.It's usually
+    // better, especially in the context of Genetic Algorithm, to normalize the
+    // inputs. This has been implemented to be used in Pimodel (see pimodel.cc)
+    Maybe<Problem> BuildFromVector(std::vector<double> springsAndDampers);
+
     // Returns number of springs + number of dampers
     int NumberOfSpringsAndDampers();
 

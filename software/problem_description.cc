@@ -34,9 +34,7 @@ int ProblemDescription::NumberOfSpringsAndDampers() {
     return this->springs.size() + this->dampers.size();
 };
 
-int ProblemDescription::NumberOfMasses(){
-    return this->masses.size();
-}
+int ProblemDescription::NumberOfMasses() { return this->masses.size(); }
 
 bool ProblemDescription::IsOk() {
     std::vector<Bounded> dna =
@@ -85,6 +83,99 @@ Maybe<Problem> ProblemDescription::BuildFromDNA(std::vector<Bounded> dna) {
             r.errMsg = e.isError;
             return r;
         }
+        i += 1;
+    }
+    p.Build();
+
+    for (auto v : this->initialVels) {
+        Maybe<Void> e;
+        if (v.massId != -1) {
+            e = p.SetInitialVel(v.massId, v.val);
+        } else {
+            e = p.SetInitialVel(v.val);
+        }
+        if (e.isError) {
+            r.isError = true;
+            r.errMsg = e.isError;
+            return r;
+        }
+    }
+    for (auto d : this->initialDisps) {
+        Maybe<Void> e;
+        if (d.massId != -1) {
+            e = p.SetInitialDisp(d.massId, d.val);
+        } else {
+            e = p.SetInitialDisp(d.val);
+        }
+        if (e.isError) {
+            r.isError = true;
+            r.errMsg = e.isError;
+            return r;
+        }
+    }
+
+    for (auto m : this->fixedMasses) {
+        Maybe<Void> e;
+        e = p.FixMass(m);
+        if (e.isError) {
+            r.isError = true;
+            r.errMsg = e.isError;
+            return r;
+        }
+    }
+    r.val = p;
+    return r;
+};
+
+Maybe<Problem> ProblemDescription::BuildFromVector(
+    std::vector<double> springsAndDampers) {
+    Maybe<Problem> r;
+
+    if (int(springsAndDampers.size()) != this->NumberOfSpringsAndDampers()) {
+        r.isError = true;
+        r.errMsg = "dna must be the same size of NumberOfSpringsAndDampers()";
+        return r;
+    }
+
+    Problem p;
+    for (auto m : this->masses) {
+        auto e = p.AddMass(m.m, m.px, m.py);
+        if (e.isError) {
+            r.isError = true;
+            r.errMsg = e.isError;
+            return r;
+        }
+    }
+    int i = 0;
+    for (auto s : this->springs) {
+        double k = springsAndDampers[i];
+        if (k < s.kMin || k > s.kMax) {
+            r.isError = true;
+            r.errMsg = "Invalid spring value";
+            return r;
+        }
+        auto e = p.AddSpring(s.m0, s.m1, k);
+        if (e.isError) {
+            r.isError = true;
+            r.errMsg = e.isError;
+            return r;
+        }
+        i += 1;
+    }
+    for (auto d : this->dampers) {
+        double c = springsAndDampers[i];
+        if (c < d.cMin || c > d.cMax) {
+            r.isError = true;
+            r.errMsg = "Invalid damper value";
+            return r;
+        }
+        auto e = p.AddDamper(d.m0, d.m1, c);
+        if (e.isError) {
+            r.isError = true;
+            r.errMsg = e.isError;
+            return r;
+        }
+        i += 1;
     }
     p.Build();
 

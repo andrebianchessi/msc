@@ -58,6 +58,48 @@ TEST(ProblemDescriptionTest, MassSpringDamperCreationTest) {
     ASSERT_DOUBLE_EQ(maxAccel1.val, 0.0);
 }
 
+TEST(ProblemDescriptionTest, BuildFromVectorTest) {
+    // Instance stationary problem to check success
+    ProblemDescription pd = ProblemDescription();
+    pd.AddMass(1.0, 0.0, 0.0);
+    pd.AddMass(1.0, 1.0, 0.0);
+    pd.AddSpring(0, 1, 0.5, 1.0);
+    pd.AddSpring(0, 1, 0.5, 1.0);
+    pd.AddDamper(0, 1, 0.5, 1.0);
+    pd.AddDamper(0, 1, 0.5, 1.0);
+    ASSERT_TRUE(pd.IsOk());
+
+    std::vector<double> dna = std::vector<double>(4);
+
+    // Err: values our of range
+    dna = {0.5, 0.5, 0.5, 100.0};
+    auto e0 = pd.BuildFromVector(dna);
+    ASSERT_TRUE(e0.isError);
+    dna = {0.6, 0.1, 0.6, 1.0};
+    e0 = pd.BuildFromVector(dna);
+    ASSERT_TRUE(e0.isError);
+
+    // Err: wrong input length
+    dna = std::vector<double>(3);
+    e0 = pd.BuildFromVector(dna);
+    ASSERT_TRUE(e0.isError);
+    dna = std::vector<double>(5);
+    e0 = pd.BuildFromVector(dna);
+    ASSERT_TRUE(e0.isError);
+
+    dna = std::vector<double>(4);
+    dna = {0.5, 0.5, 1.0, 1.0};
+    e0 = pd.BuildFromVector(dna);
+    Problem p = e0.val;
+    ASSERT_FALSE(p.Integrate(0.1).isError);
+    auto maxAccel0 = p.GetMassMaxAbsAccel(0);
+    ASSERT_FALSE(maxAccel0.isError);
+    ASSERT_DOUBLE_EQ(maxAccel0.val, 0.0);
+    auto maxAccel1 = p.GetMassMaxAbsAccel(1);
+    ASSERT_FALSE(maxAccel1.isError);
+    ASSERT_DOUBLE_EQ(maxAccel1.val, 0.0);
+}
+
 TEST(ProblemDescriptionTest, DynamicTestWithInitialVel) {
     ProblemDescription pd = ProblemDescription();
     std::vector<Bounded> dna = std::vector<Bounded>(2);
