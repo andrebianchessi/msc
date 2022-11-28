@@ -73,6 +73,11 @@ class Problem {
     // SetXDot on it, and returns it.
     vector<double> GetXDot(const vector<double> &X, double t);
 
+    // Auxiliary function that returns array containing just the accelerations
+    // [x0DotDot, x1DotDot, ... ]
+    // Created to be used in Pimodel (see pimodel.h)
+    Maybe<std::vector<double>> GetAccel(const vector<double> &X, double t);
+
     // Returns true if system has a mass with initial position (px,py)
     bool HasMassAt(double px, double py) const;
 

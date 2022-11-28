@@ -424,6 +424,46 @@ TEST(ProblemTest, GetXDotTest) {
     EXPECT_DOUBLE_EQ(XDot(3), x1DotDot);
 }
 
+TEST(ProblemTest, GetAccelTest) {
+    // Values taken from GetXDotTest
+    Problem p = Problem();
+    auto m0 = 1.0;
+    auto m1 = 2.0;
+    auto k = 5.0;
+    auto c = 7.0;
+    p.AddMass(m0, 0.0, -8.0);
+    p.AddMass(m1, 1.0, 99.0);
+    p.AddSpring(0, 1, k);
+    p.AddDamper(0, 1, c);
+    p.Build();
+
+    ASSERT_EQ(p.X.size(), 4);
+    vector<double> X = vector<double>(p.X.size());
+
+    // INITIAL DISPLACEMENTS AND VELOCITIES TEST
+    X[0] = 3.0;
+    X[1] = 30.0;
+    X[2] = 33.0;
+    X[3] = 11.0;
+
+    double x0DotDot = 1 / m0 * (-k * X[0] + k * X[1] - c * X[2] + c * X[3]);
+    double x1DotDot = 1 / m1 * (k * X[0] - k * X[1] + c * X[2] - c * X[3]);
+
+    auto accels = p.GetAccel(X, 0);
+    ASSERT_FALSE(accels.isError);
+    ASSERT_EQ(accels.val.size(), 2);
+    ASSERT_DOUBLE_EQ(accels.val[0], x0DotDot);
+    ASSERT_DOUBLE_EQ(accels.val[1], x1DotDot);
+
+    // Error cases
+    X = vector<double>(3);
+    accels = p.GetAccel(X, 0);
+    ASSERT_TRUE(accels.isError);
+    X = vector<double>(5);
+    accels = p.GetAccel(X, 0);
+    ASSERT_TRUE(accels.isError);
+}
+
 TEST(ProblemTest, IntegrateStationaryTest) {
     Problem p = Problem();
     p.AddMass(1.0, 0.0, 0.0);

@@ -341,6 +341,33 @@ matrix<double> Problem::getVel(vector<double> X, int dof) {
     return v;
 }
 
+Maybe<std::vector<double>> Problem::GetAccel(const vector<double> &X,
+                                             double t) {
+    // See SetXDot for reference
+    // This function is pretty much a copy, but simplified and with
+    // an std::vector return to be used in other places more easily
+    Maybe<std::vector<double>> r;
+    if (int(X.size()) != this->GetDof() * 2) {
+        r.isError = true;
+        r.errMsg = "Invalid X length";
+        return r;
+    }
+
+    r.val = std::vector<double>(this->GetDof());
+    matrix<double> kx = prod(this->K, Problem::getDisp(X, this->GetDof()));
+    matrix<double> cxDot = prod(this->C, Problem::getVel(X, this->GetDof()));
+    matrix<double> xDotDot = prod(this->MInv, kx + cxDot);
+    // Set values
+    for (int i = 0; i < this->GetDof(); i++) {
+        r.val[i] = xDotDot(i, 0);
+    }
+    // Apply fixed conditions
+    for (auto m : this->fixedMasses) {
+        r.val[m->xIndex] = 0;
+    }
+    return r;
+}
+
 void Problem::SetXDot(const vector<double> &X, vector<double> &XDot, double t) {
     // Set first half of XDot
     for (int i = 0; i < this->GetDof(); i++) {
