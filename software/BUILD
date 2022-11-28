@@ -329,3 +329,33 @@ cc_test(
     ":utils"
   ]
 )
+
+cc_library(
+  name = "pimodel",
+  srcs = [
+    "pimodel.h",
+    "pimodel.cc",
+  ],
+  hdrs = [
+    "pimodel.h",
+  ],
+  deps = [
+    ":maybe",
+    ":model",
+    ":polynomial",
+    ":problem_description",
+    "@com_google_googletest//:gtest_main",
+  ]
+)
+
+cc_test(
+  name = "pimodel_test",
+  srcs = [
+    "pimodel_test.cc"
+  ],
+  deps = [
+    ":pimodel",
+    "@com_google_googletest//:gtest_main",
+    ":utils"
+  ]
+)

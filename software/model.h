@@ -13,9 +13,6 @@ class Model {
     // Returns the number of parameters this model has
     virtual int nParameters() = 0;
 
-    // Calculates the model output for an input X
-    virtual Maybe<double> operator()(std::vector<double>* X) = 0;
-
     // Train the model, i.e. set the parameters to the values that minimize
     // the Loss function. This is performed using gradient descent.
     // The learning rate is automatically reduced by half when needed, until

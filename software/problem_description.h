@@ -72,6 +72,8 @@ class ProblemDescription {
     // Returns number of springs + number of dampers
     int NumberOfSpringsAndDampers();
 
+    int NumberOfMasses();
+
     std::vector<MassDescription> masses;
     std::vector<SpringDescription> springs;
     std::vector<DamperDescription> dampers;

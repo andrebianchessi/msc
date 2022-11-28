@@ -16,6 +16,7 @@ using namespace boost::numeric::ublas;
 // Represents a 1D system of masses, springs and dampers
 class Problem {
     friend class ProblemDescription;
+    friend class Pimodel;
 
    public:
     // Standard constructor

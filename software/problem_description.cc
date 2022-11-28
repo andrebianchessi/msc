@@ -34,6 +34,10 @@ int ProblemDescription::NumberOfSpringsAndDampers() {
     return this->springs.size() + this->dampers.size();
 };
 
+int ProblemDescription::NumberOfMasses(){
+    return this->masses.size();
+}
+
 bool ProblemDescription::IsOk() {
     std::vector<Bounded> dna =
         std::vector<Bounded>(this->NumberOfSpringsAndDampers());

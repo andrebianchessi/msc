@@ -27,7 +27,7 @@ class TestModel : public Model {
 
     int nParameters() override { return 3; }
 
-    Maybe<double> operator()(std::vector<double>* X) override {
+    Maybe<double> operator()(std::vector<double>* X) {
         Maybe<double> r;
         if (X->size() != 1) {
             r.errMsg = "Invalid X";
