@@ -204,3 +204,77 @@ TEST_F(PimodelTest, LossTest) {
 
     ASSERT_DOUBLE_EQ(expectedLoss, loss);
 }
+
+TEST_F(PimodelTest, LossTest2) {
+    // Similar to LossTest, but with second order polynomials
+    // and more refined discretization
+    Pimodel model = Pimodel(&this->pd, 1.0, 2, 2);
+    std::vector<double> params = std::vector<double>(8);
+    params = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
+              11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
+    ASSERT_FALSE(model.SetParameters(&params).isError);
+    // modelX0(t,k,c) = 1*t^2 + 2*tk + 3*tc + 4*t + 5*k^2 + 6*kc + 7*k
+    // + 8*c^2 + 9*c + 10*1
+    // modelX1(t,k,c) = 11*t^2 + 12*tk + 13*tc + 14*t + 15*k^2 + 16*kc + 17*k
+    // + 18*c^2 + 19*c + 20*1
+    // modelX0Dot(t,k,c) = 2t + 2k + 3c + 4
+    // modelX1Dot(t,k,c) = 22t + 12k + 13c + 14
+    // modelX0DotDot(t,k,c) = 2
+    // modelX1DotDot(t,k,c) = 22
+
+    double expectedLoss = 0;
+
+    // Initial values for the problem created in SetUp()
+    double initialX0 = 0;
+    double initialX1 = initialDisplacement;
+    double initialXDot0 = 0;
+    double initialXDot1 = 0;
+    double t = 0;
+    // Initial conditions loss:
+    for (double k : std::vector<double>{kMin, (kMin + kMax) / 2, kMax}) {
+        for (double c : std::vector<double>{cMin, (cMin + cMax) / 2, cMax}) {
+            double modelX0 = 1 * t * t + 2 * t * k + 3 * t * c + 4 * t +
+                             5 * k * k + 6 * k * c + 7 * k + 8 * c * c + 9 * c +
+                             10 * 1;
+            double modelX1 = 11 * t * t + 12 * t * k + 13 * t * c + 14 * t +
+                             15 * k * k + 16 * k * c + 17 * k + 18 * c * c +
+                             19 * c + 20 * 1;
+            double modelX0Dot = 2 * t + 2 * k + 3 * c + 4;
+            double modelX1Dot = 22 * t + 12 * k + 13 * c + 14;
+            expectedLoss += pow(modelX0 - initialX0, 2);
+            expectedLoss += pow(modelX1 - initialX1, 2);
+            expectedLoss += pow(modelX0Dot - initialXDot0, 2);
+            expectedLoss += pow(modelX1Dot - initialXDot1, 2);
+        }
+    }
+
+    // Physics loss:
+    for (double t : std::vector<double>{0, 0.5, 1.0}) {
+        for (double k : std::vector<double>{kMin, (kMin + kMax) / 2, kMax}) {
+            for (double c :
+                 std::vector<double>{cMin, (cMin + cMax) / 2, cMax}) {
+                double modelX0 = 1 * t * t + 2 * t * k + 3 * t * c + 4 * t +
+                                 5 * k * k + 6 * k * c + 7 * k + 8 * c * c +
+                                 9 * c + 10 * 1;
+                double modelX1 = 11 * t * t + 12 * t * k + 13 * t * c + 14 * t +
+                                 15 * k * k + 16 * k * c + 17 * k + 18 * c * c +
+                                 19 * c + 20 * 1;
+                double modelX0Dot = 2 * t + 2 * k + 3 * c + 4;
+                double modelX1Dot = 22 * t + 12 * k + 13 * c + 14;
+                double modelX0DotDot = 2;
+                double modelX1DotDot = 22;
+
+                double x0DotDot = 0;  // mass 0 is fixed
+                double x1DotDot = 1 / m *
+                                  (k * modelX0 - k * modelX1 + c * modelX0Dot -
+                                   c * modelX1Dot);
+                expectedLoss += pow(modelX0DotDot - x0DotDot, 2);
+                expectedLoss += pow(modelX1DotDot - x1DotDot, 2);
+            }
+        }
+    }
+
+    double loss = model.Loss();
+
+    ASSERT_DOUBLE_EQ(expectedLoss, loss);
+}

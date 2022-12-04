@@ -37,6 +37,7 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, GetParametersTest);
     FRIEND_TEST(PimodelTest, SetParametersTest);
     FRIEND_TEST(PimodelTest, LossTest);
+    FRIEND_TEST(PimodelTest, LossTest2);
 
     ProblemDescription* p;
     std::vector<Poly> polys;
