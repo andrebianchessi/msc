@@ -13,6 +13,7 @@
 
 Pimodel::Pimodel(ProblemDescription* p, double finalT, int discretization,
                  int order) {
+    assert(p->IsOk());
     assert(discretization >= 1);
     this->p = p;
     int nSprings = p->springs.size();
@@ -30,7 +31,6 @@ Pimodel::Pimodel(ProblemDescription* p, double finalT, int discretization,
         this->polys[i] = poly.val;
     }
 
-    this->massIndex = massIndex;
     this->finalT = finalT;
     this->discretization = discretization;
 }
@@ -110,11 +110,9 @@ Maybe<Void> Pimodel::SetParameters(std::vector<double>* parameters) {
     return r;
 }
 
-void Pimodel::LossDfs(std::vector<double>* tkc, int tkcIndex, double* loss) {
+void Pimodel::PhysicsLossDfs(std::vector<double>* tkc, int tkcIndex,
+                             double* loss) {
     if (tkcIndex == int(tkc->size())) {
-        print("tkc[0]", tkc->at(0));
-        print("tkc[1]", tkc->at(1));
-        print("tkc[2]", tkc->at(2));
         // Create problem for given tkc (time, springs and dampers)
         std::vector<double> DNA = std::vector<double>(tkc->size() - 1);
         std::copy(tkc->begin() + 1, tkc->end(), DNA.begin());
@@ -131,14 +129,13 @@ void Pimodel::LossDfs(std::vector<double>* tkc, int tkcIndex, double* loss) {
             assert(!eval.isError);
             X[i] = eval.val;
         }
-        for (int massIndex = 0; massIndex < this->p->NumberOfMasses();
-             massIndex++) {
+        for (int i = 0; i < this->p->NumberOfMasses(); i++) {
             // Fill velocities
             // Note that we calculate the velocities by taking the
             // derivative of the polynomials with respect to time
-            eval = this->polys[massIndex].Dxi(0, tkc);
+            eval = this->polys[i].Dxi(0, tkc);
             assert(!eval.isError);
-            X[problem.val.GetMassVelIndex(massIndex)] = eval.val;
+            X[problem.val.GetMassVelIndex(i)] = eval.val;
         }
 
         // Calculate what the true accelerations should be, i.e.
@@ -171,7 +168,7 @@ void Pimodel::LossDfs(std::vector<double>* tkc, int tkcIndex, double* loss) {
         min = 0;
         max = this->finalT;
     } else {
-        if (tkcIndex - 1 < this->p->springs.size()) {
+        if (tkcIndex - 1 < int(this->p->springs.size())) {
             min = this->p->springs[tkcIndex - 1].kMin;
             max = this->p->springs[tkcIndex - 1].kMax;
         } else {
@@ -182,21 +179,83 @@ void Pimodel::LossDfs(std::vector<double>* tkc, int tkcIndex, double* loss) {
     for (double val = min; val <= max;
          val += (max - min) / this->discretization) {
         tkc->at(tkcIndex) = val;
-        this->LossDfs(tkc, tkcIndex + 1, loss);
+        this->PhysicsLossDfs(tkc, tkcIndex + 1, loss);
+    }
+}
+
+void Pimodel::InitialConditionsLossDfs(std::vector<double>* tkc, int tkcIndex,
+                                       double* loss) {
+    if (tkcIndex == int(tkc->size())) {
+        int nMasses = this->p->NumberOfMasses();
+        // Create state vector and fill it with model predictions
+        auto X = std::vector<double>(nMasses * 2);
+        Maybe<double> eval;
+        for (int i = 0; i < nMasses; i++) {
+            // Fill positions
+            eval = this->polys[i](tkc);
+            assert(!eval.isError);
+            X[Problem::GetMassDispIndex(nMasses, i)] = eval.val;
+        }
+        for (int i = 0; i < nMasses; i++) {
+            // Fill velocities
+            // Note that we calculate the velocities by taking the
+            // derivative of the polynomials with respect to time
+            eval = this->polys[i].Dxi(0, tkc);
+            assert(!eval.isError);
+            X[Problem::GetMassVelIndex(nMasses, i)] = eval.val;
+        }
+
+        // Create a state vector with the true values of initial displacements
+        // and velocities
+        auto XTrue = std::vector<double>(nMasses * 2);
+        for (auto v : p->initialVels) {
+            assert(v.massId >= 0 && v.massId < nMasses);
+            XTrue[Problem::GetMassVelIndex(nMasses, v.massId)] = v.val;
+        }
+        for (auto d : p->initialDisps) {
+            assert(d.massId >= 0 && d.massId < nMasses);
+            XTrue[Problem::GetMassDispIndex(nMasses, d.massId)] = d.val;
+        }
+        for (auto massId : p->fixedMasses) {
+            assert(massId >= 0 && massId < nMasses);
+            XTrue[Problem::GetMassDispIndex(nMasses, massId)] = 0;
+            XTrue[Problem::GetMassVelIndex(nMasses, massId)] = 0;
+        }
+
+        // Update the loss value with the errors in initial displacement
+        // and velocities
+        for (int i = 0; i < int(X.size()); i++) {
+            (*loss) = (*loss) + pow(X[i] - XTrue[i], 2);
+        }
+        return;
+    }
+
+    double min;
+    double max;
+    if (tkcIndex - 1 < int(this->p->springs.size())) {
+        min = this->p->springs[tkcIndex - 1].kMin;
+        max = this->p->springs[tkcIndex - 1].kMax;
+    } else {
+        min = this->p->dampers[tkcIndex - 1 - this->p->springs.size()].cMin;
+        max = this->p->dampers[tkcIndex - 1 - this->p->springs.size()].cMax;
+    }
+    for (double val = min; val <= max;
+         val += (max - min) / this->discretization) {
+        tkc->at(tkcIndex) = val;
+        this->InitialConditionsLossDfs(tkc, tkcIndex + 1, loss);
     }
 }
 
 double Pimodel::Loss() {
     std::vector<double> tkc = std::vector<double>(this->inputSize());
-    int tkcI = 1;
     double loss = 0;
 
-    // Add initial displacements loss
+    // Add initial displacements and velocities loss
+    tkc[0] = 0;  // t = 0
+    this->InitialConditionsLossDfs(&tkc, 1, &loss);
 
-    // Add initial velocities loss
-
-    // Add physical loss
-    this->LossDfs(&tkc, 0, &loss);
+    // Add physics loss
+    this->PhysicsLossDfs(&tkc, 0, &loss);
     return loss;
 }
 

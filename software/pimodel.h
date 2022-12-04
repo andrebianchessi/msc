@@ -37,7 +37,6 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, GetParametersTest);
     FRIEND_TEST(PimodelTest, SetParametersTest);
     FRIEND_TEST(PimodelTest, LossTest);
-    int massIndex;
 
     ProblemDescription* p;
     std::vector<Poly> polys;
@@ -59,8 +58,11 @@ class Pimodel : public Model {
     Maybe<Void> SetParameters(std::vector<double>* parameters) override;
 
     double Loss() override;
-    // Auxiliary function used inside Loss()
-    void LossDfs(std::vector<double>* tkc, int tkcIndex, double* loss);
+    // Auxiliary functions used inside Loss() that calculates the losses
+    // using "Depth-First-Search"
+    void InitialConditionsLossDfs(std::vector<double>* tkc, int tkcIndex,
+                                  double* loss);
+    void PhysicsLossDfs(std::vector<double>* tkc, int tkcIndex, double* loss);
 
     std::vector<double> LossGradient() override;
 };

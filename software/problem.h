@@ -128,10 +128,12 @@ class Problem {
     // Returns the index of the displacement of the mass in the state vector (X)
     int GetMassDispIndex(Mass m);
     int GetMassDispIndex(int xIndex);
+    static int GetMassDispIndex(int nMasses, int xIndex);
 
     // Returns the index of the velocity of the mass in the state vector (X)
     int GetMassVelIndex(Mass m);
     int GetMassVelIndex(int xIndex);
+    static int GetMassVelIndex(int nMasses, int xIndex);
 
     // Returns maximum absolute value of acceleration of a mass. Must be called
     // after Integrate.
