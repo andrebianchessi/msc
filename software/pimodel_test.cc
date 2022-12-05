@@ -37,14 +37,14 @@ class PimodelTest : public testing::Test {
 };
 
 TEST_F(PimodelTest, ConstructorTest) {
-    Pimodel model = Pimodel(&this->pd, 1.0, 10, 2);
+    Pimodel model = Pimodel(&this->pd, 1.0, 10, 10, 2);
 
     // There should be one polynomial for each mass
     ASSERT_EQ(model.polys.size(), 2);
 }
 
 TEST_F(PimodelTest, OperatorTest) {
-    Pimodel model = Pimodel(&this->pd, 1.0, 10, 2);
+    Pimodel model = Pimodel(&this->pd, 1.0, 10, 10, 2);
 
     // Test the model's prediction for values of time, spring and damper
     std::vector<double> tkc = {1.0, 2.0, 3.0};
@@ -77,7 +77,7 @@ TEST_F(PimodelTest, SetParametersTest) {
     // The polynomial of each mass will be of order 1:
     // x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
     // x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
-    Pimodel model = Pimodel(&this->pd, 1.0, 10, 1);
+    Pimodel model = Pimodel(&this->pd, 1.0, 10, 10, 1);
 
     std::vector<double> params = {1, 2, 3, 4, 5, 6, 7, 8};
     auto r = model.SetParameters(&params);
@@ -108,7 +108,7 @@ TEST_F(PimodelTest, GetParametersTest) {
     // The polynomial of each mass will be of order 1:
     // x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
     // x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
-    Pimodel model = Pimodel(&this->pd, 1.0, 10, 1);
+    Pimodel model = Pimodel(&this->pd, 1.0, 10, 10, 1);
 
     std::vector<double> params = std::vector<double>(8);
     auto r = model.GetParameters(&params);
@@ -147,7 +147,7 @@ TEST_F(PimodelTest, GetParametersTest) {
 }
 
 TEST_F(PimodelTest, LossTest) {
-    Pimodel model = Pimodel(&this->pd, 1.0, 1, 1);
+    Pimodel model = Pimodel(&this->pd, 1.0, 1, 1, 1);
     std::vector<double> params = std::vector<double>(8);
     params = {1, 2, 3, 4, 5, 6, 7, 8};
     ASSERT_FALSE(model.SetParameters(&params).isError);
@@ -208,7 +208,7 @@ TEST_F(PimodelTest, LossTest) {
 TEST_F(PimodelTest, LossTest2) {
     // Similar to LossTest, but with second order polynomials
     // and more refined discretization
-    Pimodel model = Pimodel(&this->pd, 1.0, 2, 2);
+    Pimodel model = Pimodel(&this->pd, 1.0, 2, 2, 2);
     std::vector<double> params = std::vector<double>(8);
     params = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
               11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
@@ -278,3 +278,140 @@ TEST_F(PimodelTest, LossTest2) {
 
     ASSERT_DOUBLE_EQ(expectedLoss, loss);
 }
+
+TEST_F(PimodelTest, LossGradientTest) {
+    Pimodel model = Pimodel(&this->pd, 1.0, 1, 1, 1);
+    std::vector<double> params = std::vector<double>(8);
+    params = {1, 2, 3, 4, 5, 6, 7, 8};
+    ASSERT_FALSE(model.SetParameters(&params).isError);
+    // modelX0(t,k,c) = 1*t + 2*k + 3*c + 4*1
+    // modelX1(t,k,c) = 5*t + 6*k + 7*c + 8*1
+    // modelXDot0(t,k,c) = 1
+    // modelXDot1(t,k,c) = 5
+    // modelXDotDot0(t,k,c) = 0
+    // modelXDotDot1(t,k,c) = 0
+
+    std::vector<double> expectedGrad = std::vector<double>(8);
+
+    // Initial values for the problem created in SetUp()
+    double initialX0 = 0;
+    double initialX1 = initialDisplacement;
+    double initialX0Dot = 0;
+    double initialX1Dot = 0;
+
+    double t = 0;
+    // Initial conditions loss:
+    for (double k : std::vector<double>{kMin, kMax}) {
+        for (double c : std::vector<double>{cMin, cMax}) {
+            double modelX0 = 1 * t + 2 * k + 3 * c + 4 * 1;
+            double modelX1 = 5 * t + 6 * k + 7 * c + 8 * 1;
+            double modelX0Dot = 1;
+            double modelX1Dot = 5;
+
+            double d_da0_modelX0 = t;
+            double d_da1_modelX0 = k;
+            double d_da2_modelX0 = c;
+            double d_da3_modelX0 = 1;
+            expectedGrad[0] += 2 * (modelX0 - initialX0) * d_da0_modelX0;
+            expectedGrad[0] += 2 * (modelX0Dot - initialX0Dot) * d_da0_modelX0;
+            expectedGrad[1] += 2 * (modelX0 - initialX0) * d_da1_modelX0;
+            expectedGrad[1] += 2 * (modelX0Dot - initialX0Dot) * d_da1_modelX0;
+            expectedGrad[2] += 2 * (modelX0 - initialX0) * d_da2_modelX0;
+            expectedGrad[2] += 2 * (modelX0Dot - initialX0Dot) * d_da2_modelX0;
+            expectedGrad[3] += 2 * (modelX0 - initialX0) * d_da3_modelX0;
+            expectedGrad[3] += 2 * (modelX0Dot - initialX0Dot) * d_da3_modelX0;
+
+            double d_da0_modelX1 = t;
+            double d_da1_modelX1 = k;
+            double d_da2_modelX1 = c;
+            double d_da3_modelX1 = 1;
+            expectedGrad[4] += 2 * (modelX1 - initialX1) * d_da0_modelX1;
+            expectedGrad[4] += 2 * (modelX1Dot - initialX1Dot) * d_da0_modelX1;
+            expectedGrad[5] += 2 * (modelX1 - initialX1) * d_da1_modelX1;
+            expectedGrad[5] += 2 * (modelX1Dot - initialX1Dot) * d_da1_modelX1;
+            expectedGrad[6] += 2 * (modelX1 - initialX1) * d_da2_modelX1;
+            expectedGrad[6] += 2 * (modelX1Dot - initialX1Dot) * d_da2_modelX1;
+            expectedGrad[7] += 2 * (modelX1 - initialX1) * d_da3_modelX1;
+            expectedGrad[7] += 2 * (modelX1Dot - initialX1Dot) * d_da3_modelX1;
+        }
+    }
+
+    // Physics loss:
+    for (double t : std::vector<double>{0, 1.0}) {
+        for (double k : std::vector<double>{kMin, kMax}) {
+            for (double c : std::vector<double>{cMin, cMax}) {
+                double modelX0 = 1 * t + 2 * k + 3 * c + 4 * 1;
+                double modelX1 = 5 * t + 6 * k + 7 * c + 8 * 1;
+                double modelX0Dot = 1;
+                double modelX1Dot = 5;
+                double modelX0DotDot = 0;
+                double modelX1DotDot = 0;
+
+                double x0DotDot = 0;  // mass 0 is fixed
+                double x1DotDot = 1 / m *
+                                  (k * modelX0 - k * modelX1 + c * modelX0Dot -
+                                   c * modelX1Dot);
+
+                double d_da0_modelX0 = t;
+                double d_da1_modelX0 = k;
+                double d_da2_modelX0 = c;
+                double d_da3_modelX0 = 1;
+                expectedGrad[0] +=
+                    2 * (modelX0DotDot - x0DotDot) * d_da0_modelX0;
+                expectedGrad[1] +=
+                    2 * (modelX0DotDot - x0DotDot) * d_da1_modelX0;
+                expectedGrad[2] +=
+                    2 * (modelX0DotDot - x0DotDot) * d_da2_modelX0;
+                expectedGrad[3] +=
+                    2 * (modelX0DotDot - x0DotDot) * d_da3_modelX0;
+
+                double d_da0_modelX1 = t;
+                double d_da1_modelX1 = k;
+                double d_da2_modelX1 = c;
+                double d_da3_modelX1 = 1;
+                expectedGrad[4] +=
+                    2 * (modelX1DotDot - x1DotDot) * d_da0_modelX1;
+                expectedGrad[5] +=
+                    2 * (modelX1DotDot - x1DotDot) * d_da1_modelX1;
+                expectedGrad[6] +=
+                    2 * (modelX1DotDot - x1DotDot) * d_da2_modelX1;
+                expectedGrad[7] +=
+                    2 * (modelX1DotDot - x1DotDot) * d_da3_modelX1;
+            }
+        }
+    }
+
+    std::vector<double> grad = model.LossGradient();
+
+    ASSERT_EQ(grad.size(), 8);
+    ASSERT_DOUBLE_EQ(grad[0], expectedGrad[0]);
+    ASSERT_DOUBLE_EQ(grad[1], expectedGrad[1]);
+    ASSERT_DOUBLE_EQ(grad[2], expectedGrad[2]);
+    ASSERT_DOUBLE_EQ(grad[3], expectedGrad[3]);
+    ASSERT_DOUBLE_EQ(grad[4], expectedGrad[4]);
+    ASSERT_DOUBLE_EQ(grad[5], expectedGrad[5]);
+    ASSERT_DOUBLE_EQ(grad[6], expectedGrad[6]);
+    ASSERT_DOUBLE_EQ(grad[7], expectedGrad[7]);
+}
+
+// Training is not showing good results. Better implement more unit-tests
+// to check if everything is working as intended.
+// TEST_F(PimodelTest, TrainTest) {
+//     Pimodel model = Pimodel(&this->pd, 1.0, 20, 1, 10);
+//     model.Train(0.001, 0, true);
+
+//     std::vector<double> tkc =
+//         std::vector<double>{0.0, (kMin + kMax) / 2, (cMin + cMax) / 2};
+//     double t = 0;
+//     Maybe<std::vector<double>> X;
+
+//     std::cout << "t,x0,x1" << std::endl;
+//     while (t <= 1.0) {
+//         tkc[0] = t;
+//         X = model(&tkc);
+//         ASSERT_FALSE(X.isError);
+//         std::cout << t << "," << X.val[0] << "," << X.val[1] << std::endl;
+
+//         t += 0.1;
+//     }
+// }

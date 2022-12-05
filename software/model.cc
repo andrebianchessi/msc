@@ -47,7 +47,7 @@ Maybe<double> Model::Train(double learningRate, double minLearningRate,
         return r;
     }
     StatusAndValue stepStatus;
-    while (learningRate >= minLearningRate) {
+    while (learningRate >= minLearningRate && learningRate != 0) {
         stepStatus = this->GradientDescentStep(learningRate);
         if (stepStatus.success) {
             if (log) {

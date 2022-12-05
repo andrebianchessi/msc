@@ -16,11 +16,13 @@ class Pimodel : public Model {
     // Parameters:
     // p: Description of this problem
     // finalT: this model should model the position of the mass from t=0 to
-    // finalT discretization: How many intervals we'll discretize time and the
+    // finalT
+    // timeDiscretization: How many intervals we'll discretize time
+    // kcDiscretization: How many intervals we'll discretize
     // springs/dampers values in our loss function oder: order of the
     // multivariate polynomial used in the model
-    Pimodel(ProblemDescription* p, double finalT, int discretization,
-            int order);
+    Pimodel(ProblemDescription* p, double finalT, int timeDiscretization,
+            int kcDiscretization, int order);
 
     // Returns the position of each mass.
     // The input should be an array with:
@@ -38,6 +40,7 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, SetParametersTest);
     FRIEND_TEST(PimodelTest, LossTest);
     FRIEND_TEST(PimodelTest, LossTest2);
+    FRIEND_TEST(PimodelTest, LossGradientTest);
 
     ProblemDescription* p;
     std::vector<Poly> polys;
@@ -47,7 +50,8 @@ class Pimodel : public Model {
 
     // Parameter that describes in how many intervals we'll discretize time and
     // the springs/dampers values in our loss function
-    int discretization;
+    int timeDiscretization;
+    int kcDiscretization;
 
     // Returns the size of the input of this model.
     // This will always be the number of springs of the problem
@@ -66,4 +70,11 @@ class Pimodel : public Model {
     void PhysicsLossDfs(std::vector<double>* tkc, int tkcIndex, double* loss);
 
     std::vector<double> LossGradient() override;
+    // Auxiliary functions used inside LossGradient() that calculates the
+    // gradients using "Depth-First-Search"
+    void InitialConditionsLossGradientDfs(std::vector<double>* tkc,
+                                          int tkcIndex,
+                                          std::vector<double>* grad);
+    void PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
+                                std::vector<double>* grad);
 };
