@@ -355,6 +355,7 @@ cc_test(
   ],
   deps = [
     ":pimodel",
+    ":problem",
     "@com_google_googletest//:gtest_main",
     ":utils"
   ]

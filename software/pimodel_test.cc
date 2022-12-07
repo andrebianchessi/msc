@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "bounded.h"
+#include "problem.h"
 #include "utils.h"
 
 const double m = 3.0;
@@ -396,22 +397,33 @@ TEST_F(PimodelTest, LossGradientTest) {
 
 // Training is not showing good results. Better implement more unit-tests
 // to check if everything is working as intended.
-// TEST_F(PimodelTest, TrainTest) {
-//     Pimodel model = Pimodel(&this->pd, 1.0, 20, 1, 10);
-//     model.Train(0.001, 0, true);
+TEST_F(PimodelTest, TrainTest) {
+    double k = (kMin + kMax) / 2;
+    double c = (cMin + cMax) / 2;
+    double T = 15.0;
 
-//     std::vector<double> tkc =
-//         std::vector<double>{0.0, (kMin + kMax) / 2, (cMin + cMax) / 2};
-//     double t = 0;
-//     Maybe<std::vector<double>> X;
+    Pimodel model = Pimodel(&this->pd, T, 1, 1, 3);
+    double lr = 0.0001;
+    model.Train(lr, lr / (2 * 2 * 2 * 2), true);
 
-//     std::cout << "t,x0,x1" << std::endl;
-//     while (t <= 1.0) {
-//         tkc[0] = t;
-//         X = model(&tkc);
-//         ASSERT_FALSE(X.isError);
-//         std::cout << t << "," << X.val[0] << "," << X.val[1] << std::endl;
+    Maybe<Problem> mP = this->pd.BuildFromVector(std::vector<double>{k, c});
+    ASSERT_FALSE(mP.isError);
+    Problem p = mP.val;
+    p.Integrate(T);
 
-//         t += 0.1;
-//     }
-// }
+    std::vector<double> tkc = std::vector<double>{0.0, k, c};
+
+    Maybe<std::vector<double>> X;
+    std::cout << "t,x0,modelX0,x1,modelX1" << std::endl;
+    for (int i = 0; i < int(p.t.size()); i++) {
+        tkc[0] = p.t[i];
+        X = model(&tkc);
+        ASSERT_FALSE(X.isError);
+
+        std::cout << p.t[i] << ",";
+        std::cout << p.XHistory[i][0] << ",";
+        std::cout << X.val[0] << ",";
+        std::cout << p.XHistory[i][1] << ",";
+        std::cout << X.val[1] << std::endl;
+    }
+}

@@ -41,6 +41,7 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, LossTest);
     FRIEND_TEST(PimodelTest, LossTest2);
     FRIEND_TEST(PimodelTest, LossGradientTest);
+    FRIEND_TEST(PimodelTest, LossGradientTest2);
 
     ProblemDescription* p;
     std::vector<Poly> polys;
@@ -77,4 +78,23 @@ class Pimodel : public Model {
                                           std::vector<double>* grad);
     void PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
                                 std::vector<double>* grad);
+
+    // Auxiliary functions:
+    // Create problem for given tkc (time, springs and dampers)
+    Problem problemFromTkc(Pimodel* model, std::vector<double>* tkc);
+    // Calculate the state vector given the time instant and the
+    // values of the springs and dampers
+    boost::numeric::ublas::vector<double> getXModel(Pimodel* model,
+                                                    std::vector<double>* tkc,
+                                                    Problem* problem);
+    // Calculate accelerations with the equations from the discrete
+    // element method differential equation
+    std::vector<double> getXDotDotFromDiffEq(
+        Problem* problem, boost::numeric::ublas::vector<double> X, double t);
+    // Calculate accelerations by taking second time derivative of
+    // the polynomials that model the displacement of each mass
+    std::vector<double> getXModelDotDot(Pimodel* model,
+                                        std::vector<double>* tkc);
+    // Return the state vector with the initial conditions set
+    std::vector<double> getInitialX(Problem* problem);
 };

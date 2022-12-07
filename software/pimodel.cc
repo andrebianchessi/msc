@@ -112,54 +112,91 @@ Maybe<Void> Pimodel::SetParameters(std::vector<double>* parameters) {
     return r;
 }
 
+Problem Pimodel::problemFromTkc(Pimodel* model, std::vector<double>* tkc) {
+    std::vector<double> DNA = std::vector<double>(tkc->size() - 1);
+    std::copy(tkc->begin() + 1, tkc->end(), DNA.begin());
+    Maybe<Problem> problem = model->p->BuildFromVector(DNA);
+    assert(!problem.isError);
+    return problem.val;
+}
+
+boost::numeric::ublas::vector<double> Pimodel::getXModel(
+    Pimodel* model, std::vector<double>* tkc, Problem* problem) {
+    auto X =
+        boost::numeric::ublas::vector<double>(model->p->NumberOfMasses() * 2);
+
+    Maybe<double> eval;
+    for (int i = 0; i < model->p->NumberOfMasses(); i++) {
+        // Fill positions
+        eval = model->polys[i](tkc);
+        assert(!eval.isError);
+        X[i] = eval.val;
+    }
+    for (int i = 0; i < model->p->NumberOfMasses(); i++) {
+        // Fill velocities
+        // Note that we calculate the velocities by taking the
+        // derivative of the polynomials with respect to time
+        eval = model->polys[i].Dxi(0, tkc);
+        assert(!eval.isError);
+        X[problem->GetMassVelIndex(i)] = eval.val;
+    }
+    return X;
+}
+
+std::vector<double> Pimodel::getXModelDotDot(Pimodel* model,
+                                             std::vector<double>* tkc) {
+    std::vector<double> XModelDotDot =
+        std::vector<double>(model->p->NumberOfMasses());
+    Maybe<double> XiModelDotDot;
+    for (int i = 0; i < model->p->NumberOfMasses(); i++) {
+        XiModelDotDot = model->polys[i].D2xi(0, tkc);
+        assert(!XiModelDotDot.isError);
+        XModelDotDot[i] = XiModelDotDot.val;
+    }
+    return XModelDotDot;
+}
+
+std::vector<double> Pimodel::getXDotDotFromDiffEq(
+    Problem* problem, boost::numeric::ublas::vector<double> X, double t) {
+    Maybe<std::vector<double>> XDotDot_XModel = problem->GetAccel(X, t);
+    assert(!XDotDot_XModel.isError);
+    return XDotDot_XModel.val;
+}
+
+std::vector<double> Pimodel::getInitialX(Problem* problem) {
+    int nMasses = problem->masses.size();
+    auto initialX = std::vector<double>(nMasses * 2);
+    for (auto v : p->initialVels) {
+        assert(v.massId >= 0 && v.massId < nMasses);
+        initialX[Problem::GetMassVelIndex(nMasses, v.massId)] = v.val;
+    }
+    for (auto d : p->initialDisps) {
+        assert(d.massId >= 0 && d.massId < nMasses);
+        initialX[Problem::GetMassDispIndex(nMasses, d.massId)] = d.val;
+    }
+    for (auto massId : p->fixedMasses) {
+        assert(massId >= 0 && massId < nMasses);
+        initialX[Problem::GetMassDispIndex(nMasses, massId)] = 0;
+        initialX[Problem::GetMassVelIndex(nMasses, massId)] = 0;
+    }
+    return initialX;
+}
+
 void Pimodel::PhysicsLossDfs(std::vector<double>* tkc, int tkcIndex,
                              double* loss) {
     if (tkcIndex == int(tkc->size())) {
-        // Create problem for given tkc (time, springs and dampers)
-        std::vector<double> DNA = std::vector<double>(tkc->size() - 1);
-        std::copy(tkc->begin() + 1, tkc->end(), DNA.begin());
-        Maybe<Problem> problem = this->p->BuildFromVector(DNA);
-        assert(!problem.isError);
+        Problem problem = problemFromTkc(this, tkc);
 
-        // Create state vector and fill it with model predictions
-        auto X = boost::numeric::ublas::vector<double>(
-            this->p->NumberOfMasses() * 2);
-        Maybe<double> eval;
-        for (int i = 0; i < this->p->NumberOfMasses(); i++) {
-            // Fill positions
-            eval = this->polys[i](tkc);
-            assert(!eval.isError);
-            X[i] = eval.val;
-        }
-        for (int i = 0; i < this->p->NumberOfMasses(); i++) {
-            // Fill velocities
-            // Note that we calculate the velocities by taking the
-            // derivative of the polynomials with respect to time
-            eval = this->polys[i].Dxi(0, tkc);
-            assert(!eval.isError);
-            X[problem.val.GetMassVelIndex(i)] = eval.val;
-        }
+        boost::numeric::ublas::vector<double> XModel =
+            getXModel(this, tkc, &problem);
 
-        // Calculate what the true accelerations should be, i.e.
-        // plug the values of displacement and velocity the polynomials
-        // predict into the discrete element formula
-        Maybe<std::vector<double>> trueAccels =
-            problem.val.GetAccel(X, tkc->at(0));
-        assert(!trueAccels.isError);
+        std::vector<double> XDotDotFromDiffEq =
+            getXDotDotFromDiffEq(&problem, XModel, tkc->at(0));
 
-        // Calculate the accelerations by taking the second time derivative
-        // of the polynomials
-        std::vector<double> accels = std::vector<double>(trueAccels.val.size());
-        for (int i = 0; i < this->p->NumberOfMasses(); i++) {
-            eval = this->polys[i].D2xi(0, tkc);
-            assert(!eval.isError);
-            accels[i] = eval.val;
-        }
+        std::vector<double> XModelDotDot = getXModelDotDot(this, tkc);
 
-        // Update the loss value, which is the sum of the square error of the
-        // accelerations
         for (int i = 0; i < this->p->NumberOfMasses(); i++) {
-            (*loss) = (*loss) + pow(accels[i] - trueAccels.val[i], 2);
+            (*loss) = (*loss) + pow(XModelDotDot[i] - XDotDotFromDiffEq[i], 2);
         }
         return;
     }
@@ -190,46 +227,27 @@ void Pimodel::PhysicsLossDfs(std::vector<double>* tkc, int tkcIndex,
 void Pimodel::InitialConditionsLossDfs(std::vector<double>* tkc, int tkcIndex,
                                        double* loss) {
     if (tkcIndex == int(tkc->size())) {
-        int nMasses = this->p->NumberOfMasses();
-        // Create state vector and fill it with model predictions
-        auto X = std::vector<double>(nMasses * 2);
-        Maybe<double> eval;
-        for (int i = 0; i < nMasses; i++) {
-            // Fill positions
-            eval = this->polys[i](tkc);
-            assert(!eval.isError);
-            X[Problem::GetMassDispIndex(nMasses, i)] = eval.val;
-        }
-        for (int i = 0; i < nMasses; i++) {
-            // Fill velocities
-            // Note that we calculate the velocities by taking the
-            // derivative of the polynomials with respect to time
-            eval = this->polys[i].Dxi(0, tkc);
-            assert(!eval.isError);
-            X[Problem::GetMassVelIndex(nMasses, i)] = eval.val;
-        }
+        Problem problem = problemFromTkc(this, tkc);
+
+        boost::numeric::ublas::vector<double> XModel =
+            getXModel(this, tkc, &problem);
 
         // Create a state vector with the true values of initial displacements
         // and velocities
-        auto XTrue = std::vector<double>(nMasses * 2);
-        for (auto v : p->initialVels) {
-            assert(v.massId >= 0 && v.massId < nMasses);
-            XTrue[Problem::GetMassVelIndex(nMasses, v.massId)] = v.val;
-        }
-        for (auto d : p->initialDisps) {
-            assert(d.massId >= 0 && d.massId < nMasses);
-            XTrue[Problem::GetMassDispIndex(nMasses, d.massId)] = d.val;
-        }
-        for (auto massId : p->fixedMasses) {
-            assert(massId >= 0 && massId < nMasses);
-            XTrue[Problem::GetMassDispIndex(nMasses, massId)] = 0;
-            XTrue[Problem::GetMassVelIndex(nMasses, massId)] = 0;
-        }
+        auto initialX = getInitialX(&problem);
 
         // Update the loss value with the errors in initial displacement
         // and velocities
-        for (int i = 0; i < int(X.size()); i++) {
-            (*loss) = (*loss) + pow(X[i] - XTrue[i], 2);
+        int nMasses = problem.masses.size();
+        for (int m = 0; m < nMasses; m++) {
+            (*loss) = (*loss) + pow(XModel[problem.GetMassDispIndex(m)] -
+                                        initialX[problem.GetMassDispIndex(m)],
+                                    2);
+        }
+        for (int m = 0; m < nMasses; m++) {
+            (*loss) = (*loss) + pow(XModel[problem.GetMassVelIndex(m)] -
+                                        initialX[problem.GetMassVelIndex(m)],
+                                    2);
         }
         return;
     }
@@ -267,59 +285,42 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
                                                int tkcIndex,
                                                std::vector<double>* grad) {
     if (tkcIndex == int(tkc->size())) {
-        int nMasses = this->p->NumberOfMasses();
-        // Create state vector and fill it with model predictions
-        auto X = std::vector<double>(nMasses * 2);
-        Maybe<double> eval;
-        for (int i = 0; i < nMasses; i++) {
-            // Fill positions
-            eval = this->polys[i](tkc);
-            assert(!eval.isError);
-            X[Problem::GetMassDispIndex(nMasses, i)] = eval.val;
-        }
-        for (int i = 0; i < nMasses; i++) {
-            // Fill velocities
-            // Note that we calculate the velocities by taking the
-            // derivative of the polynomials with respect to time
-            eval = this->polys[i].Dxi(0, tkc);
-            assert(!eval.isError);
-            X[Problem::GetMassVelIndex(nMasses, i)] = eval.val;
-        }
+        Problem problem = problemFromTkc(this, tkc);
+
+        boost::numeric::ublas::vector<double> XModel =
+            getXModel(this, tkc, &problem);
 
         // Create a state vector with the true values of initial displacements
         // and velocities
-        auto XTrue = std::vector<double>(nMasses * 2);
-        for (auto v : p->initialVels) {
-            assert(v.massId >= 0 && v.massId < nMasses);
-            XTrue[Problem::GetMassVelIndex(nMasses, v.massId)] = v.val;
-        }
-        for (auto d : p->initialDisps) {
-            assert(d.massId >= 0 && d.massId < nMasses);
-            XTrue[Problem::GetMassDispIndex(nMasses, d.massId)] = d.val;
-        }
-        for (auto massId : p->fixedMasses) {
-            assert(massId >= 0 && massId < nMasses);
-            XTrue[Problem::GetMassDispIndex(nMasses, massId)] = 0;
-            XTrue[Problem::GetMassVelIndex(nMasses, massId)] = 0;
-        }
+        auto initialX = getInitialX(&problem);
 
-        // Set gradient value
-        auto coefs = std::vector<double>(this->polys[0].nTerms);
-        int gradI = 0;
+        int nMasses = p->masses.size();
+
+        // Set the gradient
+        std::vector<double> Da = std::vector<double>(this->polys[0].nTerms);
+        double initialXm;
+        double XmModel;
+
+        // Initial displacement error
+        int gradIndex = 0;
         for (int m = 0; m < nMasses; m++) {
-            this->polys[m].Da(tkc, &coefs);
-            for (int c = 0; c < int(coefs.size()); c++) {
-                grad->at(gradI) +=
-                    2 *
-                    (X[Problem::GetMassDispIndex(nMasses, m)] -
-                     XTrue[Problem::GetMassDispIndex(nMasses, m)]) *
-                    coefs[c];
-                grad->at(gradI) +=
-                    2 *
-                    (X[Problem::GetMassVelIndex(nMasses, m)] -
-                     XTrue[Problem::GetMassVelIndex(nMasses, m)]) *
-                    coefs[c];
-                gradI += 1;
+            initialXm = initialX[Problem::GetMassDispIndex(nMasses, m)];
+            XmModel = XModel[Problem::GetMassDispIndex(nMasses, m)];
+            this->polys[m].Da(tkc, &Da);
+            for (int DaIndex = 0; DaIndex < int(Da.size()); DaIndex++) {
+                grad->at(gradIndex) += 2 * (XmModel - initialXm) * Da[DaIndex];
+                gradIndex += 1;
+            }
+        }
+        // Initial vel error
+        gradIndex = 0;
+        for (int m = 0; m < nMasses; m++) {
+            initialXm = initialX[Problem::GetMassVelIndex(nMasses, m)];
+            XmModel = XModel[Problem::GetMassVelIndex(nMasses, m)];
+            this->polys[m].Da(tkc, &Da);
+            for (int DaIndex = 0; DaIndex < int(Da.size()); DaIndex++) {
+                grad->at(gradIndex) += 2 * (XmModel - initialXm) * Da[DaIndex];
+                gradIndex += 1;
             }
         }
         return;
@@ -344,57 +345,27 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
 void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
                                      std::vector<double>* grad) {
     if (tkcIndex == int(tkc->size())) {
-        // Create problem for given tkc (time, springs and dampers)
-        std::vector<double> DNA = std::vector<double>(tkc->size() - 1);
-        std::copy(tkc->begin() + 1, tkc->end(), DNA.begin());
-        Maybe<Problem> problem = this->p->BuildFromVector(DNA);
-        assert(!problem.isError);
+        Problem problem = problemFromTkc(this, tkc);
 
-        int nMasses = this->p->NumberOfMasses();
+        boost::numeric::ublas::vector<double> XModel =
+            getXModel(this, tkc, &problem);
 
-        // Create state vector and fill it with model predictions
-        auto X = boost::numeric::ublas::vector<double>(nMasses * 2);
-        Maybe<double> eval;
-        for (int i = 0; i < nMasses; i++) {
-            // Fill positions
-            eval = this->polys[i](tkc);
-            assert(!eval.isError);
-            X[i] = eval.val;
-        }
-        for (int i = 0; i < nMasses; i++) {
-            // Fill velocities
-            // Note that we calculate the velocities by taking the
-            // derivative of the polynomials with respect to time
-            eval = this->polys[i].Dxi(0, tkc);
-            assert(!eval.isError);
-            X[problem.val.GetMassVelIndex(i)] = eval.val;
-        }
+        std::vector<double> XDotDotFromDiffEq =
+            getXDotDotFromDiffEq(&problem, XModel, tkc->at(0));
 
-        // Calculate what the true accelerations should be, i.e.
-        // plug the values of displacement and velocity the polynomials
-        // predict into the discrete element formula
-        Maybe<std::vector<double>> trueAccels =
-            problem.val.GetAccel(X, tkc->at(0));
-        assert(!trueAccels.isError);
+        std::vector<double> XModelDotDot = getXModelDotDot(this, tkc);
 
-        // Calculate the accelerations by taking the second time derivative
-        // of the polynomials
-        std::vector<double> accels = std::vector<double>(trueAccels.val.size());
-        for (int i = 0; i < nMasses; i++) {
-            eval = this->polys[i].D2xi(0, tkc);
-            assert(!eval.isError);
-            accels[i] = eval.val;
-        }
+        int nMasses = problem.masses.size();
 
         // Set gradient value
-        auto coefs = std::vector<double>(this->polys[0].nTerms);
-        int gradI = 0;
+        auto Da = std::vector<double>(this->polys[0].nTerms);
+        int gradIndex = 0;
         for (int m = 0; m < nMasses; m++) {
-            this->polys[m].Da(tkc, &coefs);
-            for (int c = 0; c < int(coefs.size()); c++) {
-                grad->at(gradI) +=
-                    2 * (accels[m] - trueAccels.val[m]) * coefs[c];
-                gradI += 1;
+            this->polys[m].Da(tkc, &Da);
+            for (int DaIndex = 0; DaIndex < int(Da.size()); DaIndex++) {
+                grad->at(gradIndex) +=
+                    2 * (XModelDotDot[m] - XDotDotFromDiffEq[m]) * Da[DaIndex];
+                gradIndex += 1;
             }
         }
         return;
