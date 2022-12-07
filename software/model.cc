@@ -49,12 +49,11 @@ Maybe<double> Model::Train(double learningRate, double minLearningRate,
     StatusAndValue stepStatus;
     while (learningRate >= minLearningRate && learningRate != 0) {
         stepStatus = this->GradientDescentStep(learningRate);
-        if (stepStatus.success) {
-            if (log) {
-                std::cout << "Learning Rate: " << learningRate
-                          << " Loss: " << stepStatus.value << std::endl;
-            }
-        } else {
+        if (log) {
+            std::cout << "Learning Rate: " << learningRate
+                      << " Loss: " << stepStatus.value << std::endl;
+        }
+        if (!stepStatus.success) {
             learningRate = learningRate / 2;
         }
     }

@@ -398,21 +398,27 @@ TEST_F(PimodelTest, LossGradientTest) {
 // Training is not showing good results. Better implement more unit-tests
 // to check if everything is working as intended.
 TEST_F(PimodelTest, TrainTest) {
-    double k = (kMin + kMax) / 2;
-    double c = (cMin + cMax) / 2;
     double T = 15.0;
+    int timeDiscretization = 100;
+    int kcDiscretization = 1;
+    int order = 20;
 
-    Pimodel model = Pimodel(&this->pd, T, 1, 1, 3);
-    double lr = 0.0001;
+    // Train model
+    Pimodel model =
+        Pimodel(&this->pd, T, timeDiscretization, kcDiscretization, order);
+    double lr = 0.0000000000001;
     model.Train(lr, lr / (2 * 2 * 2 * 2), true);
 
+    // Get problem using intermediate value for k and c, and integrate it
+    double k = (kMin + kMax) / 2;
+    double c = (cMin + cMax) / 2;
     Maybe<Problem> mP = this->pd.BuildFromVector(std::vector<double>{k, c});
     ASSERT_FALSE(mP.isError);
     Problem p = mP.val;
     p.Integrate(T);
 
+    // Compare the model's prediction with the problem's result
     std::vector<double> tkc = std::vector<double>{0.0, k, c};
-
     Maybe<std::vector<double>> X;
     std::cout << "t,x0,modelX0,x1,modelX1" << std::endl;
     for (int i = 0; i < int(p.t.size()); i++) {

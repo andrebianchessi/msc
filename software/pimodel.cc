@@ -297,7 +297,8 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
         int nMasses = p->masses.size();
 
         // Set the gradient
-        std::vector<double> Da = std::vector<double>(this->polys[0].nTerms);
+        std::vector<double> XmModelGrad =
+            std::vector<double>(this->polys[0].nTerms);
         double initialXm;
         double XmModel;
 
@@ -306,9 +307,10 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
         for (int m = 0; m < nMasses; m++) {
             initialXm = initialX[Problem::GetMassDispIndex(nMasses, m)];
             XmModel = XModel[Problem::GetMassDispIndex(nMasses, m)];
-            this->polys[m].Da(tkc, &Da);
-            for (int DaIndex = 0; DaIndex < int(Da.size()); DaIndex++) {
-                grad->at(gradIndex) += 2 * (XmModel - initialXm) * Da[DaIndex];
+            this->polys[m].Da(tkc, &XmModelGrad);
+            for (int i = 0; i < int(XmModelGrad.size()); i++) {
+                grad->at(gradIndex) +=
+                    2 * (XmModel - initialXm) * XmModelGrad[i];
                 gradIndex += 1;
             }
         }
@@ -317,9 +319,10 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
         for (int m = 0; m < nMasses; m++) {
             initialXm = initialX[Problem::GetMassVelIndex(nMasses, m)];
             XmModel = XModel[Problem::GetMassVelIndex(nMasses, m)];
-            this->polys[m].Da(tkc, &Da);
-            for (int DaIndex = 0; DaIndex < int(Da.size()); DaIndex++) {
-                grad->at(gradIndex) += 2 * (XmModel - initialXm) * Da[DaIndex];
+            this->polys[m].Da(tkc, &XmModelGrad);
+            for (int i = 0; i < int(XmModelGrad.size()); i++) {
+                grad->at(gradIndex) +=
+                    2 * (XmModel - initialXm) * XmModelGrad[i];
                 gradIndex += 1;
             }
         }
@@ -342,6 +345,10 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
     }
 }
 
+// THIS IS WRONG AND MUST BE FIXED
+// XDotDotFromDiffEq also depends on the parameters of the model,
+// thus it can't be treated like a constant as in the initial conditions loss
+// gradient
 void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
                                      std::vector<double>* grad) {
     if (tkcIndex == int(tkc->size())) {
@@ -358,13 +365,14 @@ void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
         int nMasses = problem.masses.size();
 
         // Set gradient value
-        auto Da = std::vector<double>(this->polys[0].nTerms);
+        auto XModelDotDotGrad = std::vector<double>(this->polys[0].nTerms);
         int gradIndex = 0;
         for (int m = 0; m < nMasses; m++) {
-            this->polys[m].Da(tkc, &Da);
-            for (int DaIndex = 0; DaIndex < int(Da.size()); DaIndex++) {
+            this->polys[m].Da(tkc, &XModelDotDotGrad);
+            for (int i = 0; i < int(XModelDotDotGrad.size()); i++) {
                 grad->at(gradIndex) +=
-                    2 * (XModelDotDot[m] - XDotDotFromDiffEq[m]) * Da[DaIndex];
+                    2 * (XModelDotDot[m] - XDotDotFromDiffEq[m]) *
+                    XModelDotDotGrad[i];
                 gradIndex += 1;
             }
         }
