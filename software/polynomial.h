@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include <cassert>
+#include <memory>
 #include <vector>
 
 #include "maybe.h"
@@ -56,7 +57,7 @@ class Node {
 
     // child nodes
     // has constant size after Node construction
-    std::vector<Node*> children;
+    std::vector<std::shared_ptr<Node>> children;
 
     // Empty constructor
     Node(){};
@@ -75,7 +76,7 @@ class Node {
    private:
     FRIEND_TEST(NodeTest, AddChildTest);
     int childrenI;  // index of first non empty index at children vector
-    Node* AddChild(int exp, int parentsExpSum, int nChildren);
+    std::shared_ptr<Node> AddChild(int exp, int parentsExpSum, int nChildren);
 };
 
 class Poly {
@@ -189,16 +190,17 @@ class Poly {
     FRIEND_TEST(PolyTest, dfsTest);
     FRIEND_TEST(PolyTest, MultiplicationOperatorTest);
     FRIEND_TEST(PolyTest, MatrixMultiplicationTest);
-    Node* coefficients;
+    std::shared_ptr<Node> coefficients;
 
     // vector to quickly access the leaf nodes (which contain the coefficients)
-    std::vector<Node*> leafNodes;
+    std::vector<std::shared_ptr<Node>> leafNodes;
 
     // Boolean that indicates this is a "zero" polynomial
     // P = 0
     bool isZero;
 };
 
-double dfs(Node* node, int nodeTreeDepth, std::vector<double>* X);
+double dfs(std::shared_ptr<Node> node, int nodeTreeDepth,
+           std::vector<double>* X);
 Poly operator*(double x, const Poly& p);
 Poly operator*(const Poly& p, double x);

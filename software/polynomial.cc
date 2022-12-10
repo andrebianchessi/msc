@@ -2,13 +2,14 @@
 
 #include <boost/math/special_functions/binomial.hpp>
 #include <cassert>
+#include <memory>
 #include <queue>
 
 #include "maybe.h"
 #include "utils.h"
 
 Node::Node(int nChildren) {
-    this->children = std::vector<Node*>(nChildren);
+    this->children = std::vector<std::shared_ptr<Node>>(nChildren);
     this->childrenI = 0;
     this->exp = 0;
     this->parentsExpSum = 0;
@@ -17,12 +18,14 @@ Node::Node(int nChildren) {
 Node::Node(int exp, int parentsExpSum, int nChildren) {
     this->exp = exp;
     this->parentsExpSum = parentsExpSum;
-    this->children = std::vector<Node*>(nChildren);
+    this->children = std::vector<std::shared_ptr<Node>>(nChildren);
     this->childrenI = 0;
 }
 
-Node* Node::AddChild(int exp, int parentsExpSum, int nChildren) {
-    Node* child = new Node(exp, parentsExpSum, nChildren);
+std::shared_ptr<Node> Node::AddChild(int exp, int parentsExpSum,
+                                     int nChildren) {
+    std::shared_ptr<Node> child =
+        std::shared_ptr<Node>(new Node(exp, parentsExpSum, nChildren));
     this->children[this->childrenI] = child;
     this->childrenI += 1;
     return child;
@@ -56,19 +59,18 @@ Maybe<Void> Poly::Build(int n, int order, double coefficients) {
 
     // create root node
     // the root node will have order+1 children
-    Node* root = new Node(order + 1);
-    this->coefficients = root;
+    this->coefficients = std::shared_ptr<Node>(new Node(order + 1));
 
-    this->leafNodes = std::vector<Node*>(this->nTerms);
+    this->leafNodes = std::vector<std::shared_ptr<Node>>(this->nTerms);
     int leafNodesI = 0;
 
     // We now perform BFS, "layer by layer"
     // each layer is a depth in the coefficients tree.
-    std::queue<Node*> q;
+    std::queue<std::shared_ptr<Node>> q;
     q.push(this->coefficients);
     for (int treeDepth = 0; treeDepth <= n; treeDepth++) {
         for (int qI = q.size(); qI > 0; qI--) {
-            Node* currentNode = q.front();
+            std::shared_ptr<Node> currentNode = q.front();
             q.pop();
 
             if (treeDepth == n) {
@@ -103,7 +105,8 @@ Maybe<Void> Poly::Build(int n, int order, double coefficients) {
 };
 
 // Auxiliary DFS recursive function used on operator()
-double dfs(Node* node, int nodeTreeDepth, std::vector<double>* X) {
+double dfs(std::shared_ptr<Node> node, int nodeTreeDepth,
+           std::vector<double>* X) {
     if (node->IsLeaf()) {
         return node->a * std::pow(X->at(nodeTreeDepth - 1), node->exp);
     }
@@ -121,7 +124,7 @@ Maybe<double> Poly::operator()(std::vector<double>* X) {
         return r;
     }
 
-    Node* root = this->coefficients;
+    std::shared_ptr<Node> root = this->coefficients;
     double sumOfChildren = 0;
     for (int c = 0; c < int(root->children.size()); c++) {
         sumOfChildren += dfs(root->children[c], 1, X);
@@ -143,7 +146,8 @@ double powOrZero(double x, int pow) {
 }
 
 // Auxiliary DFS recursive function used on Dxi()
-double dfsDxi(int i, Node* node, int nodeTreeDepth, std::vector<double>* X) {
+double dfsDxi(int i, std::shared_ptr<Node> node, int nodeTreeDepth,
+              std::vector<double>* X) {
     // indicates if the derivative is with respect to the variable of this node
     bool derivateThisNode = i == (nodeTreeDepth - 1);
     if (node->IsLeaf()) {
@@ -176,7 +180,7 @@ Maybe<double> Poly::Dxi(int i, std::vector<double>* X) {
         return r;
     }
 
-    Node* root = this->coefficients;
+    std::shared_ptr<Node> root = this->coefficients;
     double sumOfChildren = 0;
     for (int c = 0; c < int(root->children.size()); c++) {
         sumOfChildren += dfsDxi(i, root->children[c], 1, X);
@@ -186,7 +190,8 @@ Maybe<double> Poly::Dxi(int i, std::vector<double>* X) {
 }
 
 // Auxiliary DFS recursive function used on D2xi()
-double dfsD2xi(int i, Node* node, int nodeTreeDepth, std::vector<double>* X) {
+double dfsD2xi(int i, std::shared_ptr<Node> node, int nodeTreeDepth,
+               std::vector<double>* X) {
     // indicates if the derivative is with respect to the variable of this node
     bool derivateThisNode = i == (nodeTreeDepth - 1);
     if (node->IsLeaf()) {
@@ -220,7 +225,7 @@ Maybe<double> Poly::D2xi(int i, std::vector<double>* X) {
         return r;
     }
 
-    Node* root = this->coefficients;
+    std::shared_ptr<Node> root = this->coefficients;
     double sumOfChildren = 0;
     for (int c = 0; c < int(root->children.size()); c++) {
         sumOfChildren += dfsD2xi(i, root->children[c], 1, X);
@@ -230,8 +235,9 @@ Maybe<double> Poly::D2xi(int i, std::vector<double>* X) {
 }
 
 // Auxiliary DFS recursive function used on Da
-void dfsDa(std::vector<double>* X, double parentsProduct, Node* thisNode,
-           int thisNodeTreeDepth, int* aIndex, std::vector<double>* target) {
+void dfsDa(std::vector<double>* X, double parentsProduct,
+           std::shared_ptr<Node> thisNode, int thisNodeTreeDepth, int* aIndex,
+           std::vector<double>* target) {
     const double currentProduct =
         parentsProduct * std::pow(X->at(thisNodeTreeDepth - 1), thisNode->exp);
     if (thisNode->IsLeaf()) {
@@ -266,8 +272,8 @@ Maybe<Void> Poly::Da(std::vector<double>* X, std::vector<double>* target) {
 
 // Auxiliary DFS recursive function used on DaDxi
 void dfsDaDxi(int i, std::vector<double>* X, double parentsProduct,
-              Node* thisNode, int thisNodeTreeDepth, int* aIndex,
-              std::vector<double>* target) {
+              std::shared_ptr<Node> thisNode, int thisNodeTreeDepth,
+              int* aIndex, std::vector<double>* target) {
     bool derivateThisNode = i == (thisNodeTreeDepth - 1);
     double currentProduct;
     if (derivateThisNode) {
@@ -316,8 +322,8 @@ Maybe<Void> Poly::DaDxi(int i, std::vector<double>* X,
 
 // Auxiliary DFS recursive function used on DaDxi
 void dfsDaD2xi(int i, std::vector<double>* X, double parentsProduct,
-               Node* thisNode, int thisNodeTreeDepth, int* aIndex,
-               std::vector<double>* target) {
+               std::shared_ptr<Node> thisNode, int thisNodeTreeDepth,
+               int* aIndex, std::vector<double>* target) {
     bool derivateThisNode = i == (thisNodeTreeDepth - 1);
     double currentProduct;
     if (derivateThisNode) {
