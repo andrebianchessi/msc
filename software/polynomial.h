@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 #include <math.h>
 
+#include <cassert>
 #include <vector>
 
 #include "maybe.h"
@@ -106,16 +107,26 @@ class Poly {
     int order;
     int nTerms;  // number of terms the polynomial has
 
-    // Constructor
+    // Default constructor
+    // Initializes as a zero polynomial
+    Poly();
+    // Same as default constructor
+    // Exists for compatibility reasons only
+    Poly(int);
+
+    // Copy constructor
+    Poly(const Poly&);
+    // Assignment
+    Poly& operator=(const Poly&);
+
+    // Build method to be called after the constructor
     // Arguments are the number of variables, the order of the polynomial
     // and the value for the coefficients.
     // Ex:
-    // NewPoly(2,2,2.0) returns an instance that represents:
+    // Build(2,2,2.0) will set:
     // P = 2.0*x^2 + 2.0*xy + 2.0*x + 2.0*y^2 + 2.0*y + 2.0
-    static Maybe<Poly> NewPoly(int n, int order, double coefficients);
-    static Maybe<Poly> NewPoly(int n, int order) {
-        return NewPoly(n, order, 0.0);
-    };
+    Maybe<Void> Build(int n, int order, double coefficients);
+    Maybe<Void> Build(int n, int order) { return Build(n, order, 0.0); };
 
     // Evaluates the polynomial for the given values of the variables
     Maybe<double> operator()(std::vector<double>* X);
@@ -168,28 +179,26 @@ class Poly {
     // P = 5x^2 + 6xy + 7x + 8y^2 + 9y + 10*1
     Maybe<Void> SetCoefficients(std::vector<double>* coefficients);
 
-    // Multiplies all coefficients by k
-    // Ex:
-    // P = 1*x^2 + 1*x + 1*1
-    // P.Multiply(9)
-    // P = 9*x^2 + 9*x + 9*1
-    void Multiply(double k);
+    friend Poly operator+(Poly const& left, Poly const& right);
+    friend Poly operator*(double x, const Poly& p);
+    Poly& operator+=(const Poly& right);
 
    private:
     friend class PolyTest;
     FRIEND_TEST(PolyConstructorTest, constructorTest);
     FRIEND_TEST(PolyTest, dfsTest);
+    FRIEND_TEST(PolyTest, MultiplicationOperatorTest);
+    FRIEND_TEST(PolyTest, MatrixMultiplicationTest);
     Node* coefficients;
 
     // vector to quickly access the leaf nodes (which contain the coefficients)
     std::vector<Node*> leafNodes;
 
-    // Number that multiplies this polynomial
-    // Note that we consider that this is part of each coefficient
-    // Ex:
-    // P = 7*(3x^2 + 4x + 5)
-    // The coefficients are: 7*3, 7*4, 7*5
-    double k;
+    // Boolean that indicates this is a "zero" polynomial
+    // P = 0
+    bool isZero;
 };
 
 double dfs(Node* node, int nodeTreeDepth, std::vector<double>* X);
+Poly operator*(double x, const Poly& p);
+Poly operator*(const Poly& p, double x);

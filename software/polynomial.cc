@@ -1,6 +1,7 @@
 #include "polynomial.h"
 
 #include <boost/math/special_functions/binomial.hpp>
+#include <cassert>
 #include <queue>
 
 #include "maybe.h"
@@ -38,35 +39,33 @@ int nChilds(int nodeParentsExpSum, int nodeExp, int polyOrder,
     return childMaxExp - childMinExp + 1;
 }
 
-Maybe<Poly> Poly::NewPoly(int n, int order, double coefficients) {
-    Maybe<Poly> r;
+Maybe<Void> Poly::Build(int n, int order, double coefficients) {
+    Maybe<Void> r;
     if (n < 0 || order < 0) {
         r.isError = true;
         r.errMsg = "n and order must be >=0";
         return r;
     }
 
-    Poly p;
-    p.k = 1;
-    p.n = n;
-    p.order = order;
+    this->n = n;
+    this->order = order;
     // Source:
     // https://mathoverflow.net/questions/225953/number-of-polynomial-terms-for-certain-degree-and-certain-number-of-variables/225963#225963?newreg=2a0208ceb740461d8eaa21e304b0e341
-    p.nTerms =
-        int(boost::math::binomial_coefficient<double>(p.n + p.order, p.order));
+    this->nTerms = int(boost::math::binomial_coefficient<double>(
+        this->n + this->order, this->order));
 
     // create root node
     // the root node will have order+1 children
     Node* root = new Node(order + 1);
-    p.coefficients = root;
+    this->coefficients = root;
 
-    p.leafNodes = std::vector<Node*>(p.nTerms);
+    this->leafNodes = std::vector<Node*>(this->nTerms);
     int leafNodesI = 0;
 
     // We now perform BFS, "layer by layer"
     // each layer is a depth in the coefficients tree.
     std::queue<Node*> q;
-    q.push(p.coefficients);
+    q.push(this->coefficients);
     for (int treeDepth = 0; treeDepth <= n; treeDepth++) {
         for (int qI = q.size(); qI > 0; qI--) {
             Node* currentNode = q.front();
@@ -74,7 +73,7 @@ Maybe<Poly> Poly::NewPoly(int n, int order, double coefficients) {
 
             if (treeDepth == n) {
                 currentNode->a = coefficients;
-                p.leafNodes[leafNodesI] = currentNode;
+                this->leafNodes[leafNodesI] = currentNode;
                 leafNodesI += 1;
             } else {
                 // Number of children current node will have
@@ -99,8 +98,7 @@ Maybe<Poly> Poly::NewPoly(int n, int order, double coefficients) {
             }
         }
     }
-
-    r.val = p;
+    this->isZero = false;
     return r;
 };
 
@@ -128,7 +126,7 @@ Maybe<double> Poly::operator()(std::vector<double>* X) {
     for (int c = 0; c < int(root->children.size()); c++) {
         sumOfChildren += dfs(root->children[c], 1, X);
     }
-    r.val = this->k * sumOfChildren;
+    r.val = sumOfChildren;
     return r;
 };
 
@@ -183,7 +181,7 @@ Maybe<double> Poly::Dxi(int i, std::vector<double>* X) {
     for (int c = 0; c < int(root->children.size()); c++) {
         sumOfChildren += dfsDxi(i, root->children[c], 1, X);
     }
-    r.val = this->k * sumOfChildren;
+    r.val = sumOfChildren;
     return r;
 }
 
@@ -227,7 +225,7 @@ Maybe<double> Poly::D2xi(int i, std::vector<double>* X) {
     for (int c = 0; c < int(root->children.size()); c++) {
         sumOfChildren += dfsD2xi(i, root->children[c], 1, X);
     }
-    r.val = this->k * sumOfChildren;
+    r.val = sumOfChildren;
     return r;
 }
 
@@ -374,7 +372,7 @@ Maybe<Void> Poly::GetCoefficients(std::vector<double>* target) {
         return r;
     }
     for (int i = 0; i < this->nTerms; i++) {
-        (*target)[i] = this->leafNodes[i]->a * this->k;
+        (*target)[i] = this->leafNodes[i]->a;
     }
     return r;
 }
@@ -392,4 +390,69 @@ Maybe<Void> Poly::SetCoefficients(std::vector<double>* target) {
     return r;
 }
 
-void Poly::Multiply(double k) { this->k = k; }
+Poly::Poly() { this->isZero = true; }
+
+Poly::Poly(int k) { this->isZero = true; }
+
+// Copy constructor
+Poly::Poly(const Poly& right) {
+    if (right.isZero) {
+        this->isZero = true;
+        return;
+    }
+    this->isZero = false;
+    assert(!this->Build(right.n, right.order).isError);
+    for (int i = 0; i < int(right.leafNodes.size()); i++) {
+        this->leafNodes[i]->a = right.leafNodes[i]->a;
+    }
+}
+// Assignment
+Poly& Poly::operator=(const Poly& right) {
+    if (right.isZero) {
+        this->isZero = true;
+        return (*this);
+    }
+    this->isZero = false;
+    assert(!this->Build(right.n, right.order).isError);
+    for (int i = 0; i < int(right.leafNodes.size()); i++) {
+        this->leafNodes[i]->a = right.leafNodes[i]->a;
+    }
+    return (*this);
+}
+
+Poly operator+(Poly const& left, Poly const& right) {
+    if (left.isZero) {
+        return right;
+    }
+    if (right.isZero) {
+        return left;
+    }
+    assert(left.n == right.n);
+    assert(left.order == right.order);
+    Poly newP;
+    assert(!newP.Build(left.n, left.order).isError);
+    for (int i = 0; i < int(newP.leafNodes.size()); i++) {
+        newP.leafNodes[i]->a = right.leafNodes[i]->a + left.leafNodes[i]->a;
+    }
+    return newP;
+};
+Poly& Poly::operator+=(const Poly& right) {
+    if (right.isZero) {
+        return *this;
+    }
+    if (this->isZero) {
+        this->Build(right.n, right.order);
+    }
+    assert(this->order == right.order);
+    for (int i = 0; i < int(this->leafNodes.size()); i++) {
+        this->leafNodes[i]->a += right.leafNodes[i]->a;
+    }
+    return *this;
+}
+Poly operator*(double x, const Poly& p) {
+    for (int i = 0; i < int(p.leafNodes.size()); i++) {
+        p.leafNodes[i]->a *= x;
+    }
+    return p;
+}
+Poly operator*(const Poly& p, double x) { return x * p; }

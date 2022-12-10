@@ -25,11 +25,12 @@ Pimodel::Pimodel(ProblemDescription* p, double finalT, int timeDiscretization,
     // mass , and so on. The input of each polynomial is the values of the
     // springs, the dampers, and time.
     this->polys = std::vector<Poly>(p->NumberOfMasses());
-    Maybe<Poly> poly;
+    Poly poly;
+    Maybe<Void> r;
     for (int i = 0; i < p->NumberOfMasses(); i++) {
-        poly = Poly::NewPoly(nSprings + nDampers + 1, order);
-        assert(!poly.isError);
-        this->polys[i] = poly.val;
+        r = poly.Build(nSprings + nDampers + 1, order);
+        assert(!r.isError);
+        this->polys[i] = poly;
     }
 
     this->finalT = finalT;

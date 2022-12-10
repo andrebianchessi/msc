@@ -300,6 +300,7 @@ cc_test(
   deps = [
     ":polynomial",
     "@com_google_googletest//:gtest_main",
+    "@boost//:numeric_ublas",
     ":utils"
   ]
 )
