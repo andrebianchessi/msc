@@ -68,9 +68,6 @@ class Node {
     // Non-leaf node constructor
     Node(int exp, int parentsExpSum, int nChildren);
 
-    // Leaf node constructor
-    Node(int exp, int parentsExpSum, double coefficient);
-
     bool IsLeaf() { return this->children.size() == 0; }
 
    private:
@@ -132,15 +129,12 @@ class Poly {
     // Evaluates the polynomial for the given values of the variables
     Maybe<double> operator()(std::vector<double>* X);
 
-    // Returns the derivative with respect to i-th variable
+    // Sets this polynomial as the derivative of this polynomial
+    // with respect to i-th variable.
     // Ex:
     // P = x^2 + xy + x + y^2 + y + 1
-    // Dxi(0, {3.0, 0.0}) = 2*x + y + 1 = 2*3.0 + 0.0 + 1
-    Maybe<double> Dxi(int i, std::vector<double>* X);
-
-    // Returns the second derivative with respect to the i-th variable,
-    // similar to Poly::Dxi
-    Maybe<double> D2xi(int i, std::vector<double>* X);
+    // Dxi(0) -> P will be set to: 2x + y + 1 + 0 + 0 + 0
+    Maybe<Void> Dxi(int i);
 
     // Get the derivatives with respect to each coefficient
     // Ex:
@@ -148,24 +142,6 @@ class Poly {
     // P = 1.0x^2 + 2.0xy + 3.0x + 4.0y^2 + 5.0y + 6.0
     // target will be set to {7^2, 7*8, 7, 8^2, 8, 1.0}
     Maybe<Void> Da(std::vector<double>* X, std::vector<double>* target);
-
-    // Get the derivatives with respect to each coefficient of the derivative
-    // with respect to the i-th variable
-    // Ex:
-    // P = x^2 + xy + x + y^2 + y + 1
-    // Dx0 = 2*x + y + 1
-    // DaDx0 = [x, y, 1, 0, 0, 0]
-    Maybe<Void> DaDxi(int i, std::vector<double>* X,
-                      std::vector<double>* target);
-
-    // Get the derivatives with respect to each coefficient of the second
-    // derivative with respect to the i-th variable
-    // Ex: P = x^2 + xy + x + y^2 + y + 1
-    // Dx0 = 2*x + y + 1
-    // D2x0 = 2
-    // DaD2xi = [2, 0, 0, 0, 0, 0]
-    Maybe<Void> DaD2xi(int i, std::vector<double>* X,
-                       std::vector<double>* target);
 
     // Sets the coefficients at target vector
     // Ex:
@@ -181,8 +157,16 @@ class Poly {
     Maybe<Void> SetCoefficients(std::vector<double>* coefficients);
 
     friend Poly operator+(Poly const& left, Poly const& right);
+    friend Poly operator-(Poly const& left, Poly const& right);
     friend Poly operator*(double x, const Poly& p);
+    friend Poly operator*(const Poly& p, double x);
+    friend Poly operator+(double x, const Poly& p);
+    friend Poly operator+(const Poly& p, double x);
+    friend Poly operator-(double x, const Poly& p);
+    friend Poly operator-(const Poly& p, double x);
     Poly& operator+=(const Poly& right);
+    bool operator==(Poly const& right);
+    bool operator!=(Poly const& right);
 
    private:
     friend class PolyTest;
@@ -190,6 +174,7 @@ class Poly {
     FRIEND_TEST(PolyTest, dfsTest);
     FRIEND_TEST(PolyTest, MultiplicationOperatorTest);
     FRIEND_TEST(PolyTest, MatrixMultiplicationTest);
+    FRIEND_TEST(PolyTest, DxiTest2);
     std::shared_ptr<Node> coefficients;
 
     // vector to quickly access the leaf nodes (which contain the coefficients)
@@ -204,3 +189,5 @@ double dfs(std::shared_ptr<Node> node, int nodeTreeDepth,
            std::vector<double>* X);
 Poly operator*(double x, const Poly& p);
 Poly operator*(const Poly& p, double x);
+Poly operator+(double x, const Poly& p);
+Poly operator+(const Poly& p, double x);

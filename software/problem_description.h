@@ -47,7 +47,7 @@ struct InitialDispDescription {
 
 class ProblemDescription {
    public:
-    void AddMass(double px, double py, double m);
+    void AddMass(double m, double px, double py);
 
     void AddInitialVel(int massId, double value);
     void AddInitialVel(double value);

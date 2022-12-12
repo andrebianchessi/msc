@@ -25,7 +25,7 @@ Node::Node(int exp, int parentsExpSum, int nChildren) {
 std::shared_ptr<Node> Node::AddChild(int exp, int parentsExpSum,
                                      int nChildren) {
     std::shared_ptr<Node> child =
-        std::shared_ptr<Node>(new Node(exp, parentsExpSum, nChildren));
+        std::make_shared<Node>(exp, parentsExpSum, nChildren);
     this->children[this->childrenI] = child;
     this->childrenI += 1;
     return child;
@@ -59,7 +59,7 @@ Maybe<Void> Poly::Build(int n, int order, double coefficients) {
 
     // create root node
     // the root node will have order+1 children
-    this->coefficients = std::shared_ptr<Node>(new Node(order + 1));
+    this->coefficients = std::make_shared<Node>(order + 1);
 
     this->leafNodes = std::vector<std::shared_ptr<Node>>(this->nTerms);
     int leafNodesI = 0;
@@ -145,7 +145,7 @@ double powOrZero(double x, int pow) {
     return 0;
 }
 
-// Auxiliary DFS recursive function used on Dxi()
+// Auxiliary DFS recursive function used on Dxi
 double dfsDxi(int i, std::shared_ptr<Node> node, int nodeTreeDepth,
               std::vector<double>* X) {
     // indicates if the derivative is with respect to the variable of this node
@@ -167,25 +167,75 @@ double dfsDxi(int i, std::shared_ptr<Node> node, int nodeTreeDepth,
     }
     return std::pow(X->at(nodeTreeDepth - 1), node->exp) * sumOfChildren;
 }
-Maybe<double> Poly::Dxi(int i, std::vector<double>* X) {
-    Maybe<double> r;
-    if (int(X->size()) != this->n) {
-        r.isError = true;
-        r.errMsg = "X of invalid length";
-        return r;
+
+// Auxiliary DFS recursive function used on GetDxi
+// This goes through all the nodes and, if the derivative is with respect to
+// the variable that node represents, it is differentiated.
+// Note that this doesn't remove "empty" nodes from the tree. Just the exponents
+// of the nodes and the coefficients (values at leaf nodes) are adjusted. Thus,
+// if you call this function multiple times you'll end up with a tree in which
+// all exponents (exp fields) are zero, and the coefficients are are zero; which
+// works but might be considered inefficient. IMO this is totally fine
+// especially if we only take one or two derivatives;
+void dfsSetAsDxi(int i, std::shared_ptr<Node> node, int nodeTreeDepth,
+                 int multiplyChildLeafsBy) {
+    // indicates if the derivative is with respect to the variable of this node
+    bool derivateThisNode = i == (nodeTreeDepth - 1);
+    if (derivateThisNode) {
+        assert(multiplyChildLeafsBy == 1);
+        if (node->exp == 0) {
+            multiplyChildLeafsBy = 0;
+        } else {
+            multiplyChildLeafsBy = node->exp;
+            node->exp -= 1;
+        }
     }
+    if (node->IsLeaf()) {
+        node->a *= multiplyChildLeafsBy;
+        return;
+    }
+
+    for (int c = 0; c < int(node->children.size()); c++) {
+        dfsSetAsDxi(i, node->children[c], nodeTreeDepth + 1,
+                    multiplyChildLeafsBy);
+    }
+}
+void dfsFixDxiTree(std::shared_ptr<Node> node, std::shared_ptr<Node> dxiNode) {
+    if (node->IsLeaf()) {
+        node->a += dxiNode->a;
+        return;
+    }
+
+    std::shared_ptr<Node> dxiNodeChild;
+    std::shared_ptr<Node> nodeChild;
+    for (int dc = 0; dc < int(dxiNode->children.size()); dc++) {
+        dxiNodeChild = dxiNode->children[dc];
+        for (int c = 0; c < int(node->children.size()); c++) {
+            nodeChild = node->children[c];
+            if (nodeChild->exp == dxiNodeChild->exp) {
+                dfsFixDxiTree(nodeChild, dxiNodeChild);
+            }
+        }
+    }
+}
+Maybe<Void> Poly::Dxi(int i) {
+    Maybe<Void> r;
     if (i < 0 || i >= this->n) {
         r.isError = true;
-        r.errMsg = "invalid i";
+        r.errMsg = "Invalid i";
         return r;
     }
 
-    std::shared_ptr<Node> root = this->coefficients;
-    double sumOfChildren = 0;
-    for (int c = 0; c < int(root->children.size()); c++) {
-        sumOfChildren += dfsDxi(i, root->children[c], 1, X);
+    Poly dxi = (*this);
+    for (int c = 0; c < int(dxi.coefficients->children.size()); c++) {
+        dfsSetAsDxi(i, dxi.coefficients->children[c], 1, 1);
     }
-    r.val = sumOfChildren;
+
+    for (int i = 0; i < (this->leafNodes.size()); i++) {
+        this->leafNodes[i]->a = 0;
+    }
+    dfsFixDxiTree(this->coefficients, dxi.coefficients);
+
     return r;
 }
 
@@ -211,27 +261,6 @@ double dfsD2xi(int i, std::shared_ptr<Node> node, int nodeTreeDepth,
                sumOfChildren;
     }
     return std::pow(X->at(nodeTreeDepth - 1), node->exp) * sumOfChildren;
-}
-Maybe<double> Poly::D2xi(int i, std::vector<double>* X) {
-    Maybe<double> r;
-    if (int(X->size()) != this->n) {
-        r.isError = true;
-        r.errMsg = "X of invalid length";
-        return r;
-    }
-    if (i < 0 || i >= this->n) {
-        r.isError = true;
-        r.errMsg = "invalid i";
-        return r;
-    }
-
-    std::shared_ptr<Node> root = this->coefficients;
-    double sumOfChildren = 0;
-    for (int c = 0; c < int(root->children.size()); c++) {
-        sumOfChildren += dfsD2xi(i, root->children[c], 1, X);
-    }
-    r.val = sumOfChildren;
-    return r;
 }
 
 // Auxiliary DFS recursive function used on Da
@@ -294,31 +323,6 @@ void dfsDaDxi(int i, std::vector<double>* X, double parentsProduct,
                  thisNodeTreeDepth + 1, aIndex, target);
     }
 }
-Maybe<Void> Poly::DaDxi(int i, std::vector<double>* X,
-                        std::vector<double>* target) {
-    Maybe<Void> r;
-    if (int(target->size()) != this->nTerms) {
-        r.isError = true;
-        r.errMsg = "target must have same length as the number of terms";
-        return r;
-    }
-    if (int(X->size()) != this->n) {
-        r.isError = true;
-        r.errMsg = "X of invalid length";
-        return r;
-    }
-    if (i < 0 || i >= this->n) {
-        r.isError = true;
-        r.errMsg = "invalid i";
-        return r;
-    }
-
-    int aIndex = 0;
-    for (int c = 0; c < int(this->coefficients->children.size()); c++) {
-        dfsDaDxi(i, X, 1, this->coefficients->children[c], 1, &aIndex, target);
-    }
-    return r;
-}
 
 // Auxiliary DFS recursive function used on DaDxi
 void dfsDaD2xi(int i, std::vector<double>* X, double parentsProduct,
@@ -343,31 +347,6 @@ void dfsDaD2xi(int i, std::vector<double>* X, double parentsProduct,
         dfsDaD2xi(i, X, currentProduct, thisNode->children[c],
                   thisNodeTreeDepth + 1, aIndex, target);
     }
-}
-Maybe<Void> Poly::DaD2xi(int i, std::vector<double>* X,
-                         std::vector<double>* target) {
-    Maybe<Void> r;
-    if (int(target->size()) != this->nTerms) {
-        r.isError = true;
-        r.errMsg = "target must have same length as the number of terms";
-        return r;
-    }
-    if (int(X->size()) != this->n) {
-        r.isError = true;
-        r.errMsg = "X of invalid length";
-        return r;
-    }
-    if (i < 0 || i >= this->n) {
-        r.isError = true;
-        r.errMsg = "invalid i";
-        return r;
-    }
-
-    int aIndex = 0;
-    for (int c = 0; c < int(this->coefficients->children.size()); c++) {
-        dfsDaD2xi(i, X, 1, this->coefficients->children[c], 1, &aIndex, target);
-    }
-    return r;
 }
 
 Maybe<Void> Poly::GetCoefficients(std::vector<double>* target) {
@@ -442,6 +421,22 @@ Poly operator+(Poly const& left, Poly const& right) {
     }
     return newP;
 };
+Poly operator-(Poly const& left, Poly const& right) {
+    if (left.isZero) {
+        return right;
+    }
+    if (right.isZero) {
+        return left;
+    }
+    assert(left.n == right.n);
+    assert(left.order == right.order);
+    Poly newP;
+    assert(!newP.Build(left.n, left.order).isError);
+    for (int i = 0; i < int(newP.leafNodes.size()); i++) {
+        newP.leafNodes[i]->a = left.leafNodes[i]->a - right.leafNodes[i]->a;
+    }
+    return newP;
+};
 Poly& Poly::operator+=(const Poly& right) {
     if (right.isZero) {
         return *this;
@@ -462,3 +457,48 @@ Poly operator*(double x, const Poly& p) {
     return p;
 }
 Poly operator*(const Poly& p, double x) { return x * p; }
+
+Poly operator+(double x, const Poly& p) {
+    Poly newP = p;
+    newP.leafNodes[newP.leafNodes.size() - 1]->a += x;
+    return newP;
+}
+Poly operator+(const Poly& p, double x) {
+    Poly newP = p;
+    newP.leafNodes[newP.leafNodes.size() - 1]->a += x;
+    return newP;
+}
+Poly operator-(const Poly& p, double x) {
+    Poly newP = p;
+    newP.leafNodes[newP.leafNodes.size() - 1]->a -= x;
+    return newP;
+}
+Poly operator-(double x, const Poly& p) {
+    Poly newP = p;
+    newP = newP * (-1);
+    newP.leafNodes[newP.leafNodes.size() - 1]->a += x;
+    return newP;
+}
+
+bool Poly::operator==(Poly const& right) {
+    if (right.isZero && this->isZero) {
+        return true;
+    }
+    if (right.isZero && !this->isZero) {
+        return false;
+    }
+    if (!right.isZero && this->isZero) {
+        return false;
+    }
+    if (right.n != this->n || right.order != this->order) {
+        return false;
+    }
+    for (int i = 0; i < int(this->leafNodes.size()); i++) {
+        if (this->leafNodes[i]->a != right.leafNodes[i]->a) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool Poly::operator!=(Poly const& right) { return !((*this) == right); }
