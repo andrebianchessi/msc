@@ -157,13 +157,10 @@ class Poly {
     Maybe<Void> SetCoefficients(std::vector<double>* coefficients);
 
     friend Poly operator+(Poly const& left, Poly const& right);
-    friend Poly operator-(Poly const& left, Poly const& right);
     friend Poly operator*(double x, const Poly& p);
     friend Poly operator*(const Poly& p, double x);
     friend Poly operator+(double x, const Poly& p);
     friend Poly operator+(const Poly& p, double x);
-    friend Poly operator-(double x, const Poly& p);
-    friend Poly operator-(const Poly& p, double x);
     Poly& operator+=(const Poly& right);
     bool operator==(Poly const& right);
     bool operator!=(Poly const& right);

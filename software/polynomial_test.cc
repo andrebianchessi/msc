@@ -430,16 +430,6 @@ TEST_F(PolyTest, PlusOperatorTest) {
     ASSERT_DOUBLE_EQ(coefs[3], 44);
     ASSERT_DOUBLE_EQ(coefs[4], 55);
     ASSERT_DOUBLE_EQ(coefs[5], 66 + 99);
-
-    pSum = 3 - pSum - 7;
-    coefs = std::vector<double>(6);
-    ASSERT_FALSE(pSum.GetCoefficients(&coefs).isError);
-    ASSERT_DOUBLE_EQ(coefs[0], -11);
-    ASSERT_DOUBLE_EQ(coefs[1], -22);
-    ASSERT_DOUBLE_EQ(coefs[2], -33);
-    ASSERT_DOUBLE_EQ(coefs[3], -44);
-    ASSERT_DOUBLE_EQ(coefs[4], -55);
-    ASSERT_DOUBLE_EQ(coefs[5], 3 + (-66 - 99) - 7);
 }
 
 TEST_F(PolyTest, EqualityOperatorTest) {
@@ -476,30 +466,6 @@ TEST_F(PolyTest, EqualityOperatorTest) {
     ASSERT_TRUE(p3 != p4);
 }
 
-TEST_F(PolyTest, MinusOperatorTest) {
-    Poly p0;
-    p0.Build(2, 2);
-    auto coefsToSet = std::vector<double>{1, 2, 3, 4, 5, 6};
-    ASSERT_FALSE(p0.SetCoefficients(&coefsToSet).isError);
-
-    Poly p1;
-    p1.Build(2, 2);
-    coefsToSet = std::vector<double>{10, -20, 30, 40, -50, 60};
-    ASSERT_FALSE(p1.SetCoefficients(&coefsToSet).isError);
-
-    Poly pSum;
-    pSum = p0 - p1;
-
-    auto coefs = std::vector<double>(6);
-    ASSERT_FALSE(pSum.GetCoefficients(&coefs).isError);
-    ASSERT_DOUBLE_EQ(coefs[0], 1 - 10);
-    ASSERT_DOUBLE_EQ(coefs[1], 2 + 20);
-    ASSERT_DOUBLE_EQ(coefs[2], 3 - 30);
-    ASSERT_DOUBLE_EQ(coefs[3], 4 - 40);
-    ASSERT_DOUBLE_EQ(coefs[4], 5 + 50);
-    ASSERT_DOUBLE_EQ(coefs[5], 6 - 60);
-}
-
 TEST_F(PolyTest, MultiplicationOperatorTest) {
     auto coefs = std::vector<double>(6);
 
@@ -522,6 +488,52 @@ TEST_F(PolyTest, MultiplicationOperatorTest) {
     ASSERT_DOUBLE_EQ(coefs[3], 4 * 7 * 9);
     ASSERT_DOUBLE_EQ(coefs[4], 5 * 7 * 9);
     ASSERT_DOUBLE_EQ(coefs[5], 6 * 7 * 9);
+
+    p = -2 * p;
+    r = p.GetCoefficients(&coefs);
+    ASSERT_FALSE(r.isError);
+    ASSERT_DOUBLE_EQ(coefs[0], 1 * 7 * 9 * -2);
+    ASSERT_DOUBLE_EQ(coefs[1], 2 * 7 * 9 * -2);
+    ASSERT_DOUBLE_EQ(coefs[2], 3 * 7 * 9 * -2);
+    ASSERT_DOUBLE_EQ(coefs[3], 4 * 7 * 9 * -2);
+    ASSERT_DOUBLE_EQ(coefs[4], 5 * 7 * 9 * -2);
+    ASSERT_DOUBLE_EQ(coefs[5], 6 * 7 * 9 * -2);
+
+    p = p * (-3);
+    r = p.GetCoefficients(&coefs);
+    ASSERT_FALSE(r.isError);
+    ASSERT_DOUBLE_EQ(coefs[0], 1 * 7 * 9 * -2 * -3);
+    ASSERT_DOUBLE_EQ(coefs[1], 2 * 7 * 9 * -2 * -3);
+    ASSERT_DOUBLE_EQ(coefs[2], 3 * 7 * 9 * -2 * -3);
+    ASSERT_DOUBLE_EQ(coefs[3], 4 * 7 * 9 * -2 * -3);
+    ASSERT_DOUBLE_EQ(coefs[4], 5 * 7 * 9 * -2 * -3);
+    ASSERT_DOUBLE_EQ(coefs[5], 6 * 7 * 9 * -2 * -3);
+}
+
+TEST_F(PolyTest, PlusAndMultiplicationTest) {
+    auto coefs = std::vector<double>(4);
+
+    Poly p0;
+    p0.Build(3, 1);
+    coefs = {1, 2, 3, 4};
+    ASSERT_FALSE(p0.SetCoefficients(&coefs).isError);
+    // p0 = x + 2y + 3x + 4
+
+    Poly p1;
+    p1.Build(3, 1);
+    coefs = {5, 6, 7, 8};
+    ASSERT_FALSE(p1.SetCoefficients(&coefs).isError);
+    // p0 = 5x + 6y + 7z + 8
+
+    Poly p2;
+    p2 = 2 * p0 + (-3) * p1;
+    // p2 = 2*(x + 2y + 3x + 4) -3*(5x + 6y + 7z + 8)
+    // p2 = -10x - 11y - 12
+    p2.GetCoefficients(&coefs);
+    ASSERT_DOUBLE_EQ(coefs[0], 2 - 3 * 5);
+    ASSERT_DOUBLE_EQ(coefs[1], 2 * 2 - 3 * 6);
+    ASSERT_DOUBLE_EQ(coefs[2], 2 * 3 - 3 * 7);
+    ASSERT_DOUBLE_EQ(coefs[3], 2 * 4 - 3 * 8);
 }
 
 TEST_F(PolyTest, MatrixMultiplicationTest) {
@@ -540,38 +552,43 @@ TEST_F(PolyTest, MatrixMultiplicationTest) {
 
     using namespace boost::numeric::ublas;
 
-    double k = 0.0;
+    double k = 1.0;
     matrix<double> K(2, 2);
     K(0, 0) = -k;
     K(0, 1) = k;
-    K(1, 0) = -k;
-    K(1, 1) = k;
+    K(1, 0) = k;
+    K(1, 1) = -k;
 
     matrix<Poly> X(2, 1);
     X(0, 0) = p0;
     X(1, 0) = p1;
 
-    matrix<Poly> mult(2, 1);
-    mult = prod(K, X);
+    // matrix<Poly> mult(2, 1);
+    auto mult = prod<matrix<Poly>, matrix<double>, matrix<Poly>>(K, X);
 
     // p0 = 1x^2 + 2xy + 3x + 4y^2 + 5y + 6
     // p1 = 7x^2 + 8xy + 9x + 10y^2 + 11y + 12
-
     //|-k k|*|p0| = |-k*p0 + k*p1|
     //|k -k| |p1|   |k*p0 - k*p1|
+    ASSERT_EQ(mult(0, 0).n, 2);
+    ASSERT_EQ(mult(0, 0).order, 2);
+    ASSERT_EQ(mult(1, 0).n, 2);
+    ASSERT_EQ(mult(1, 0).order, 2);
+
+    ASSERT_TRUE(mult(0, 0) == (-k) * p0 + k * p1);
+    ASSERT_TRUE(mult(1, 0) == k * p0 + (-k) * p1);
+
     double x = 17;
     double y = 23;
     double p0Val = 1 * x * x + 2 * x * y + 3 * x + 4 * y * y + 5 * y + 6;
     double p1Val = 7 * x * x + 8 * x * y + 9 * x + 10 * y * y + 11 * y + 12;
-
-    ASSERT_EQ(mult(0, 0).n, 2);
-    ASSERT_EQ(mult(0, 0).order, 2);
-
-    ASSERT_EQ(mult(1, 0).n, 2);
-    ASSERT_EQ(mult(1, 0).order, 2);
-
     std::vector<double> xy = {x, y};
+
     auto eval = mult(0, 0)(&xy);
     ASSERT_FALSE(eval.isError);
     ASSERT_DOUBLE_EQ(eval.val, -k * p0Val + k * p1Val);
+
+    eval = mult(1, 0)(&xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, k * p0Val - k * p1Val);
 }

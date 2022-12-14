@@ -421,22 +421,6 @@ Poly operator+(Poly const& left, Poly const& right) {
     }
     return newP;
 };
-Poly operator-(Poly const& left, Poly const& right) {
-    if (left.isZero) {
-        return right;
-    }
-    if (right.isZero) {
-        return left;
-    }
-    assert(left.n == right.n);
-    assert(left.order == right.order);
-    Poly newP;
-    assert(!newP.Build(left.n, left.order).isError);
-    for (int i = 0; i < int(newP.leafNodes.size()); i++) {
-        newP.leafNodes[i]->a = left.leafNodes[i]->a - right.leafNodes[i]->a;
-    }
-    return newP;
-};
 Poly& Poly::operator+=(const Poly& right) {
     if (right.isZero) {
         return *this;
@@ -451,10 +435,11 @@ Poly& Poly::operator+=(const Poly& right) {
     return *this;
 }
 Poly operator*(double x, const Poly& p) {
-    for (int i = 0; i < int(p.leafNodes.size()); i++) {
-        p.leafNodes[i]->a *= x;
+    Poly newP = p;
+    for (int i = 0; i < int(newP.leafNodes.size()); i++) {
+        newP.leafNodes[i]->a *= x;
     }
-    return p;
+    return newP;
 }
 Poly operator*(const Poly& p, double x) { return x * p; }
 
@@ -465,17 +450,6 @@ Poly operator+(double x, const Poly& p) {
 }
 Poly operator+(const Poly& p, double x) {
     Poly newP = p;
-    newP.leafNodes[newP.leafNodes.size() - 1]->a += x;
-    return newP;
-}
-Poly operator-(const Poly& p, double x) {
-    Poly newP = p;
-    newP.leafNodes[newP.leafNodes.size() - 1]->a -= x;
-    return newP;
-}
-Poly operator-(double x, const Poly& p) {
-    Poly newP = p;
-    newP = newP * (-1);
     newP.leafNodes[newP.leafNodes.size() - 1]->a += x;
     return newP;
 }

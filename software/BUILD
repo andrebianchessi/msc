@@ -346,6 +346,7 @@ cc_library(
     ":polynomial",
     ":problem_description",
     "@com_google_googletest//:gtest_main",
+    "@boost//:numeric_ublas",
   ]
 )
 

@@ -38,13 +38,20 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, ConstructorTest);
     FRIEND_TEST(PimodelTest, GetParametersTest);
     FRIEND_TEST(PimodelTest, SetParametersTest);
+    FRIEND_TEST(PimodelTest, getAccelsFromDiffEqTest);
+    FRIEND_TEST(PimodelTest, InitialConditionsLossTest);
+    FRIEND_TEST(PimodelTest, PhysicsLossTest);
     FRIEND_TEST(PimodelTest, LossTest);
-    FRIEND_TEST(PimodelTest, LossTest2);
     FRIEND_TEST(PimodelTest, LossGradientTest);
     FRIEND_TEST(PimodelTest, LossGradientTest2);
 
     ProblemDescription* p;
-    std::vector<Poly> polys;
+
+    // column matrix that contains the polynomials that represent the
+    // displacement of each mass. Ex: polys[0] = Polynomial that represents the
+    // displacement (x) of mass 0, as a function of time and the values of the
+    // springs and the masses
+    boost::numeric::ublas::matrix<Poly> polys;
 
     // This model describes the system from t = 0 to t = finalT
     double finalT;
@@ -80,21 +87,36 @@ class Pimodel : public Model {
                                 std::vector<double>* grad);
 
     // Auxiliary functions:
+
     // Create problem for given tkc (time, springs and dampers)
-    Problem problemFromTkc(Pimodel* model, std::vector<double>* tkc);
-    // Calculate the state vector given the time instant and the
-    // values of the springs and dampers
-    boost::numeric::ublas::vector<double> getXModel(Pimodel* model,
-                                                    std::vector<double>* tkc,
-                                                    Problem* problem);
-    // Calculate accelerations with the equations from the discrete
-    // element method differential equation
-    std::vector<double> getXDotDotFromDiffEq(
-        Problem* problem, boost::numeric::ublas::vector<double> X, double t);
-    // Calculate accelerations by taking second time derivative of
-    // the polynomials that model the displacement of each mass
-    std::vector<double> getXModelDotDot(Pimodel* model,
-                                        std::vector<double>* tkc);
+    Problem problemFromTkc(std::vector<double>* tkc);
+
     // Return the state vector with the initial conditions set
-    std::vector<double> getInitialX(Problem* problem);
+    std::vector<double> getInitialX();
+
+    // Calculate the state vector for given tkc (time, springs and dampers)
+    // using the polynomials
+    std::vector<double> getXModel(std::vector<double>* tkc);
+
+    // Get polynomials that model the accelerations by  taking second time
+    // derivative of the polynomials
+    std::vector<Poly> getAccelsFromModel();
+
+    // Gets the polynomials that represent the acceleration of each mass
+    // by using the differential equation from the discrete element method
+    boost::numeric::ublas::matrix<Poly> getAccelsFromDiffEq(Problem* problem);
 };
+
+// Sets the gradient of each polynomial at target, one after the other
+// Ex:
+// p0 = 1*x + 2*1
+// p1 = 3*x + 4*1
+// polys = [p0, p1]
+// grad(p0) = [x, 2]
+// grad(p1) = [x, 4]
+// for X = [9.0] -> target = [9.0, 2, 9.0, 4]
+Maybe<Void> Da(std::vector<Poly>* polys, std::vector<double>* X,
+               std::vector<double>* target);
+// Same as the above, but input is column matrix
+Maybe<Void> Da(boost::numeric::ublas::matrix<Poly>* polys,
+               std::vector<double>* X, std::vector<double>* target);
