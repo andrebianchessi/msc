@@ -307,88 +307,88 @@ double Pimodel::Loss() {
     return loss;
 }
 
-Maybe<Void> Da(std::vector<Poly>* polys, std::vector<double>* X,
-               std::vector<double>* target) {
-    Maybe<Void> r;
-    for (int i = 0; i < int(polys->size()) - 1; i++) {
-        if ((*polys)[i].n != (*polys)[i + 1].n) {
-            r.isError = true;
-            r.errMsg = "all polynomials must have the same number of inputs";
-            return r;
-        }
-    }
-    if (int(X->size()) != (*polys)[0].n) {
-        r.isError = true;
-        r.errMsg = "X of invalid length";
-        return r;
-    }
-    int nTermsTotal = 0;
-    for (int i = 0; i < int(polys->size()); i++) {
-        nTermsTotal += (*polys)[i].nTerms;
-    }
-    if (int(target->size()) != nTermsTotal) {
-        r.isError = true;
-        r.errMsg = "target must have same length as the number of terms";
-        return r;
-    }
+// Maybe<Void> Da(std::vector<Poly>* polys, std::vector<double>* X,
+//                std::vector<double>* target) {
+//     Maybe<Void> r;
+//     for (int i = 0; i < int(polys->size()) - 1; i++) {
+//         if ((*polys)[i].n != (*polys)[i + 1].n) {
+//             r.isError = true;
+//             r.errMsg = "all polynomials must have the same number of inputs";
+//             return r;
+//         }
+//     }
+//     if (int(X->size()) != (*polys)[0].n) {
+//         r.isError = true;
+//         r.errMsg = "X of invalid length";
+//         return r;
+//     }
+//     int nTermsTotal = 0;
+//     for (int i = 0; i < int(polys->size()); i++) {
+//         nTermsTotal += (*polys)[i].nTerms;
+//     }
+//     if (int(target->size()) != nTermsTotal) {
+//         r.isError = true;
+//         r.errMsg = "target must have same length as the number of terms";
+//         return r;
+//     }
 
-    int gradIndex = 0;
+//     int gradIndex = 0;
 
-    std::vector<double> piGrad;
-    for (int pi = 0; pi < int((*polys).size()); pi++) {
-        piGrad = std::vector<double>((*polys)[pi].nTerms);
-        (*polys)[pi].Da(X, &piGrad);
-        for (int i = 0; i < int(piGrad.size()); i++) {
-            target->at(gradIndex) = piGrad[i];
-            gradIndex += 1;
-        }
-    }
-    return r;
-}
+//     std::vector<double> piGrad;
+//     for (int pi = 0; pi < int((*polys).size()); pi++) {
+//         piGrad = std::vector<double>((*polys)[pi].nTerms);
+//         (*polys)[pi].Da(X, &piGrad);
+//         for (int i = 0; i < int(piGrad.size()); i++) {
+//             target->at(gradIndex) += piGrad[i];
+//             gradIndex += 1;
+//         }
+//     }
+//     return r;
+// }
 
-Maybe<Void> Da(boost::numeric::ublas::matrix<Poly>* polys,
-               std::vector<double>* X, std::vector<double>* target) {
-    Maybe<Void> r;
-    if ((*polys).size2() != 1) {
-        r.isError = true;
-        r.errMsg = "(*polys) must be column matrix";
-        return r;
-    }
-    for (int i = 0; i < int((*polys).size1()) - 1; i++) {
-        if ((*polys)(i, 0).n != (*polys)(i + 1, 0).n) {
-            r.isError = true;
-            r.errMsg = "all polynomials must have the same number of inputs";
-            return r;
-        }
-    }
-    if (int(X->size()) != (*polys)(0, 0).n) {
-        r.isError = true;
-        r.errMsg = "X of invalid length";
-        return r;
-    }
-    int nTermsTotal = 0;
-    for (int i = 0; i < int((*polys).size1()); i++) {
-        nTermsTotal += (*polys)(i, 0).nTerms;
-    }
-    if (int(target->size()) != nTermsTotal) {
-        r.isError = true;
-        r.errMsg = "target must have same length as the number of terms";
-        return r;
-    }
+// Maybe<Void> Da(boost::numeric::ublas::matrix<Poly>* polys,
+//                std::vector<double>* X, std::vector<double>* target) {
+//     Maybe<Void> r;
+//     if ((*polys).size2() != 1) {
+//         r.isError = true;
+//         r.errMsg = "(*polys) must be column matrix";
+//         return r;
+//     }
+//     for (int i = 0; i < int((*polys).size1()) - 1; i++) {
+//         if ((*polys)(i, 0).n != (*polys)(i + 1, 0).n) {
+//             r.isError = true;
+//             r.errMsg = "all polynomials must have the same number of inputs";
+//             return r;
+//         }
+//     }
+//     if (int(X->size()) != (*polys)(0, 0).n) {
+//         r.isError = true;
+//         r.errMsg = "X of invalid length";
+//         return r;
+//     }
+//     int nTermsTotal = 0;
+//     for (int i = 0; i < int((*polys).size1()); i++) {
+//         nTermsTotal += (*polys)(i, 0).nTerms;
+//     }
+//     if (int(target->size()) != nTermsTotal) {
+//         r.isError = true;
+//         r.errMsg = "target must have same length as the number of terms";
+//         return r;
+//     }
 
-    int gradIndex = 0;
+//     int gradIndex = 0;
 
-    std::vector<double> piGrad;
-    for (int pi = 0; pi < int((*polys).size1()); pi++) {
-        piGrad = std::vector<double>((*polys)(pi, 0).nTerms);
-        (*polys)(pi, 0).Da(X, &piGrad);
-        for (int i = 0; i < int(piGrad.size()); i++) {
-            target->at(gradIndex) = piGrad[i];
-            gradIndex += 1;
-        }
-    }
-    return r;
-}
+//     std::vector<double> piGrad;
+//     for (int pi = 0; pi < int((*polys).size1()); pi++) {
+//         piGrad = std::vector<double>((*polys)(pi, 0).nTerms);
+//         (*polys)(pi, 0).Da(X, &piGrad);
+//         for (int i = 0; i < int(piGrad.size()); i++) {
+//             target->at(gradIndex) += piGrad[i];
+//             gradIndex += 1;
+//         }
+//     }
+//     return r;
+// }
 
 void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
                                                int tkcIndex,
@@ -403,21 +403,39 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
         int nMasses = p->masses.size();
 
         // Set the gradient
-        std::vector<Poly> losses;
-        losses.reserve(nMasses);
+        double residue;
+        int gradIndex = 0;
         for (int m = 0; m < nMasses; m++) {
-            losses.push_back(
-                2 *
-                    (XModel[Problem::GetMassDispIndex(nMasses, m)] -
-                     initialX[Problem::GetMassDispIndex(nMasses, m)]) *
-                    this->polys(m, 0) +
-                2 *
-                    (XModel[Problem::GetMassVelIndex(nMasses, m)] -
-                     initialX[Problem::GetMassVelIndex(nMasses, m)]) *
-                    this->polys(m, 0));
+            residue = (XModel[Problem::GetMassDispIndex(nMasses, m)] -
+                       initialX[Problem::GetMassDispIndex(nMasses, m)]);
+
+            std::vector<double> piGrad =
+                std::vector<double>(this->polys(m, 0).nTerms);
+            this->polys(m, 0).Da(tkc, &piGrad);
+
+            for (int i = 0; i < int(piGrad.size()); i++) {
+                grad->at(gradIndex) += 2 * residue * piGrad[i];
+                gradIndex += 1;
+            }
+        }
+        Poly pVel;
+        gradIndex = 0;
+        for (int m = 0; m < nMasses; m++) {
+            residue = (XModel[Problem::GetMassVelIndex(nMasses, m)] -
+                       initialX[Problem::GetMassVelIndex(nMasses, m)]);
+
+            std::vector<double> piGrad =
+                std::vector<double>(this->polys(m, 0).nTerms);
+            pVel = this->polys(m, 0);
+            assert(!pVel.Dxi(0).isError);
+            pVel.Da(tkc, &piGrad);
+
+            for (int i = 0; i < int(piGrad.size()); i++) {
+                grad->at(gradIndex) += 2 * residue * piGrad[i];
+                gradIndex += 1;
+            }
         }
 
-        assert(!Da(&losses, tkc, grad).isError);
         return;
     }
 
@@ -468,7 +486,7 @@ void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
             for (int i = 0; i < int(accels_from_model_m_grad.size()); i++) {
                 grad->at(gradIndex) +=
                     2 * (residueEval.val) * accels_from_model_m_grad[i];
-                grad->at(gradIndex) +=
+                grad->at(gradIndex) -=
                     2 * (residueEval.val) * accels_from_diff_eq_m_grad[i];
                 gradIndex += 1;
             }

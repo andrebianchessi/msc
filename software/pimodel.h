@@ -43,8 +43,8 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, PhysicsLossTest);
     FRIEND_TEST(PimodelTest, LossTest);
     FRIEND_TEST(PimodelTest, LossTest2);
-    FRIEND_TEST(PimodelTest, LossGradientTest);
-    FRIEND_TEST(PimodelTest, LossGradientTest2);
+    FRIEND_TEST(PimodelTest, InitialConditionsLossGradientTest);
+    FRIEND_TEST(PimodelTest, PhysicsLossGradientTest);
 
     ProblemDescription* p;
 
@@ -107,17 +107,3 @@ class Pimodel : public Model {
     // by using the differential equation from the discrete element method
     boost::numeric::ublas::matrix<Poly> getAccelsFromDiffEq(Problem* problem);
 };
-
-// Sets the gradient of each polynomial at target, one after the other
-// Ex:
-// p0 = 1*x + 2*1
-// p1 = 3*x + 4*1
-// polys = [p0, p1]
-// grad(p0) = [x, 2]
-// grad(p1) = [x, 4]
-// for X = [9.0] -> target = [9.0, 2, 9.0, 4]
-Maybe<Void> Da(std::vector<Poly>* polys, std::vector<double>* X,
-               std::vector<double>* target);
-// Same as the above, but input is column matrix
-Maybe<Void> Da(boost::numeric::ublas::matrix<Poly>* polys,
-               std::vector<double>* X, std::vector<double>* target);
