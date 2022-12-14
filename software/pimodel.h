@@ -42,6 +42,7 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, InitialConditionsLossTest);
     FRIEND_TEST(PimodelTest, PhysicsLossTest);
     FRIEND_TEST(PimodelTest, LossTest);
+    FRIEND_TEST(PimodelTest, LossTest2);
     FRIEND_TEST(PimodelTest, LossGradientTest);
     FRIEND_TEST(PimodelTest, LossGradientTest2);
 

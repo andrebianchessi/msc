@@ -404,48 +404,20 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
 
         // Set the gradient
         std::vector<Poly> losses;
-        losses.reserve(nMasses * 2);
+        losses.reserve(nMasses);
         for (int m = 0; m < nMasses; m++) {
-            losses[m] = 2 *
-                        (XModel[Problem::GetMassDispIndex(nMasses, m)] -
-                         initialX[Problem::GetMassDispIndex(nMasses, m)]) *
-                        this->polys(m, 0);
-        }
-        for (int m = 0; m < nMasses; m++) {
-            losses[m] = 2 *
-                        (XModel[Problem::GetMassVelIndex(nMasses, m)] -
-                         initialX[Problem::GetMassVelIndex(nMasses, m)]) *
-                        this->polys(m, 0);
+            losses.push_back(
+                2 *
+                    (XModel[Problem::GetMassDispIndex(nMasses, m)] -
+                     initialX[Problem::GetMassDispIndex(nMasses, m)]) *
+                    this->polys(m, 0) +
+                2 *
+                    (XModel[Problem::GetMassVelIndex(nMasses, m)] -
+                     initialX[Problem::GetMassVelIndex(nMasses, m)]) *
+                    this->polys(m, 0));
         }
 
         assert(!Da(&losses, tkc, grad).isError);
-
-        // std::vector<double> XmModelGrad =
-        //     std::vector<double>(this->polys(0, 0).nTerms);
-        // // Initial displacement error
-        // int gradIndex = 0;
-        // for (int m = 0; m < nMasses; m++) {
-        //     initialXm = initialX[Problem::GetMassDispIndex(nMasses, m)];
-        //     XmModel = XModel[Problem::GetMassDispIndex(nMasses, m)];
-        //     this->polys(m, 0).Da(tkc, &XmModelGrad);
-        //     for (int i = 0; i < int(XmModelGrad.size()); i++) {
-        //         grad->at(gradIndex) +=
-        //             2 * (XmModel - initialXm) * XmModelGrad[i];
-        //         gradIndex += 1;
-        //     }
-        // }
-        // // Initial vel error
-        // gradIndex = 0;
-        // for (int m = 0; m < nMasses; m++) {
-        //     initialXm = initialX[Problem::GetMassVelIndex(nMasses, m)];
-        //     XmModel = XModel[Problem::GetMassVelIndex(nMasses, m)];
-        //     this->polys(m, 0).Da(tkc, &XmModelGrad);
-        //     for (int i = 0; i < int(XmModelGrad.size()); i++) {
-        //         grad->at(gradIndex) +=
-        //             2 * (XmModel - initialXm) * XmModelGrad[i];
-        //         gradIndex += 1;
-        //     }
-        // }
         return;
     }
 
