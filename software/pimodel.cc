@@ -469,10 +469,7 @@ void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
 
         int nMasses = problem.masses.size();
 
-        auto accels_from_model_m_grad =
-            std::vector<double>(this->polys(0, 0).nTerms);
-        auto accels_from_diff_eq_m_grad =
-            std::vector<double>(this->polys(0, 0).nTerms);
+        auto residueGrad = std::vector<double>(this->polys(0, 0).nTerms);
         Poly residue;
         Maybe<double> residueEval;
         int gradIndex = 0;
@@ -481,13 +478,9 @@ void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
             residueEval = residue(tkc);
             assert(!residueEval.isError);
 
-            AccelsFromModel[m].Da(tkc, &accels_from_model_m_grad);
-            AccelsFromDiffEq(m, 0).Da(tkc, &accels_from_diff_eq_m_grad);
-            for (int i = 0; i < int(accels_from_model_m_grad.size()); i++) {
-                grad->at(gradIndex) +=
-                    2 * (residueEval.val) * accels_from_model_m_grad[i];
-                grad->at(gradIndex) -=
-                    2 * (residueEval.val) * accels_from_diff_eq_m_grad[i];
+            residue.Da(tkc, &residueGrad);
+            for (int i = 0; i < int(residueGrad.size()); i++) {
+                grad->at(gradIndex) += 2 * (residueEval.val) * residueGrad[i];
                 gradIndex += 1;
             }
         }
@@ -511,8 +504,8 @@ void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
         }
         discretization = this->kcDiscretization;
     }
-    for (int i = 0; i <= this->kcDiscretization; i++) {
-        tkc->at(tkcIndex) = min + (max - min) / this->kcDiscretization * i;
+    for (int i = 0; i <= discretization; i++) {
+        tkc->at(tkcIndex) = min + (max - min) / discretization * i;
         this->PhysicsLossGradientDfs(tkc, tkcIndex + 1, grad);
     }
 }
