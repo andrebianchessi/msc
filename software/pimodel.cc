@@ -64,7 +64,7 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
 }
 
 int Pimodel::nParameters() {
-    return this->polys(0, 0).nTerms * this->p->NumberOfMasses();
+    return this->polys(0, 0).nMonomials() * this->p->NumberOfMasses();
 }
 
 Maybe<Void> Pimodel::GetParameters(std::vector<double>* target) {
@@ -75,7 +75,7 @@ Maybe<Void> Pimodel::GetParameters(std::vector<double>* target) {
         return r;
     }
 
-    int nTerms = this->polys(0, 0).nTerms;
+    int nTerms = this->polys(0, 0).nMonomials();
     std::vector<double> coefs = std::vector<double>(nTerms);
     int targetI = 0;
     for (int pIndex = 0; pIndex < this->p->NumberOfMasses(); pIndex++) {
@@ -99,7 +99,7 @@ Maybe<Void> Pimodel::SetParameters(std::vector<double>* parameters) {
         return r;
     }
 
-    int nTerms = this->polys(0, 0).nTerms;
+    int nTerms = this->polys(0, 0).nMonomials();
     std::vector<double> coefs = std::vector<double>(nTerms);
     int parametersI = 0;
     for (int pIndex = 0; pIndex < this->p->NumberOfMasses(); pIndex++) {
@@ -324,7 +324,7 @@ double Pimodel::Loss() {
 //     }
 //     int nTermsTotal = 0;
 //     for (int i = 0; i < int(polys->size()); i++) {
-//         nTermsTotal += (*polys)[i].nTerms;
+//         nTermsTotal += (*polys)[i].nMonomials();
 //     }
 //     if (int(target->size()) != nTermsTotal) {
 //         r.isError = true;
@@ -336,7 +336,7 @@ double Pimodel::Loss() {
 
 //     std::vector<double> piGrad;
 //     for (int pi = 0; pi < int((*polys).size()); pi++) {
-//         piGrad = std::vector<double>((*polys)[pi].nTerms);
+//         piGrad = std::vector<double>((*polys)[pi].nMonomials());
 //         (*polys)[pi].Da(X, &piGrad);
 //         for (int i = 0; i < int(piGrad.size()); i++) {
 //             target->at(gradIndex) += piGrad[i];
@@ -368,7 +368,7 @@ double Pimodel::Loss() {
 //     }
 //     int nTermsTotal = 0;
 //     for (int i = 0; i < int((*polys).size1()); i++) {
-//         nTermsTotal += (*polys)(i, 0).nTerms;
+//         nTermsTotal += (*polys)(i, 0).nMonomials();
 //     }
 //     if (int(target->size()) != nTermsTotal) {
 //         r.isError = true;
@@ -380,7 +380,7 @@ double Pimodel::Loss() {
 
 //     std::vector<double> piGrad;
 //     for (int pi = 0; pi < int((*polys).size1()); pi++) {
-//         piGrad = std::vector<double>((*polys)(pi, 0).nTerms);
+//         piGrad = std::vector<double>((*polys)(pi, 0).nMonomials());
 //         (*polys)(pi, 0).Da(X, &piGrad);
 //         for (int i = 0; i < int(piGrad.size()); i++) {
 //             target->at(gradIndex) += piGrad[i];
@@ -410,7 +410,7 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
                        initialX[Problem::GetMassDispIndex(nMasses, m)]);
 
             std::vector<double> piGrad =
-                std::vector<double>(this->polys(m, 0).nTerms);
+                std::vector<double>(this->polys(m, 0).nMonomials());
             this->polys(m, 0).Da(tkc, &piGrad);
 
             for (int i = 0; i < int(piGrad.size()); i++) {
@@ -425,7 +425,7 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
                        initialX[Problem::GetMassVelIndex(nMasses, m)]);
 
             std::vector<double> piGrad =
-                std::vector<double>(this->polys(m, 0).nTerms);
+                std::vector<double>(this->polys(m, 0).nMonomials());
             pVel = this->polys(m, 0);
             assert(!pVel.Dxi(0).isError);
             pVel.Da(tkc, &piGrad);
@@ -469,7 +469,7 @@ void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
 
         int nMasses = problem.masses.size();
 
-        auto residueGrad = std::vector<double>(this->polys(0, 0).nTerms);
+        auto residueGrad = std::vector<double>(this->polys(0, 0).nMonomials());
         Poly residue;
         Maybe<double> residueEval;
         int gradIndex = 0;

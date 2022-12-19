@@ -4,7 +4,7 @@
       {
         "label": "Build debug",
         "type": "shell",
-        "command": "bazel build //:all -c dbg",
+        "command": "bazel build //:${fileBasenameNoExtension} -c dbg",
         "group": {
           "kind": "build",
           "isDefault": true

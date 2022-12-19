@@ -9,71 +9,17 @@
 
 #include "maybe.h"
 
-class Node {
-    friend class Poly;
-    /*     Node of tree used to represent coefficients of multivariate
-       polynomial The height of each node represents which variable this node
-       refers to.
-
-        Ex:
-        root
-        |   \
-        N    N -> these nodes represent powers of the first variable
-        |\   |\
-        N N  N N -> these nodes represent powers of the second variable
-
-        The terms are obtained by traversing the tree
-        Ex the representation of P = 1*x^2 + 2*x*y + 3*x + 4*y^2 + 5*y + 6:
-            root
-        /     |     \
-        N0   N1      N2
-        |    |  \   | \  \
-        N3   N4  N5 N6 N7 N8
-
-        N0.exp = 2
-        N3.exp = 0, N3.a = 1
-
-        N1.exp = 1
-        N4.exp = 1, N4.a = 2
-        N5.exp = 0, N5.a = 3
-
-        N2.exp = 0
-        N6.exp = 2, N6.a = 4
-        N7.exp = 1, N7.a = 5
-        N8.exp = 0, N8.a = 6
-
-        x^2: root.children[0].children[0]
-        xy: root.children[1].children[0]
-        x: root.children[1].children[1]
-        y^2: root.children[2].children[0]
-        y: root.children[2].children[1]
-        1: root.children[2].children[2] */
-
+class Monomial {
+    // Represents k*(a*x0^e0*x1^e1*)...
+    // Note: k is the scalar that changes when we multiply this monomial by a
+    // scalar
    public:
-    int exp;            // exponent of this node
-    int parentsExpSum;  // sum of the exps of parents
+    // [e0, e1, ...]
+    std::vector<int> exponents;
+    double a;
+    double k;
 
-    double a;  // coefficient of this monomial; only present at leaf node
-
-    // child nodes
-    // has constant size after Node construction
-    std::vector<std::shared_ptr<Node>> children;
-
-    // Empty constructor
-    Node(){};
-
-    // Root node constructor
-    Node(int nChildren);
-
-    // Non-leaf node constructor
-    Node(int exp, int parentsExpSum, int nChildren);
-
-    bool IsLeaf() { return this->children.size() == 0; }
-
-   private:
-    FRIEND_TEST(NodeTest, AddChildTest);
-    int childrenI;  // index of first non empty index at children vector
-    std::shared_ptr<Node> AddChild(int exp, int parentsExpSum, int nChildren);
+    Monomial(double a, std::vector<int> exponents);
 };
 
 class Poly {
@@ -103,19 +49,12 @@ class Poly {
     // P = x^2 + xy + x + y^2 + y + 1 -> order = 2
     // P = x + y + z + 1 -> oder = 1
     int order;
-    int nTerms;  // number of terms the polynomial has
+    int nMonomials();  // number of monomials the polynomial has
 
-    // Default constructor
-    // Initializes as a zero polynomial
+    // Constructor
     Poly();
-    // Same as default constructor
-    // Exists for compatibility reasons only
+    // Same as empty constructor, only exists for compatibility reasons
     Poly(int);
-
-    // Copy constructor
-    Poly(const Poly&);
-    // Assignment
-    Poly& operator=(const Poly&);
 
     // Build method to be called after the constructor
     // Arguments are the number of variables, the order of the polynomial
@@ -156,6 +95,9 @@ class Poly {
     // P = 5x^2 + 6xy + 7x + 8y^2 + 9y + 10*1
     Maybe<Void> SetCoefficients(std::vector<double>* coefficients);
 
+    friend void buildDfs(std::vector<int>* exponents, int exponentsSum,
+                         Poly& p);
+
     friend Poly operator+(Poly const& left, Poly const& right);
     friend Poly operator*(double x, const Poly& p);
     friend Poly operator*(const Poly& p, double x);
@@ -166,24 +108,24 @@ class Poly {
     bool operator!=(Poly const& right);
 
    private:
+    // Auxiliary function used in Build method.
+    void buildDfs(std::vector<int>& exponents, int exponentsSum,
+                  int indexAtExponents, double coefficientToSet);
+
     friend class PolyTest;
     FRIEND_TEST(PolyConstructorTest, constructorTest);
-    FRIEND_TEST(PolyTest, dfsTest);
+    FRIEND_TEST(PolyTest, copyConstructorAndAssignment);
     FRIEND_TEST(PolyTest, MultiplicationOperatorTest);
-    FRIEND_TEST(PolyTest, MatrixMultiplicationTest);
-    FRIEND_TEST(PolyTest, DxiTest2);
-    std::shared_ptr<Node> coefficients;
+    FRIEND_TEST(PolyTest, PlusAndMultiplicationTest);
 
-    // vector to quickly access the leaf nodes (which contain the coefficients)
-    std::vector<std::shared_ptr<Node>> leafNodes;
-
-    // Boolean that indicates this is a "zero" polynomial
-    // P = 0
+    // Indicates Build method hasn't been called on this entity
     bool isZero;
+
+    std::vector<Monomial> monomials;
 };
 
-double dfs(std::shared_ptr<Node> node, int nodeTreeDepth,
-           std::vector<double>* X);
+// double dfs(std::shared_ptr<Node> node, int nodeTreeDepth,
+//            std::vector<double>* X);
 Poly operator*(double x, const Poly& p);
 Poly operator*(const Poly& p, double x);
 Poly operator+(double x, const Poly& p);
