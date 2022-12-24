@@ -3,21 +3,21 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 # Import googletest
 http_archive(
   name = "com_google_googletest",
-  urls = ["https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip"],
-  strip_prefix = "googletest-609281088cfefc76f9d0ce82e1ff6c30cc3591e5",
+  urls = ["https://github.com/google/googletest/archive/58d77fa8070e8cec2dc1ed015d66b454c8d78850.zip"],
+  strip_prefix = "googletest-58d77fa8070e8cec2dc1ed015d66b454c8d78850",
 )
 
 # Import Boost
 # The following code is extracted from https://github.com/nelhage/rules_boost
 # and is, therefore, Copyright of Nelson Elhage
-_RULES_BOOST_COMMIT = "652b21e35e4eeed5579e696da0facbe8dba52b1f"
 http_archive(
     name = "com_github_nelhage_rules_boost",
-    sha256 = "c1b8b2adc3b4201683cf94dda7eef3fc0f4f4c0ea5caa3ed3feffe07e1fb5b15",
-    strip_prefix = "rules_boost-%s" % _RULES_BOOST_COMMIT,
-    urls = [
-        "https://github.com/nelhage/rules_boost/archive/%s.tar.gz" % _RULES_BOOST_COMMIT,
-    ],
+
+    # Replace the commit hash in both places (below) with the latest, rather than using the stale one here.
+    # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
+    url = "https://github.com/nelhage/rules_boost/archive/f1065639e6f33741abe2a6a78fa79dd1a07bbf5d.tar.gz",
+    strip_prefix = "rules_boost-f1065639e6f33741abe2a6a78fa79dd1a07bbf5d",
+    # When you first run this tool, it'll recommend a sha256 hash to put here with a message like: "DEBUG: Rule 'com_github_nelhage_rules_boost' indicated that a canonical reproducible form can be obtained by modifying arguments sha256 = ..."
 )
 load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
 boost_deps()
