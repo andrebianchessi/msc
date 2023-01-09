@@ -126,6 +126,7 @@ class Polys {
 
     Polys& operator+=(const Poly& right);
     Polys& operator+=(const Polys& right);
+    Polys& operator*=(double k);
 
     Maybe<double> operator()(std::vector<double>& X) const;
     Maybe<Void> Dxi(int i);

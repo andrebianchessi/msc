@@ -196,6 +196,12 @@ Polys& Polys::operator+=(const Polys& right) {
     (*this) = (*this) + right;
     return (*this);
 }
+Polys& Polys::operator*=(double k) {
+    for (int i = 0; i < int(this->k.size()); i++) {
+        this->k[i] *= k;
+    }
+    return (*this);
+}
 
 Maybe<double> Polys::operator()(std::vector<double>& X) const {
     Maybe<double> r;
@@ -278,5 +284,26 @@ Maybe<double> Poly::Da(std::vector<double>& X,
         }
         target->at(i) = maybeDa.val;
     }
+    return r;
+}
+
+Maybe<Void> Polys::Dxi(int i) {
+    Maybe<Void> r;
+    if (this->polys.size() == 0) {
+        return r;
+    }
+    if (i < 0 || i >= this->polys[0].n) {
+        r.isError = true;
+        r.errMsg = "Invalid i";
+        return r;
+    }
+
+    for (int p = 0; p < int(this->polys.size()); p++) {
+        r = this->polys[p].Dxi(i);
+        if (r.isError) {
+            return r;
+        }
+    }
+
     return r;
 }

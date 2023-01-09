@@ -404,6 +404,53 @@ TEST_F(PolyTest, MatrixMultiplicationTest) {
     ASSERT_DOUBLE_EQ(eval.val, k * p0Val - k * p1Val);
 }
 
+TEST_F(PolyTest, DxiPolysTest) {
+    double x = 987;
+    double y = 91;
+    std::vector<double> xy = {x, y};
+    Maybe<Void> err;
+    Maybe<double> eval;
+    Polys ps;
+
+    ps = Polys(n2o2Zeros);
+    ASSERT_FALSE(ps.Dxi(0).isError);
+    eval = ps(xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_EQ(eval.val, 0);
+
+    ps = Polys(n2o2Zeros);
+    ASSERT_FALSE(ps.Dxi(1).isError);
+    eval = ps(xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_EQ(eval.val, 0);
+
+    ps = Polys(n2o2Zeros);
+    ASSERT_TRUE(ps.Dxi(2).isError);
+    ASSERT_TRUE(ps.Dxi(-1).isError);
+
+    ps = Polys(n2o2);
+    // P = 1x^2 + 2xy + 3x + 4y^2 + 5y + 6
+    ASSERT_FALSE(ps.Dxi(0).isError);
+    eval = ps(xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_EQ(eval.val, 1.0 * 2 * x + 2.0 * y + 3.0);
+
+    ps = Polys(n2o2);
+    ASSERT_FALSE(ps.Dxi(1).isError);
+    eval = ps(xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_EQ(eval.val, 2.0 * x + 4.0 * 2 * y + 5.0);
+
+    ps = Polys(n2o2);
+    ps *= 7;
+    ps += n2o2;
+    // ps = 8*(1x^2 + 2xy + 3x + 4y^2 + 5y + 6)
+    ASSERT_FALSE(ps.Dxi(0).isError);
+    eval = ps(xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_EQ(eval.val, 8 * (1.0 * 2 * x + 2.0 * y + 3.0));
+}
+
 // TEST_F(PolyTest, GetCoefficientsTest) {
 //     auto coefs = std::vector<double>(1);
 //     auto r = n2o2Zeros.GetCoefficients(&coefs);
