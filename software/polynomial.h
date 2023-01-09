@@ -10,16 +10,24 @@
 #include "maybe.h"
 
 class Monomial {
-    // Represents k*(a*x0^e0*x1^e1*)...
-    // Note: k is the scalar that changes when we multiply this monomial by a
-    // scalar
-   public:
-    // [e0, e1, ...]
-    std::vector<int> exponents;
-    double a;
-    double k;
+    // Represents a monomial in the form:
+    // a*x0^e0*x1^e1*...*xi^ei
 
-    Monomial(double a, std::vector<int> exponents);
+   public:
+    double a;
+
+    // [e0, e1, ...]
+    std::vector<int> exps;
+
+    Monomial(std::vector<int> exps);
+
+    Maybe<double> operator()(std::vector<double>& X) const;
+
+    // Differentiate with respect to xi
+    Maybe<Void> Dxi(int i);
+
+    // Value of derivative with respect to a
+    Maybe<double> Da(std::vector<double>& X) const;
 };
 
 class Poly {
@@ -40,6 +48,11 @@ class Poly {
     // P_1 = x + y + 1
     // P_2 = x^2 + x*y + x + y^2 + y + 1
    public:
+    // Identifier
+    // Used to order polynomial coefficients when calculating gradient of
+    // linear combination of Poly instances (see Polys class)
+    int id;
+
     // Number of variables
     // P = x^2 + xy + x + y^2 + y + 1 -> n = 2
     // P = x + y + z + 1 -> n = 3
@@ -49,24 +62,23 @@ class Poly {
     // P = x^2 + xy + x + y^2 + y + 1 -> order = 2
     // P = x + y + z + 1 -> oder = 1
     int order;
-    int nMonomials();  // number of monomials the polynomial has
+    int nMonomials() const;  // number of monomials the polynomial has
 
     // Constructor
     Poly();
-    // Same as empty constructor, only exists for compatibility reasons
-    Poly(int);
+    Poly(int);  // Same as default constructor, only exists for compatibility
 
     // Build method to be called after the constructor
-    // Arguments are the number of variables, the order of the polynomial
-    // and the value for the coefficients.
-    // Ex:
-    // Build(2,2,2.0) will set:
-    // P = 2.0*x^2 + 2.0*xy + 2.0*x + 2.0*y^2 + 2.0*y + 2.0
-    Maybe<Void> Build(int n, int order, double coefficients);
-    Maybe<Void> Build(int n, int order) { return Build(n, order, 0.0); };
+    // Arguments are the number:
+    // number of inputs
+    // order of polynomial
+    // identifier of polynomial (only used when doing linear combination of
+    // polynomials)
+    Maybe<Void> Build(int n, int order, int id);
+    Maybe<Void> Build(int n, int order) { return this->Build(n, order, 0); };
 
     // Evaluates the polynomial for the given values of the variables
-    Maybe<double> operator()(std::vector<double>* X);
+    Maybe<double> operator()(std::vector<double>& X) const;
 
     // Sets this polynomial as the derivative of this polynomial
     // with respect to i-th variable.
@@ -75,58 +87,54 @@ class Poly {
     // Dxi(0) -> P will be set to: 2x + y + 1 + 0 + 0 + 0
     Maybe<Void> Dxi(int i);
 
-    // Get the derivatives with respect to each coefficient
+    // Get the derivatives with respect to the coefficients (they're set at the
+    // target variable)
     // Ex:
     // X = {7,8}
     // P = 1.0x^2 + 2.0xy + 3.0x + 4.0y^2 + 5.0y + 6.0
     // target will be set to {7^2, 7*8, 7, 8^2, 8, 1.0}
-    Maybe<Void> Da(std::vector<double>* X, std::vector<double>* target);
-
-    // Sets the coefficients at target vector
-    // Ex:
-    // P = 1.0x^2 + 2.0xy + 3.0x + 4.0y^2 + 5.0y + 6.0
-    // target will be set to {1,2,3,4,5,6}
-    Maybe<Void> GetCoefficients(std::vector<double>* target);
-
-    // Sets the coefficients of the polynomial with the values provided
-    // Ex:
-    // coefficients = {5,6,7,8,9,10}
-    // P will be set to:
-    // P = 5x^2 + 6xy + 7x + 8y^2 + 9y + 10*1
-    Maybe<Void> SetCoefficients(std::vector<double>* coefficients);
-
-    friend void buildDfs(std::vector<int>* exponents, int exponentsSum,
-                         Poly& p);
-
-    friend Poly operator+(Poly const& left, Poly const& right);
-    friend Poly operator*(double x, const Poly& p);
-    friend Poly operator*(const Poly& p, double x);
-    friend Poly operator+(double x, const Poly& p);
-    friend Poly operator+(const Poly& p, double x);
-    Poly& operator+=(const Poly& right);
-    bool operator==(Poly const& right);
-    bool operator!=(Poly const& right);
+    Maybe<double> Da(std::vector<double>& X, std::vector<double>* target) const;
 
    private:
-    // Auxiliary function used in Build method.
-    void buildDfs(std::vector<int>& exponents, int exponentsSum,
-                  int indexAtExponents, double coefficientToSet);
-
-    friend class PolyTest;
     FRIEND_TEST(PolyConstructorTest, constructorTest);
     FRIEND_TEST(PolyTest, copyConstructorAndAssignment);
-    FRIEND_TEST(PolyTest, MultiplicationOperatorTest);
-    FRIEND_TEST(PolyTest, PlusAndMultiplicationTest);
+    FRIEND_TEST(PolyTest, DxiTest2);
+    FRIEND_TEST(PolyTest, PolysConstructorTest);
+    FRIEND_TEST(PolyTest, MatrixMultiplicationTest);
 
-    // Indicates Build method hasn't been called on this entity
+    // Auxiliary function used in Build method.
+    void buildDfs(std::vector<int>& exponents, int exponentsSum,
+                  int exponentsIndex);
+
+    friend class Polys;
+    friend class PolyTest;
+
+    // Indicates Build still wasn't called yet
     bool isZero;
 
     std::vector<Monomial> monomials;
 };
 
-// double dfs(std::shared_ptr<Node> node, int nodeTreeDepth,
-//            std::vector<double>* X);
-Poly operator*(double x, const Poly& p);
-Poly operator*(const Poly& p, double x);
-Poly operator+(double x, const Poly& p);
-Poly operator+(const Poly& p, double x);
+class Polys {
+    // Represents linear combination of Poly instances
+    // It's assumed that all polys have the same number of inputs
+   public:
+    std::vector<Poly> polys;
+    std::vector<double> k;
+    Polys();
+    Polys(const Poly& p);
+
+    Polys& operator+=(const Poly& right);
+    Polys& operator+=(const Polys& right);
+
+    Maybe<double> operator()(std::vector<double>& X) const;
+    Maybe<Void> Dxi(int i);
+    Maybe<double> Da(std::vector<double>& X, std::vector<double>* target) const;
+};
+
+Polys operator*(double k, const Poly& p);
+Polys operator*(const Poly& p, double k);
+Polys operator+(Poly const& left, Poly const& right);
+Polys operator+(Polys const& left, Poly const& right);
+Polys operator+(Poly const& left, Polys const& right);
+Polys operator+(Polys const& left, Polys const& right);

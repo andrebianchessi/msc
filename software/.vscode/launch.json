@@ -10,7 +10,7 @@
             "program": "${workspaceFolder}/bazel-out/k8-dbg/bin/${fileBasenameNoExtension}.runfiles/__main__/${fileBasenameNoExtension}",
             "cwd": "${workspaceFolder}/bazel-out/k8-dbg/bin/${fileBasenameNoExtension}.runfiles/__main__/",
             "request": "launch",
-            "name": "Debug current _test file",
+            "name": "_test.cc",
             "args": [],
             "preLaunchTask": "Build debug",
             "sourceFileMap": {

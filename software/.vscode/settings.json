@@ -85,7 +85,10 @@
         "stop_token": "cpp",
         "thread": "cpp",
         "typeindex": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "barrier": "cpp",
+        "latch": "cpp",
+        "syncstream": "cpp"
     },
     "cSpell.words": [
         "accels",

@@ -8,31 +8,82 @@
 #include "maybe.h"
 #include "utils.h"
 
-Monomial::Monomial(double a, std::vector<int> exponents) {
-    this->a = a;
-    this->exponents = exponents;
-    this->k = 1;
-};
+Monomial::Monomial(std::vector<int> exps) {
+    for (auto e : exps) {
+        assert(e >= 0);
+    }
+    this->a = 0;
+    this->exps = exps;
+}
+
+Maybe<double> Monomial::operator()(std::vector<double>& X) const {
+    Maybe<double> r;
+    if (X.size() != this->exps.size()) {
+        r.isError = true;
+        r.errMsg = "X of invalid length";
+        return r;
+    }
+
+    double prod = this->a;
+    for (int e = 0; e < int(this->exps.size()); e++) {
+        prod *= pow(X.at(e), this->exps[e]);
+    }
+
+    r.val = prod;
+    return r;
+}
+
+Maybe<Void> Monomial::Dxi(int i) {
+    Maybe<Void> r;
+    if (i < 0 || i >= int(this->exps.size())) {
+        r.isError = true;
+        r.errMsg = "Invalid i";
+        return r;
+    }
+
+    if (this->exps.at(i) >= 1) {
+        this->a *= this->exps.at(i);
+        this->exps.at(i) -= 1;
+        return r;
+    }
+    this->a = 0;
+    return r;
+}
+
+Maybe<double> Monomial::Da(std::vector<double>& X) const {
+    Maybe<double> r;
+    if (X.size() != this->exps.size()) {
+        r.isError = true;
+        r.errMsg = "X of invalid length";
+        return r;
+    }
+    double prod = 1;
+    for (int e = 0; e < int(this->exps.size()); e++) {
+        prod *= pow(X.at(e), this->exps[e]);
+    }
+
+    r.val = prod;
+    return r;
+}
 
 Poly::Poly() { this->isZero = true; }
 
 Poly::Poly(int k) { this->isZero = true; }
 
 void Poly::buildDfs(std::vector<int>& exponents, int exponentsSum,
-                    int indexAtExponents, double coefficientToSet) {
-    if (indexAtExponents == int(exponents.size())) {
-        this->monomials.push_back(Monomial(coefficientToSet, exponents));
+                    int exponentsIndex) {
+    if (exponentsIndex == int(exponents.size())) {
+        this->monomials.push_back(Monomial(exponents));
         return;
     }
 
     int exponentsLeft = this->order - exponentsSum;
     for (int e = exponentsLeft; e >= 0; e--) {
-        exponents[indexAtExponents] = e;
-        buildDfs(exponents, exponentsSum + e, indexAtExponents + 1,
-                 coefficientToSet);
+        exponents[exponentsIndex] = e;
+        buildDfs(exponents, exponentsSum + e, exponentsIndex + 1);
     }
 }
-Maybe<Void> Poly::Build(int n, int order, double coefficients) {
+Maybe<Void> Poly::Build(int n, int order, int id) {
     Maybe<Void> r;
     if (n < 0 || order < 0) {
         r.isError = true;
@@ -40,10 +91,10 @@ Maybe<Void> Poly::Build(int n, int order, double coefficients) {
         return r;
     }
 
+    this->id = id;
     this->n = n;
     this->order = order;
     // Source:
-    //
     // https://mathoverflow.net/questions/225953/number-of-polynomial-terms-for-certain-degree-and-certain-number-of-variables/225963#225963?newreg=2a0208ceb740461d8eaa21e304b0e341
     int nMonomials = int(boost::math::binomial_coefficient<double>(
         this->n + this->order, this->order));
@@ -52,128 +103,140 @@ Maybe<Void> Poly::Build(int n, int order, double coefficients) {
     this->monomials.reserve(nMonomials);
 
     std::vector<int> exponents = std::vector<int>(n);
-    this->buildDfs(exponents, 0, 0, coefficients);
+    this->buildDfs(exponents, 0, 0);
 
     this->isZero = false;
     return r;
 };
 
-int Poly::nMonomials() { return this->monomials.size(); }
+int Poly::nMonomials() const { return this->monomials.size(); }
 
-Maybe<double> Poly::operator()(std::vector<double>* X) {
+Maybe<double> Poly::operator()(std::vector<double>& X) const {
     Maybe<double> r;
-    if (int(X->size()) != this->n) {
+    if (int(X.size()) != this->n) {
         r.isError = true;
         r.errMsg = "X of invalid length";
         return r;
     }
+    Maybe<double> maybeVal;
     double val = 0;
-    double monomialVal;
     for (int m = 0; m < int(this->monomials.size()); m++) {
-        monomialVal = this->monomials[m].a * this->monomials[m].k;
-        for (int i = 0; i < this->n; i++) {
-            monomialVal *= std::pow(X->at(i), this->monomials[m].exponents[i]);
+        maybeVal = this->monomials[m](X);
+        if (maybeVal.isError) {
+            r.isError = true;
+            r.errMsg = maybeVal.errMsg;
+            return r;
         }
-        val += monomialVal;
+        val += maybeVal.val;
     }
     r.val = val;
     return r;
 };
 
-Poly operator*(double x, const Poly& p) {
-    Poly newP = p;
-    for (int m = 0; m < int(newP.monomials.size()); m++) {
-        newP.monomials[m].k *= x;
-    }
-    return newP;
+Polys::Polys() {
+    this->polys = std::vector<Poly>(0);
+    this->k = std::vector<double>(0);
 }
-Poly operator*(const Poly& p, double x) { return x * p; }
 
-Poly operator+(Poly const& left, Poly const& right) {
-    if (left.isZero) {
-        return right;
+Polys::Polys(const Poly& p) {
+    if (p.isZero) {
+        this->polys = std::vector<Poly>(0);
+        this->k = std::vector<double>(0);
+        return;
     }
-    if (right.isZero) {
-        return left;
-    }
-    Poly newP = left;
-    newP.order = std::max(left.order, right.order);
-    newP.monomials.reserve(left.monomials.size() + right.monomials.size());
-    for (int i = 0; i < int(right.monomials.size()); i++) {
-        newP.monomials.push_back(right.monomials[i]);
-    }
-    return newP;
+    this->polys = std::vector<Poly>{p};
+    this->k = std::vector<double>{1.0};
+}
+Polys operator*(double k, const Poly& p) {
+    Polys ps = Polys(p);
+    ps.k[ps.k.size() - 1] *= k;
+    return ps;
 };
-Poly& Poly::operator+=(const Poly& right) {
-    if (this->isZero) {
-        *this = right;
-        return *this;
+Polys operator*(const Poly& p, double k) { return k * p; };
+
+Polys operator+(Poly const& left, Poly const& right) {
+    assert(left.n == right.n);
+    Polys p = Polys(left);
+    p.k.push_back(1.0);
+    p.polys.push_back(right);
+    return p;
+};
+Polys operator+(Polys const& left, Poly const& right) {
+    if (left.polys.size() > 0) {
+        assert(left.polys[0].n == right.n);
     }
-    this->order = std::max(this->order, right.order);
-    this->monomials.reserve(this->monomials.size() + right.monomials.size());
-    for (int i = 0; i < int(right.monomials.size()); i++) {
-        this->monomials.push_back(right.monomials[i]);
+    Polys p = left;
+    p.k.push_back(1.0);
+    p.polys.push_back(right);
+    return p;
+};
+Polys operator+(Poly const& left, Polys const& right) {
+    if (right.polys.size() > 0) {
+        assert(right.polys[0].n == left.n);
     }
-    return *this;
+    Polys p = right;
+    p.k.push_back(1.0);
+    p.polys.push_back(left);
+    return p;
+};
+Polys operator+(Polys const& left, Polys const& right) {
+    Polys p = left;
+    for (int i = 0; i < int(right.polys.size()); i++) {
+        p.polys.push_back(right.polys[i]);
+        p.k.push_back(right.k[i]);
+    }
+    return p;
+};
+
+Polys& Polys::operator+=(const Poly& right) {
+    (*this) = (*this) + right;
+    return (*this);
 }
-Poly operator+(double x, const Poly& p) {
-    assert(!p.isZero);
-    Poly newP = p;
-    newP.monomials[newP.monomials.size() - 1].a += x;
-    return newP;
-}
-Poly operator+(const Poly& p, double x) {
-    assert(!p.isZero);
-    Poly newP = p;
-    newP.monomials[newP.monomials.size() - 1].a += x;
-    return newP;
+Polys& Polys::operator+=(const Polys& right) {
+    (*this) = (*this) + right;
+    return (*this);
 }
 
-bool Poly::operator==(Poly const& right) {
-    if (right.n != this->n || right.order != this->order) {
-        return false;
-    }
-    if (this->monomials.size() != right.monomials.size()) {
-        return false;
-    }
-    for (int i = 0; i < int(this->monomials.size()); i++) {
-        if (this->monomials[i].a != right.monomials[i].a) {
-            return false;
+Maybe<double> Polys::operator()(std::vector<double>& X) const {
+    Maybe<double> r;
+    double val = 0;
+    for (int p = 0; p < int(this->polys.size()); p++) {
+        r = this->polys[p](X);
+        if (r.isError) {
+            print("r.errMsg", r.errMsg);
+            return r;
         }
-        if (this->monomials[i].exponents != right.monomials[i].exponents) {
-            return false;
-        }
+        val += this->k[p] * r.val;
     }
-    return true;
-}
-
-bool Poly::operator!=(Poly const& right) { return !((*this) == right); }
-
-Maybe<Void> Poly::GetCoefficients(std::vector<double>* target) {
-    Maybe<Void> r;
-    if (int(target->size()) != this->nMonomials()) {
-        r.isError = true;
-        r.errMsg = "target must have same length as the number of terms";
-        return r;
-    }
-    for (int i = 0; i < this->nMonomials(); i++) {
-        (*target)[i] = this->monomials[i].a;
-    }
+    r.val = val;
     return r;
-}
+};
 
-Maybe<Void> Poly::SetCoefficients(std::vector<double>* coefficients) {
-    Maybe<Void> r;
-    if (int(coefficients->size()) != this->nMonomials()) {
-        r.isError = true;
-        r.errMsg = "coefficients must have same length as the number of terms";
-        return r;
-    }
-    for (int i = 0; i < this->nMonomials(); i++) {
-        this->monomials[i].a = (*coefficients)[i];
-    }
-    return r;
-}
+// Maybe<Void> Poly::GetCoefficients(std::vector<double>* target) {
+//     Maybe<Void> r;
+//     if (int(target->size()) != this->nMonomials()) {
+//         r.isError = true;
+//         r.errMsg = "target must have same length as the number of terms";
+//         return r;
+//     }
+//     for (int i = 0; i < this->nMonomials(); i++) {
+//         (*target)[i] = this->monomials[i].a;
+//     }
+//     return r;
+// }
+
+// Maybe<Void> Poly::SetCoefficients(std::vector<double>* coefficients) {
+//     Maybe<Void> r;
+//     if (int(coefficients->size()) != this->nMonomials()) {
+//         r.isError = true;
+//         r.errMsg = "coefficients must have same length as the number of
+//         terms"; return r;
+//     }
+//     for (int i = 0; i < this->nMonomials(); i++) {
+//         this->monomials[i].a = (*coefficients)[i];
+//     }
+//     return r;
+// }
 
 Maybe<Void> Poly::Dxi(int i) {
     Maybe<Void> r;
@@ -183,44 +246,37 @@ Maybe<Void> Poly::Dxi(int i) {
         return r;
     }
 
-    int xiExp;
     for (int m = 0; m < int(this->monomials.size()); m++) {
-        xiExp = this->monomials[m].exponents[i];
-        // If this monomial doesn't depend on variable i,
-        // this monomial becomes 0
-        if (xiExp == 0) {
-            for (int e = 0; e < int(this->monomials[m].exponents.size()); e++) {
-                this->monomials[m].exponents[e] = 0;
-            }
-            this->monomials[m].a = 0;
-            continue;
+        r = this->monomials[m].Dxi(i);
+        if (r.isError) {
+            return r;
         }
-        this->monomials[m].exponents[i] -= 1;
-        this->monomials[m].a *= xiExp;
     }
 
     return r;
 }
 
-Maybe<Void> Poly::Da(std::vector<double>* X, std::vector<double>* target) {
-    Maybe<Void> r;
+Maybe<double> Poly::Da(std::vector<double>& X,
+                       std::vector<double>* target) const {
+    Maybe<double> r;
     if (int(target->size()) != this->nMonomials()) {
         r.isError = true;
         r.errMsg = "target must have same length as the number of terms";
         return r;
     }
-    if (int(X->size()) != this->n) {
+    if (int(X.size()) != this->n) {
         r.isError = true;
         r.errMsg = "X of invalid length";
         return r;
     }
 
+    Maybe<double> maybeDa;
     for (int i = 0; i < this->nMonomials(); i++) {
-        target->at(i) = 1;
-        for (int xi = 0; xi < this->n; xi++) {
-            target->at(i) *=
-                std::pow(X->at(xi), this->monomials[i].exponents[xi]);
+        maybeDa = this->monomials[i].Da(X);
+        if (maybeDa.isError) {
+            return maybeDa;
         }
+        target->at(i) = maybeDa.val;
     }
     return r;
 }
