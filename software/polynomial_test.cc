@@ -543,3 +543,12 @@ TEST_F(PolyTest, DaPolysTest) {
     ASSERT_FALSE(eval.isError);
     ASSERT_DOUBLE_EQ(eval.val, 7 * 1);
 }
+
+TEST_F(PolyTest, EqualityOperatorTest) {
+    ASSERT_EQ(Polys(n2o2), Polys(n2o2));
+    ASSERT_EQ(Polys(n2o2) + Polys(n2o2Zeros), Polys(n2o2) + Polys(n2o2Zeros));
+
+    ASSERT_NE(Polys(n2o2Zeros), Polys(n2o2));
+    ASSERT_NE(2 * Polys(n2o2), Polys(n2o2));
+    ASSERT_NE(Polys(n2o2) + Polys(n2o2Zeros), Polys(n2o2Zeros) + Polys(n2o2));
+}

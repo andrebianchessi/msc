@@ -30,6 +30,8 @@ class Monomial {
     Maybe<double> Da(std::vector<double>& X) const;
 };
 
+class Polys;
+
 class Poly {
     // Class that represents a multivariate polynomial
     // These polynomials are sum of terms in which the sum of the exponents
@@ -101,6 +103,7 @@ class Poly {
     FRIEND_TEST(PolyTest, DxiTest2);
     FRIEND_TEST(PolyTest, PolysConstructorTest);
     FRIEND_TEST(PolyTest, MatrixMultiplicationTest);
+    FRIEND_TEST(PimodelTest, getAccelsFromDiffEqTest);
 
     // Auxiliary function used in Build method.
     void buildDfs(std::vector<int>& exponents, int exponentsSum,
@@ -108,6 +111,8 @@ class Poly {
 
     friend class Polys;
     friend class PolyTest;
+    friend class Pimodel;
+    friend bool operator==(Polys const& right, Polys const& left);
 
     // Indicates Build still wasn't called yet
     bool isZero;
@@ -142,3 +147,8 @@ Polys operator+(Poly const& left, Poly const& right);
 Polys operator+(Polys const& left, Poly const& right);
 Polys operator+(Poly const& left, Polys const& right);
 Polys operator+(Polys const& left, Polys const& right);
+Polys operator*(double k, Polys const& right);
+
+// Note: order of monomials is considered for equality
+bool operator==(Polys const& right, Polys const& left);
+bool operator!=(Polys const& right, Polys const& left);

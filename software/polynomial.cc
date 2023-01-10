@@ -203,6 +203,51 @@ Polys& Polys::operator*=(double k) {
     return (*this);
 }
 
+Polys operator*(double k, Polys const& right) {
+    Polys p = right;
+    for (int i = 0; i < int(p.k.size()); i++) {
+        p.k[i] *= k;
+    }
+    return p;
+}
+
+bool operator==(Polys const& right, Polys const& left) {
+    if (right.polys.size() != left.polys.size()) {
+        return false;
+    }
+    for (int i = 0; i < int(right.polys.size()); i++) {
+        if (right.k[i] != left.k[i]) {
+            return false;
+        }
+        if (right.polys[i].id != left.polys[i].id) {
+            return false;
+        }
+        if (right.polys[i].n != left.polys[i].n) {
+            return false;
+        }
+        if (right.polys[i].order != left.polys[i].order) {
+            return false;
+        }
+        if (right.polys[i].nMonomials() != left.polys[i].nMonomials()) {
+            return false;
+        }
+        for (int m = 0; m < right.polys[i].nMonomials(); m++) {
+            if (right.polys[i].monomials[m].a != left.polys[i].monomials[m].a) {
+                return false;
+            }
+            if (right.polys[i].monomials[m].exps !=
+                left.polys[i].monomials[m].exps) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool operator!=(Polys const& right, Polys const& left) {
+    return !(right == left);
+}
+
 Maybe<double> Polys::operator()(std::vector<double>& X) const {
     Maybe<double> r;
     double val = 0;
