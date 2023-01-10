@@ -87,13 +87,13 @@ class Poly {
     // Dxi(0) -> P will be set to: 2x + y + 1 + 0 + 0 + 0
     Maybe<Void> Dxi(int i);
 
-    // Get the derivatives with respect to the coefficients (they're set at the
-    // target variable)
+    // Get the derivative with respect to the i-th coefficient
     // Ex:
     // X = {7,8}
     // P = 1.0x^2 + 2.0xy + 3.0x + 4.0y^2 + 5.0y + 6.0
-    // target will be set to {7^2, 7*8, 7, 8^2, 8, 1.0}
-    Maybe<double> Da(std::vector<double>& X, std::vector<double>* target) const;
+    // Da0 = 7^2
+    // Da1 = 7*8
+    Maybe<double> Dai(int i, std::vector<double>& X) const;
 
    private:
     FRIEND_TEST(PolyConstructorTest, constructorTest);
@@ -130,7 +130,10 @@ class Polys {
 
     Maybe<double> operator()(std::vector<double>& X) const;
     Maybe<Void> Dxi(int i);
-    Maybe<double> Da(std::vector<double>& X, std::vector<double>* target) const;
+
+    // Returns the derivative with respect to the i-th coefficient of
+    // the polynomial with id = pId
+    Maybe<double> Dai(int pId, int i, std::vector<double>& X) const;
 };
 
 Polys operator*(double k, const Poly& p);

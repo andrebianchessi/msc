@@ -209,7 +209,6 @@ Maybe<double> Polys::operator()(std::vector<double>& X) const {
     for (int p = 0; p < int(this->polys.size()); p++) {
         r = this->polys[p](X);
         if (r.isError) {
-            print("r.errMsg", r.errMsg);
             return r;
         }
         val += this->k[p] * r.val;
@@ -217,32 +216,6 @@ Maybe<double> Polys::operator()(std::vector<double>& X) const {
     r.val = val;
     return r;
 };
-
-// Maybe<Void> Poly::GetCoefficients(std::vector<double>* target) {
-//     Maybe<Void> r;
-//     if (int(target->size()) != this->nMonomials()) {
-//         r.isError = true;
-//         r.errMsg = "target must have same length as the number of terms";
-//         return r;
-//     }
-//     for (int i = 0; i < this->nMonomials(); i++) {
-//         (*target)[i] = this->monomials[i].a;
-//     }
-//     return r;
-// }
-
-// Maybe<Void> Poly::SetCoefficients(std::vector<double>* coefficients) {
-//     Maybe<Void> r;
-//     if (int(coefficients->size()) != this->nMonomials()) {
-//         r.isError = true;
-//         r.errMsg = "coefficients must have same length as the number of
-//         terms"; return r;
-//     }
-//     for (int i = 0; i < this->nMonomials(); i++) {
-//         this->monomials[i].a = (*coefficients)[i];
-//     }
-//     return r;
-// }
 
 Maybe<Void> Poly::Dxi(int i) {
     Maybe<Void> r;
@@ -262,28 +235,24 @@ Maybe<Void> Poly::Dxi(int i) {
     return r;
 }
 
-Maybe<double> Poly::Da(std::vector<double>& X,
-                       std::vector<double>* target) const {
+Maybe<double> Poly::Dai(int i, std::vector<double>& X) const {
     Maybe<double> r;
-    if (int(target->size()) != this->nMonomials()) {
-        r.isError = true;
-        r.errMsg = "target must have same length as the number of terms";
-        return r;
-    }
     if (int(X.size()) != this->n) {
         r.isError = true;
         r.errMsg = "X of invalid length";
         return r;
     }
-
-    Maybe<double> maybeDa;
-    for (int i = 0; i < this->nMonomials(); i++) {
-        maybeDa = this->monomials[i].Da(X);
-        if (maybeDa.isError) {
-            return maybeDa;
-        }
-        target->at(i) = maybeDa.val;
+    if (i < 0 || i >= this->nMonomials()) {
+        r.isError = true;
+        r.errMsg = "invalid i";
+        return r;
     }
+
+    Maybe<double> maybeDa = this->monomials[i].Da(X);
+    if (maybeDa.isError) {
+        return maybeDa;
+    }
+    r.val = maybeDa.val;
     return r;
 }
 
@@ -305,5 +274,22 @@ Maybe<Void> Polys::Dxi(int i) {
         }
     }
 
+    return r;
+}
+
+Maybe<double> Polys::Dai(int pId, int i, std::vector<double>& X) const {
+    Maybe<double> r;
+    r.val = 0;
+
+    Maybe<double> maybeVal;
+    for (int pi = 0; pi < int(this->polys.size()); pi++) {
+        if (this->polys[pi].id == pId) {
+            maybeVal = this->polys[pi].Dai(i, X);
+            if (maybeVal.isError) {
+                return maybeVal;
+            }
+            r.val += this->k[pi] * maybeVal.val;
+        }
+    }
     return r;
 }

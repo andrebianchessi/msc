@@ -268,28 +268,41 @@ TEST_F(PolyTest, DxiTest2) {
 
 TEST_F(PolyTest, DaTest) {
     std::vector<double> X = {1.0, 2.0};
-    auto coefs = std::vector<double>(1);
-    auto r = n2o2Zeros.Da(X, &coefs);
+    auto r = n2o2Zeros.Dai(-1, X);
     ASSERT_TRUE(r.isError);
 
     X = {1.0};
-    coefs = std::vector<double>(6);
-    r = n2o2Zeros.Da(X, &coefs);
+    r = n2o2Zeros.Dai(2, X);
     ASSERT_TRUE(r.isError);
 
     double x = 17.0;
     double y = 29.0;
     X = {x, y};
-    coefs = std::vector<double>(6);
-    r = n2o2Zeros.Da(X, &coefs);
-    ASSERT_FALSE(r.isError);
+
     // P = 0*x^2 + 0*xy + 0*x + 0*y^2 + 0*y + 0
-    ASSERT_DOUBLE_EQ(coefs[0], x * x);
-    ASSERT_DOUBLE_EQ(coefs[1], x * y);
-    ASSERT_DOUBLE_EQ(coefs[2], x);
-    ASSERT_DOUBLE_EQ(coefs[3], y * y);
-    ASSERT_DOUBLE_EQ(coefs[4], y);
-    ASSERT_DOUBLE_EQ(coefs[5], 1);
+    r = n2o2Zeros.Dai(0, X);
+    ASSERT_FALSE(r.isError);
+    ASSERT_DOUBLE_EQ(r.val, x * x);
+
+    r = n2o2Zeros.Dai(1, X);
+    ASSERT_FALSE(r.isError);
+    ASSERT_DOUBLE_EQ(r.val, x * y);
+
+    r = n2o2Zeros.Dai(2, X);
+    ASSERT_FALSE(r.isError);
+    ASSERT_DOUBLE_EQ(r.val, x);
+
+    r = n2o2Zeros.Dai(3, X);
+    ASSERT_FALSE(r.isError);
+    ASSERT_DOUBLE_EQ(r.val, y * y);
+
+    r = n2o2Zeros.Dai(4, X);
+    ASSERT_FALSE(r.isError);
+    ASSERT_DOUBLE_EQ(r.val, y);
+
+    r = n2o2Zeros.Dai(5, X);
+    ASSERT_FALSE(r.isError);
+    ASSERT_DOUBLE_EQ(r.val, 1);
 }
 
 TEST_F(PolyTest, PolysConstructorTest) {
@@ -451,244 +464,82 @@ TEST_F(PolyTest, DxiPolysTest) {
     ASSERT_EQ(eval.val, 8 * (1.0 * 2 * x + 2.0 * y + 3.0));
 }
 
-// TEST_F(PolyTest, GetCoefficientsTest) {
-//     auto coefs = std::vector<double>(1);
-//     auto r = n2o2Zeros.GetCoefficients(&coefs);
-//     ASSERT_TRUE(r.isError);
+TEST_F(PolyTest, DaPolysTest) {
+    double x = 8.1;
+    double y = 4.2;
+    std::vector<double> xy = {x, y};
+    Maybe<double> eval;
+    Polys ps;
 
-//     coefs = std::vector<double>(7);
-//     r = n2o2Zeros.GetCoefficients(&coefs);
-//     ASSERT_TRUE(r.isError);
+    ps = Polys(n2o2Zeros);
+    // Doesn't return error if polys doesn't contain poly with given id
+    eval = ps.Dai(100, 0, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, 0);
+    ASSERT_TRUE(ps.Dai(0, 6, xy).isError);
 
-//     coefs = std::vector<double>(6);
+    ps = n2o2Zeros + n2o2Twos + 7.0 * n2o2;
+    // ps = 0*x^2 + 0*xy + 0*x + 0*y^2 + 0*y + 0
+    //      + 2*x^2 + 2*xy + 2*x + 2*y^2 + 2*y + 2
+    //      + 7*(1x^2 + 2xy + 3x + 4y^2 + 5y + 6)
 
-//     r = n2o2Zeros.GetCoefficients(&coefs);
-//     ASSERT_FALSE(r.isError);
-//     // P = 0*x^2 + 0*xy + 0*x + 0*y^2 + 0*y + 0
-//     ASSERT_DOUBLE_EQ(coefs[0], 0);
-//     ASSERT_DOUBLE_EQ(coefs[1], 0);
-//     ASSERT_DOUBLE_EQ(coefs[2], 0);
-//     ASSERT_DOUBLE_EQ(coefs[3], 0);
-//     ASSERT_DOUBLE_EQ(coefs[4], 0);
-//     ASSERT_DOUBLE_EQ(coefs[5], 0);
+    // p0
+    eval = ps.Dai(0, 0, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, x * x);
+    eval = ps.Dai(0, 1, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, x * y);
+    eval = ps.Dai(0, 2, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, x);
+    eval = ps.Dai(0, 3, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, y * y);
+    eval = ps.Dai(0, 4, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, y);
+    eval = ps.Dai(0, 5, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, 1);
 
-//     r = n2o2Twos.GetCoefficients(&coefs);
-//     ASSERT_FALSE(r.isError);
-//     // P = 2*x^2 + 2*xy + 2*x + 2*y^2 + 2*y + 2
-//     ASSERT_DOUBLE_EQ(coefs[0], 2);
-//     ASSERT_DOUBLE_EQ(coefs[1], 2);
-//     ASSERT_DOUBLE_EQ(coefs[2], 2);
-//     ASSERT_DOUBLE_EQ(coefs[3], 2);
-//     ASSERT_DOUBLE_EQ(coefs[4], 2);
-//     ASSERT_DOUBLE_EQ(coefs[5], 2);
+    // p1
+    eval = ps.Dai(1, 0, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, x * x);
+    eval = ps.Dai(1, 1, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, x * y);
+    eval = ps.Dai(1, 2, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, x);
+    eval = ps.Dai(1, 3, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, y * y);
+    eval = ps.Dai(1, 4, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, y);
+    eval = ps.Dai(1, 5, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, 1);
 
-//     double x = 3;
-//     double y = 5;
-//     auto X = std::vector<double>{x, y};
-//     ASSERT_DOUBLE_EQ(n2o2Twos(&X).val,
-//                      (2 * x * x + 2 * x * y + 2 * x + 2 * y * y + 2 * y +
-//                      2));
-
-//     r = n2o2.GetCoefficients(&coefs);
-//     ASSERT_FALSE(r.isError);
-//     // P = 1*x^2 + 2*xy + 3*x + 4*y^2 + 5*y + 6
-//     ASSERT_DOUBLE_EQ(coefs[0], 1);
-//     ASSERT_DOUBLE_EQ(coefs[1], 2);
-//     ASSERT_DOUBLE_EQ(coefs[2], 3);
-//     ASSERT_DOUBLE_EQ(coefs[3], 4);
-//     ASSERT_DOUBLE_EQ(coefs[4], 5);
-//     ASSERT_DOUBLE_EQ(coefs[5], 6);
-//     ASSERT_DOUBLE_EQ(n2o2(&X).val,
-//                      1 * x * x + 2 * x * y + 3 * x + 4 * y * y + 5 * y + 6);
-// }
-
-// TEST_F(PolyTest, MultiplicationOperatorTest) {
-//     auto coefs = std::vector<double>(6);
-
-//     Poly p = this->n2o2 * 7;
-//     auto r = p.GetCoefficients(&coefs);
-//     ASSERT_FALSE(r.isError);
-//     ASSERT_EQ(p.n, 2);
-//     ASSERT_DOUBLE_EQ(coefs[0], 1);
-//     ASSERT_DOUBLE_EQ(coefs[1], 2);
-//     ASSERT_DOUBLE_EQ(coefs[2], 3);
-//     ASSERT_DOUBLE_EQ(coefs[3], 4);
-//     ASSERT_DOUBLE_EQ(coefs[4], 5);
-//     ASSERT_DOUBLE_EQ(coefs[5], 6);
-//     ASSERT_DOUBLE_EQ(p.monomials[0].k, 7);
-//     ASSERT_DOUBLE_EQ(p.monomials[1].k, 7);
-//     ASSERT_DOUBLE_EQ(p.monomials[2].k, 7);
-//     ASSERT_DOUBLE_EQ(p.monomials[3].k, 7);
-//     ASSERT_DOUBLE_EQ(p.monomials[4].k, 7);
-//     ASSERT_DOUBLE_EQ(p.monomials[5].k, 7);
-
-//     p = 9 * p;
-//     ASSERT_EQ(p.n, 2);
-//     ASSERT_DOUBLE_EQ(p.monomials[0].k, 7 * 9);
-//     ASSERT_DOUBLE_EQ(p.monomials[1].k, 7 * 9);
-//     ASSERT_DOUBLE_EQ(p.monomials[2].k, 7 * 9);
-//     ASSERT_DOUBLE_EQ(p.monomials[3].k, 7 * 9);
-//     ASSERT_DOUBLE_EQ(p.monomials[4].k, 7 * 9);
-//     ASSERT_DOUBLE_EQ(p.monomials[5].k, 7 * 9);
-
-//     // Assert original is not changed
-//     r = this->n2o2.GetCoefficients(&coefs);
-//     ASSERT_FALSE(r.isError);
-//     ASSERT_EQ(this->n2o2.n, 2);
-//     ASSERT_DOUBLE_EQ(coefs[0], 1);
-//     ASSERT_DOUBLE_EQ(coefs[1], 2);
-//     ASSERT_DOUBLE_EQ(coefs[2], 3);
-//     ASSERT_DOUBLE_EQ(coefs[3], 4);
-//     ASSERT_DOUBLE_EQ(coefs[4], 5);
-//     ASSERT_DOUBLE_EQ(coefs[5], 6);
-//     ASSERT_DOUBLE_EQ(n2o2.monomials[0].k, 1);
-//     ASSERT_DOUBLE_EQ(n2o2.monomials[1].k, 1);
-//     ASSERT_DOUBLE_EQ(n2o2.monomials[2].k, 1);
-//     ASSERT_DOUBLE_EQ(n2o2.monomials[3].k, 1);
-//     ASSERT_DOUBLE_EQ(n2o2.monomials[4].k, 1);
-//     ASSERT_DOUBLE_EQ(n2o2.monomials[5].k, 1);
-// }
-
-// TEST_F(PolyTest, PlusOperatorTest) {
-//     Poly p0;
-//     p0.Build(2, 2, 0.0, 0);
-//     auto coefsToSet = std::vector<double>{1, 2, 3, 4, 5, 6};
-//     ASSERT_FALSE(p0.SetCoefficients(&coefsToSet).isError);
-
-//     Poly p1;
-//     p1.Build(2, 2, 0.0, 6);
-//     coefsToSet = std::vector<double>{10, 20, 30, 40, 50, 60};
-//     ASSERT_FALSE(p1.SetCoefficients(&coefsToSet).isError);
-
-//     Poly pSum;
-//     pSum = p0 + p1;
-
-//     ASSERT_EQ(pSum.n, 2);
-//     auto coefs = std::vector<double>(12);
-//     ASSERT_FALSE(pSum.GetCoefficients(&coefs).isError);
-//     ASSERT_DOUBLE_EQ(coefs[0], 1);
-//     ASSERT_DOUBLE_EQ(coefs[1], 2);
-//     ASSERT_DOUBLE_EQ(coefs[2], 3);
-//     ASSERT_DOUBLE_EQ(coefs[3], 4);
-//     ASSERT_DOUBLE_EQ(coefs[4], 5);
-//     ASSERT_DOUBLE_EQ(coefs[5], 6);
-//     ASSERT_DOUBLE_EQ(coefs[6], 10);
-//     ASSERT_DOUBLE_EQ(coefs[7], 20);
-//     ASSERT_DOUBLE_EQ(coefs[8], 30);
-//     ASSERT_DOUBLE_EQ(coefs[9], 40);
-//     ASSERT_DOUBLE_EQ(coefs[10], 50);
-//     ASSERT_DOUBLE_EQ(coefs[11], 60);
-
-//     pSum = pSum + 99.0;
-//     coefs = std::vector<double>(12);
-//     ASSERT_FALSE(pSum.GetCoefficients(&coefs).isError);
-//     ASSERT_DOUBLE_EQ(coefs[0], 1);
-//     ASSERT_DOUBLE_EQ(coefs[1], 2);
-//     ASSERT_DOUBLE_EQ(coefs[2], 3);
-//     ASSERT_DOUBLE_EQ(coefs[3], 4);
-//     ASSERT_DOUBLE_EQ(coefs[4], 5);
-//     ASSERT_DOUBLE_EQ(coefs[5], 6);
-//     ASSERT_DOUBLE_EQ(coefs[6], 10);
-//     ASSERT_DOUBLE_EQ(coefs[7], 20);
-//     ASSERT_DOUBLE_EQ(coefs[8], 30);
-//     ASSERT_DOUBLE_EQ(coefs[9], 40);
-//     ASSERT_DOUBLE_EQ(coefs[10], 50);
-//     ASSERT_DOUBLE_EQ(coefs[11], 60 + 99);
-// }
-
-// TEST_F(PolyTest, EqualityOperatorTest) {
-//     Poly p0;
-//     p0.Build(2, 2, 0.0, 0);
-//     auto coefsToSet = std::vector<double>{1, 2, 3, 4, 5, 6};
-//     ASSERT_FALSE(p0.SetCoefficients(&coefsToSet).isError);
-
-//     Poly p1;
-//     p1.Build(2, 2, 0.0, 0);
-//     coefsToSet = std::vector<double>{10, -20, 30, 40, -50, 60};
-//     ASSERT_FALSE(p1.SetCoefficients(&coefsToSet).isError);
-
-//     Poly p2;
-//     p2.Build(2, 2, 0.0, 0);
-//     coefsToSet = std::vector<double>{1, 2, 3, 4, 5, 6};
-//     ASSERT_FALSE(p2.SetCoefficients(&coefsToSet).isError);
-
-//     ASSERT_FALSE(p0 == p1);
-//     ASSERT_TRUE(p0 != p1);
-//     ASSERT_FALSE(p1 == p2);
-//     ASSERT_TRUE(p1 != p2);
-//     ASSERT_TRUE(p0 == p2);
-//     ASSERT_FALSE(p0 != p2);
-
-//     Poly p3;
-//     Poly p4;
-//     ASSERT_TRUE(p3 == p4);
-//     ASSERT_FALSE(p3 != p4);
-
-//     p3.Build(2, 3, 0.0, 0);
-//     p4.Build(2, 2, 0.0, 0);
-//     ASSERT_FALSE(p3 == p4);
-//     ASSERT_TRUE(p3 != p4);
-// }
-
-// TEST_F(PolyTest, SetCoefficientsTest) {
-//     auto coefsToSet = std::vector<double>(1);
-//     auto r = n2o2Zeros.GetCoefficients(&coefsToSet);
-//     ASSERT_TRUE(r.isError);
-
-//     coefsToSet = std::vector<double>(7);
-//     r = n2o2Zeros.GetCoefficients(&coefsToSet);
-//     ASSERT_TRUE(r.isError);
-
-//     coefsToSet = std::vector<double>{9, 10, 11, 12, 13, 14};
-//     r = n2o2Zeros.SetCoefficients(&coefsToSet);
-//     ASSERT_FALSE(r.isError);
-
-//     auto coefsSet = std::vector<double>(6);
-//     r = n2o2Zeros.GetCoefficients(&coefsSet);
-//     ASSERT_FALSE(r.isError);
-//     ASSERT_DOUBLE_EQ(coefsSet[0], 9);
-//     ASSERT_DOUBLE_EQ(coefsSet[1], 10);
-//     ASSERT_DOUBLE_EQ(coefsSet[2], 11);
-//     ASSERT_DOUBLE_EQ(coefsSet[3], 12);
-//     ASSERT_DOUBLE_EQ(coefsSet[4], 13);
-//     ASSERT_DOUBLE_EQ(coefsSet[5], 14);
-// }
-
-// TEST_F(PolyTest, PlusAndMultiplicationTest) {
-//     auto coefs = std::vector<double>(4);
-
-//     Poly p0;
-//     p0.Build(1, 3, 0.0, 0);
-//     coefs = {1, 2, 3, 4};
-//     ASSERT_FALSE(p0.SetCoefficients(&coefs).isError);
-//     // p0 = x + 2y + 3x + 4
-
-//     Poly p1;
-//     p1.Build(1, 3, 0.0, 4);
-//     coefs = {5, 6, 7, 8};
-//     ASSERT_FALSE(p1.SetCoefficients(&coefs).isError);
-//     // p0 = 5x + 6y + 7z + 8
-
-//     Poly p2;
-//     p2 = 2 * p0 + (-3) * p1;
-//     ASSERT_EQ(p2.n, 1);
-//     // p2 = 2*(x + 2y + 3x + 4) -3*(5x + 6y + 7z + 8)
-//     coefs = std::vector<double>(8);
-//     ASSERT_FALSE(p2.GetCoefficients(&coefs).isError);
-//     ASSERT_DOUBLE_EQ(coefs[0], 1);
-//     ASSERT_DOUBLE_EQ(coefs[1], 2);
-//     ASSERT_DOUBLE_EQ(coefs[2], 3);
-//     ASSERT_DOUBLE_EQ(coefs[3], 4);
-//     ASSERT_DOUBLE_EQ(coefs[4], 5);
-//     ASSERT_DOUBLE_EQ(coefs[5], 6);
-//     ASSERT_DOUBLE_EQ(coefs[6], 7);
-//     ASSERT_DOUBLE_EQ(coefs[7], 8);
-//     ASSERT_DOUBLE_EQ(p2.monomials[0].k, 2);
-//     ASSERT_DOUBLE_EQ(p2.monomials[1].k, 2);
-//     ASSERT_DOUBLE_EQ(p2.monomials[2].k, 2);
-//     ASSERT_DOUBLE_EQ(p2.monomials[3].k, 2);
-//     ASSERT_DOUBLE_EQ(p2.monomials[4].k, -3);
-//     ASSERT_DOUBLE_EQ(p2.monomials[5].k, -3);
-//     ASSERT_DOUBLE_EQ(p2.monomials[6].k, -3);
-//     ASSERT_DOUBLE_EQ(p2.monomials[7].k, -3);
-// }
+    // p2
+    eval = ps.Dai(2, 0, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, 7 * x * x);
+    eval = ps.Dai(2, 1, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, 7 * x * y);
+    eval = ps.Dai(2, 2, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, 7 * x);
+    eval = ps.Dai(2, 3, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, 7 * y * y);
+    eval = ps.Dai(2, 4, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, 7 * y);
+    eval = ps.Dai(2, 5, xy);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val, 7 * 1);
+}
