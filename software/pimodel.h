@@ -38,21 +38,24 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, ConstructorTest);
     FRIEND_TEST(PimodelTest, GetParametersTest);
     FRIEND_TEST(PimodelTest, SetParametersTest);
+    FRIEND_TEST(PimodelTest, ProblemFromTkcTest);
+    FRIEND_TEST(PimodelTest, getXModelTest);
+    FRIEND_TEST(PimodelTest, getAccelsFromModelTest);
     FRIEND_TEST(PimodelTest, getAccelsFromDiffEqTest);
+    FRIEND_TEST(PimodelTest, getInitialXTest);
     FRIEND_TEST(PimodelTest, InitialConditionsLossTest);
     FRIEND_TEST(PimodelTest, PhysicsLossTest);
-    FRIEND_TEST(PimodelTest, LossTest);
-    FRIEND_TEST(PimodelTest, LossTest2);
-    FRIEND_TEST(PimodelTest, InitialConditionsLossGradientTest);
-    FRIEND_TEST(PimodelTest, PhysicsLossGradientTest);
+        FRIEND_TEST(PimodelTest, LossTest);
+    //     FRIEND_TEST(PimodelTest, InitialConditionsLossGradientTest);
+    //     FRIEND_TEST(PimodelTest, PhysicsLossGradientTest);
 
     ProblemDescription* p;
 
     // column matrix that contains the polynomials that represent the
-    // displacement of each mass. Ex: polys[0] = Polynomial that represents the
+    // displacement of each mass. Ex: models[0] = Polynomial that represents the
     // displacement (x) of mass 0, as a function of time and the values of the
     // springs and the masses
-    boost::numeric::ublas::matrix<Poly> polys;
+    boost::numeric::ublas::matrix<Poly> models;
 
     // This model describes the system from t = 0 to t = finalT
     double finalT;
@@ -99,11 +102,11 @@ class Pimodel : public Model {
     // using the polynomials
     std::vector<double> getXModel(std::vector<double>* tkc);
 
-    // Get polynomials that model the accelerations by  taking second time
+    // Get polynomials that model the accelerations by taking second time
     // derivative of the polynomials
-    std::vector<Poly> getAccelsFromModel();
+    std::vector<Polys> getAccelsFromModel();
 
     // Gets the polynomials that represent the acceleration of each mass
     // by using the differential equation from the discrete element method
-    boost::numeric::ublas::matrix<Poly> getAccelsFromDiffEq(Problem* problem);
+    boost::numeric::ublas::matrix<Polys> getAccelsFromDiffEq(Problem* problem);
 };

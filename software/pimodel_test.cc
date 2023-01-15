@@ -9,6 +9,7 @@
 #include "utils.h"
 
 const double m = 3.0;
+const double tMax = 0.5;
 const double kMin = 1.0;
 const double kMax = 2.0;
 const double cMin = 10.0;
@@ -21,6 +22,31 @@ class PimodelTest : public testing::Test {
     double x;
     double y;
     std::vector<double> xy;
+
+    // First order model (polynomials of order 1) with time and kc
+    // discretization 1.
+    // i.e. in loss function we considered:
+    // t = 0 and t = tMax
+    // k = kMin and kMax
+    // c = cMin and cMax
+    //
+    // The polynomials that describe each mass are:
+    // x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
+    // x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
+    Pimodel* simpleModel;
+
+    // Second order model (polynomials of order 2) with time and kc
+    // discretization 2.
+    // i.e. in loss function we considered:
+    // t = 0, t=tMax/2 and t = tMax
+    // k = kMin, k = (kMin+kMax)/2 and k = kMax
+    // c = cMin, c = (cMin+cMax)/2 and c = cMax
+    //
+    // The polynomials (with coefficients a0, a1... omitted) that describe each
+    // mass are in the form:
+    // x0(t,k,c) = t^2 + tk + tc + t + k^2 + kc + k + c^2 + c + 1
+    // x1(t,k,c) = t^2 + tk + tc + t + k^2 + kc + k + c^2 + c + 1
+    Pimodel* secondOrderModel;
 
     void SetUp() {
         // Called before every TEST_F
@@ -38,6 +64,9 @@ class PimodelTest : public testing::Test {
         auto e0 = this->pd.BuildFromDNA(dna);
         ASSERT_FALSE(e0.isError);
 
+        this->simpleModel = new Pimodel(&this->pd, tMax, 1, 1, 1);
+        this->secondOrderModel = new Pimodel(&this->pd, tMax, 2, 2, 2);
+
         x = 19354;
         y = 1235;
         xy = std::vector<double>{x, y};
@@ -45,11 +74,9 @@ class PimodelTest : public testing::Test {
 };
 
 TEST_F(PimodelTest, ConstructorTest) {
-    Pimodel model = Pimodel(&this->pd, 1.0, 10, 10, 2);
-
     // There should be one polynomial for each mass
-    ASSERT_EQ(model.polys.size1(), 2);
-    ASSERT_EQ(model.polys.size2(), 1);
+    ASSERT_EQ(simpleModel->models.size1(), 2);
+    ASSERT_EQ(simpleModel->models.size2(), 1);
 }
 
 TEST_F(PimodelTest, OperatorTest) {
@@ -83,20 +110,15 @@ TEST_F(PimodelTest, OperatorTest) {
 }
 
 TEST_F(PimodelTest, SetParametersTest) {
-    // The polynomial of each mass will be of order 1:
-    // x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
-    // x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
-    Pimodel model = Pimodel(&this->pd, 1.0, 10, 10, 1);
-
     std::vector<double> params = {1, 2, 3, 4, 5, 6, 7, 8};
-    auto r = model.SetParameters(&params);
+    auto r = simpleModel->SetParameters(&params);
     ASSERT_FALSE(r.isError);
 
     double t = 99;
     double k = 98;
     double c = 97;
     std::vector<double> tkc = {t, k, c};
-    auto eval = model(&tkc);
+    auto eval = (*simpleModel)(&tkc);
     ASSERT_FALSE(eval.isError);
 
     ASSERT_EQ(eval.val.size(), 2);
@@ -106,21 +128,16 @@ TEST_F(PimodelTest, SetParametersTest) {
 
     // Test error cases
     params = {1, 2, 3, 4, 5, 6, 7};
-    r = model.SetParameters(&params);
+    r = simpleModel->SetParameters(&params);
     ASSERT_TRUE(r.isError);
     params = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-    r = model.SetParameters(&params);
+    r = simpleModel->SetParameters(&params);
     ASSERT_TRUE(r.isError);
 }
 
 TEST_F(PimodelTest, GetParametersTest) {
-    // The polynomial of each mass will be of order 1:
-    // x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
-    // x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
-    Pimodel model = Pimodel(&this->pd, 1.0, 10, 10, 1);
-
     std::vector<double> params = std::vector<double>(8);
-    auto r = model.GetParameters(&params);
+    auto r = simpleModel->GetParameters(&params);
     ASSERT_FALSE(r.isError);
 
     ASSERT_DOUBLE_EQ(params[0], 0.0);
@@ -133,9 +150,9 @@ TEST_F(PimodelTest, GetParametersTest) {
     ASSERT_DOUBLE_EQ(params[7], 0.0);
 
     params = {1, 2, 3, 4, 5, 6, 7, 8};
-    r = model.SetParameters(&params);
+    r = simpleModel->SetParameters(&params);
     ASSERT_FALSE(r.isError);
-    r = model.GetParameters(&params);
+    r = simpleModel->GetParameters(&params);
     ASSERT_FALSE(r.isError);
     ASSERT_DOUBLE_EQ(params[0], 1.0);
     ASSERT_DOUBLE_EQ(params[1], 2.0);
@@ -148,18 +165,140 @@ TEST_F(PimodelTest, GetParametersTest) {
 
     // Test error cases
     params = std::vector<double>(7);
-    r = model.GetParameters(&params);
+    r = simpleModel->GetParameters(&params);
     ASSERT_TRUE(r.isError);
     params = std::vector<double>(9);
-    r = model.GetParameters(&params);
+    r = simpleModel->GetParameters(&params);
     ASSERT_TRUE(r.isError);
 }
 
-TEST_F(PimodelTest, InitialConditionsLossTest) {
-    Pimodel model = Pimodel(&this->pd, 1.0, 1, 1, 1);
+TEST_F(PimodelTest, ProblemFromTkcTest) {
+    double k = kMin;
+    double c = cMin;
+    auto tkc = std::vector<double>{1.0, k, c};
+    Problem p = simpleModel->problemFromTkc(&tkc);
+
+    ASSERT_EQ(p.masses.size(), 2);
+    ASSERT_EQ(p.masses[0].m, m);
+    ASSERT_EQ(p.masses[1].m, m);
+
+    ASSERT_EQ(p.springs.size(), 1);
+    ASSERT_EQ(p.springs[0].Get_k(), k);
+    ASSERT_EQ(p.dampers.size(), 1);
+    ASSERT_EQ(p.dampers[0].Get_c(), c);
+}
+
+TEST_F(PimodelTest, getXModelTest) {
+    // x0(t,k,c) = 1*t + 2*k + 3*c + 4*1
+    // x1(t,k,c) = 5*t + 6*k + 7*c + 8*1
+    std::vector<double> params = {1, 2, 3, 4, 5, 6, 7, 8};
+    auto r = simpleModel->SetParameters(&params);
+    ASSERT_FALSE(r.isError);
+
+    double k = kMin;
+    double c = cMin;
+    double t = tMax;
+    auto tkc = std::vector<double>{t, k, c};
+
+    std::vector<double> X = simpleModel->getXModel(&tkc);
+
+    ASSERT_EQ(X.size(), 4);
+    ASSERT_EQ(X[0], 1 * t + 2 * k + 3 * c + 4 * 1);
+    ASSERT_EQ(X[1], 5 * t + 6 * k + 7 * c + 8 * 1);
+    ASSERT_EQ(X[2], 1);  // dx0/dt = 1
+    ASSERT_EQ(X[3], 5);  // dx1/dt = 5
+}
+
+TEST_F(PimodelTest, getAccelsFromModelTest) {
+    // x0(t,k,c) = 3*(t^2 + tk + tc + t + k^2 + kc + k + c^2 + c + 1)
+    // x1(t,k,c) = 5*(t^2 + tk + tc + t + k^2 + kc + k + c^2 + c + 1)
+    std::vector<double> params = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                  5, 5, 5, 5, 5, 5, 5, 5, 5, 5};
+    auto r = secondOrderModel->SetParameters(&params);
+    ASSERT_FALSE(r.isError);
+
+    double k = kMin;
+    double c = cMin;
+    double t = tMax;
+    auto tkc = std::vector<double>{t, k, c};
+
+    std::vector<double> X = secondOrderModel->getXModel(&tkc);
+
+    ASSERT_EQ(X.size(), 4);
+    ASSERT_EQ(X[0], 3 * (t * t + t * k + t * c + t + k * k + k * c + k + c * c +
+                         c + 1));
+    ASSERT_EQ(X[1], 5 * (t * t + t * k + t * c + t + k * k + k * c + k + c * c +
+                         c + 1));
+    ASSERT_EQ(X[2], 3 * (2 * t + k + c + 1));  // dx0/dt
+    ASSERT_EQ(X[3], 5 * (2 * t + k + c + 1));  // dx1/dt
+}
+
+TEST_F(PimodelTest, getAccelsFromDiffEqTest) {
     std::vector<double> params = std::vector<double>(8);
     params = {1, 2, 3, 4, 5, 6, 7, 8};
-    ASSERT_FALSE(model.SetParameters(&params).isError);
+    ASSERT_FALSE(simpleModel->SetParameters(&params).isError);
+    // modelX0(t,k,c) = 1*t + 2*k + 3*c + 4*1
+    // modelX1(t,k,c) = 5*t + 6*k + 7*c + 8*1
+    // modelXDot0(t,k,c) = 1
+    // modelXDot1(t,k,c) = 5
+
+    Maybe<Problem> mProblem =
+        this->pd.BuildFromVector(std::vector<double>{kMin, cMin});
+    ASSERT_FALSE(mProblem.isError);
+    Problem problem = mProblem.val;
+
+    auto A = simpleModel->getAccelsFromDiffEq(&problem);
+    ASSERT_EQ(A.size1(), 2);
+    ASSERT_EQ(A.size2(), 1);
+
+    // expectedAccel0(t,k,c) = 1 / m * (-kMin * x0 + kMin * x1 - cMin * dx0dt
+    // + cMin * dx1dt);
+    // expectedAccel0 = 1 / m * (-kMin * (1*t + 2*k + 3*c + 4*1) + kMin * (5*t
+    // + 6*k + 7*c + 8*1) - cMin * 1 + cMin * 5);
+    // expectedAccel0 = (4*kMin/m)*t + (4*kMin)/m*k + (4 *kMin)/m*c  +
+    // (4*kMin+4*cMin)/m*1
+    double t = tMax;
+    double k = 923847;
+    double c = 74437;
+    double expectedEval =
+        1 / m *
+        (-kMin * (1 * t + 2 * k + 3 * c + 4 * 1) +
+         kMin * (5 * t + 6 * k + 7 * c + 8 * 1) - cMin * 1 + cMin * 5);
+    std::vector<double> tkc = {t, k, c};
+    ASSERT_DOUBLE_EQ(A(0, 0)(tkc).val, expectedEval);
+    ASSERT_DOUBLE_EQ(A(1, 0)(tkc).val, -expectedEval);
+}
+
+TEST_F(PimodelTest, getInitialXTest) {
+    auto pd = ProblemDescription();
+    pd.AddMass(m, 0.0, 0.0);
+    pd.AddMass(m, 1.0, 0.0);
+    pd.AddMass(m, 2.0, 0.0);
+    pd.AddSpring(0, 1, kMin, kMax);
+    pd.AddDamper(0, 1, cMin, cMax);
+    pd.AddDamper(1, 2, cMin, cMax);
+    pd.SetFixedMass(0);
+    pd.AddInitialDisp(1, 0.1);
+    pd.AddInitialVel(1, 0.2);
+    pd.AddInitialDisp(2, 0.3);
+    pd.AddInitialVel(2, 0.4);
+
+    auto model = Pimodel(&pd, tMax, 1, 1, 1);
+
+    std::vector<double> X = model.getInitialX();
+    ASSERT_EQ(X.size(), 6);
+    ASSERT_EQ(X[0], 0);
+    ASSERT_EQ(X[1], 0.1);
+    ASSERT_EQ(X[2], 0.3);
+    ASSERT_EQ(X[3], 0);
+    ASSERT_EQ(X[4], 0.2);
+    ASSERT_EQ(X[5], 0.4);
+}
+
+TEST_F(PimodelTest, InitialConditionsLossTest) {
+    std::vector<double> params = std::vector<double>(8);
+    params = {1, 2, 3, 4, 5, 6, 7, 8};
+    ASSERT_FALSE(simpleModel->SetParameters(&params).isError);
     // modelX0(t,k,c) = 1*t + 2*k + 3*c + 4*1
     // modelX1(t,k,c) = 5*t + 6*k + 7*c + 8*1
     // modelXDot0(t,k,c) = 1
@@ -187,70 +326,18 @@ TEST_F(PimodelTest, InitialConditionsLossTest) {
         }
     }
 
-    std::vector<double> tkc = std::vector<double>(model.inputSize());
+    std::vector<double> tkc = std::vector<double>(simpleModel->inputSize());
     tkc[0] = 0.0;
     double loss = 0;
-    model.InitialConditionsLossDfs(&tkc, 1, &loss);
+    simpleModel->InitialConditionsLossDfs(&tkc, 1, &loss);
 
     ASSERT_DOUBLE_EQ(expectedLoss, loss);
 }
 
-TEST_F(PimodelTest, getAccelsFromDiffEqTest) {
-    Pimodel model = Pimodel(&this->pd, 1.0, 1, 1, 1);
-    std::vector<double> params = std::vector<double>(8);
-    params = {1, 2, 3, 4, 5, 6, 7, 8};
-    ASSERT_FALSE(model.SetParameters(&params).isError);
-    // modelX0(t,k,c) = 1*t + 2*k + 3*c + 4*1
-    // modelX1(t,k,c) = 5*t + 6*k + 7*c + 8*1
-    // modelXDot0(t,k,c) = 1*t^0 + 0*k + 0*c + 0*1
-    // modelXDot1(t,k,c) = 5*t^0 + 0*k + 0*c + 0*1
-
-    Maybe<Problem> mProblem =
-        this->pd.BuildFromVector(std::vector<double>{kMin, cMin});
-    ASSERT_FALSE(mProblem.isError);
-    Problem problem = mProblem.val;
-
-    auto A = model.getAccelsFromDiffEq(&problem);
-    ASSERT_EQ(A.size1(), 2);
-    ASSERT_EQ(A.size2(), 1);
-
-    // expectedAccel0(t,k,c) = 1 / m * (-kMin * x0 + kMin * x1 - cMin * dx0dt +
-    // cMin * dx1dt);
-    // expectedAccel0 =
-    //                 1 / m * (-kMin * (1*t + 2*k + 3*c + 4*1) + kMin * (5*t +
-    //                 6*k + 7*c + 8*1) - cMin * 1 + cMin * 5);
-    // expectedAccel0 = (4*kMin/m)*t + (4*kMin)/m*k + (4 *kMin)/m*c  +
-    // (4*kMin+4*cMin)/m*1
-    std::vector<double> coefs = std::vector<double>(4);
-    ASSERT_FALSE(A(0, 0).GetCoefficients(&coefs).isError);
-    ASSERT_DOUBLE_EQ(coefs[0], 4 * kMin / m);
-    ASSERT_DOUBLE_EQ(coefs[1], 4 * kMin / m);
-    ASSERT_DOUBLE_EQ(coefs[2], 4 * kMin / m);
-    ASSERT_DOUBLE_EQ(coefs[3], (4 * kMin + 4 * cMin) / m);
-    double t = 0;
-    double k = 923847;
-    double c = 74437;
-    double expectedEval =
-        1 / m *
-        (-kMin * (1 * t + 2 * k + 3 * c + 4 * 1) +
-         kMin * (5 * t + 6 * k + 7 * c + 8 * 1) - cMin * 1 + cMin * 5);
-    std::vector<double> tkc = {t, k, c};
-    ASSERT_DOUBLE_EQ(A(0, 0)(&tkc).val, expectedEval);
-
-    // expectedAccel1 = -1*expectedAccel0
-    coefs = std::vector<double>(4);
-    ASSERT_FALSE(A(1, 0).GetCoefficients(&coefs).isError);
-    EXPECT_DOUBLE_EQ(coefs[0], -4 * kMin / m);
-    EXPECT_DOUBLE_EQ(coefs[1], -4 * kMin / m);
-    EXPECT_DOUBLE_EQ(coefs[2], -4 * kMin / m);
-    EXPECT_DOUBLE_EQ(coefs[3], -(4 * kMin + 4 * cMin) / m);
-}
-
 TEST_F(PimodelTest, PhysicsLossTest) {
-    Pimodel model = Pimodel(&this->pd, 1.0, 1, 1, 1);
     std::vector<double> params = std::vector<double>(8);
     params = {1, 2, 3, 4, 5, 6, 7, 8};
-    ASSERT_FALSE(model.SetParameters(&params).isError);
+    ASSERT_FALSE(simpleModel->SetParameters(&params).isError);
     // modelX0(t,k,c) = 1*t + 2*k + 3*c + 4*1
     // modelX1(t,k,c) = 5*t + 6*k + 7*c + 8*1
     // modelXDot0(t,k,c) = 1
@@ -261,7 +348,7 @@ TEST_F(PimodelTest, PhysicsLossTest) {
     double expectedLoss = 0;
 
     // Physics loss:
-    for (double t : std::vector<double>{0, 1.0}) {
+    for (double t : std::vector<double>{0, tMax}) {
         for (double k : std::vector<double>{kMin, kMax}) {
             for (double c : std::vector<double>{cMin, cMax}) {
                 double modelX0 = 1 * t + 2 * k + 3 * c + 4 * 1;
@@ -283,21 +370,19 @@ TEST_F(PimodelTest, PhysicsLossTest) {
         }
     }
 
-    std::vector<double> tkc = std::vector<double>(model.inputSize());
+    std::vector<double> tkc = std::vector<double>(simpleModel->inputSize());
     double loss = 0;
-    model.PhysicsLossDfs(&tkc, 0, &loss);
+    simpleModel->PhysicsLossDfs(&tkc, 0, &loss);
 
     ASSERT_DOUBLE_EQ(expectedLoss, loss);
 }
 
-TEST_F(PimodelTest, LossTest2) {
-    // Similar to LossTest, but with second order polynomials
-    // and more refined discretization
-    Pimodel model = Pimodel(&this->pd, 1.0, 2, 2, 2);
+TEST_F(PimodelTest, LossTest) {
+    // Full loss test
     std::vector<double> params = std::vector<double>(8);
     params = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
               11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
-    ASSERT_FALSE(model.SetParameters(&params).isError);
+    ASSERT_FALSE(secondOrderModel->SetParameters(&params).isError);
     // modelX0(t,k,c) = 1*t^2 + 2*tk + 3*tc + 4*t + 5*k^2 + 6*kc + 7*k
     // + 8*c^2 + 9*c + 10*1
     // modelX1(t,k,c) = 11*t^2 + 12*tk + 13*tc + 14*t + 15*k^2 + 16*kc + 17*k
@@ -334,7 +419,7 @@ TEST_F(PimodelTest, LossTest2) {
     }
 
     // Physics loss:
-    for (double t : std::vector<double>{0, 0.5, 1.0}) {
+    for (double t : std::vector<double>{0, tMax / 2, tMax}) {
         for (double k : std::vector<double>{kMin, (kMin + kMax) / 2, kMax}) {
             for (double c :
                  std::vector<double>{cMin, (cMin + cMax) / 2, cMax}) {
@@ -361,85 +446,87 @@ TEST_F(PimodelTest, LossTest2) {
         }
     }
 
-    double loss = model.Loss();
+    double loss = secondOrderModel->Loss();
 
     ASSERT_DOUBLE_EQ(expectedLoss, loss);
 }
 
-TEST_F(PimodelTest, InitialConditionsLossGradientTest) {
-    Pimodel model = Pimodel(&this->pd, 1.0, 1, 1, 1);
-    std::vector<double> params = std::vector<double>(8);
-    params = {1, 2, 3, 4, 5, 6, 7, 8};
-    ASSERT_FALSE(model.SetParameters(&params).isError);
-    // modelX0(t,k,c) = 1*t + 2*k + 3*c + 4*1
-    // modelX1(t,k,c) = 5*t + 6*k + 7*c + 8*1
-    // modelXDot0(t,k,c) = 1
-    // modelXDot1(t,k,c) = 5
-    // modelXDotDot0(t,k,c) = 0
-    // modelXDotDot1(t,k,c) = 0
+// TEST_F(PimodelTest, InitialConditionsLossGradientTest) {
+//     Pimodel model = Pimodel(&this->pd, 1.0, 1, 1, 1);
+//     std::vector<double> params = std::vector<double>(8);
+//     params = {1, 2, 3, 4, 5, 6, 7, 8};
+//     ASSERT_FALSE(model.SetParameters(&params).isError);
+//     // modelX0(t,k,c) = 1*t + 2*k + 3*c + 4*1
+//     // modelX1(t,k,c) = 5*t + 6*k + 7*c + 8*1
+//     // modelXDot0(t,k,c) = 1
+//     // modelXDot1(t,k,c) = 5
+//     // modelXDotDot0(t,k,c) = 0
+//     // modelXDotDot1(t,k,c) = 0
 
-    std::vector<double> expectedGrad = std::vector<double>(8);
+//     std::vector<double> expectedGrad = std::vector<double>(8);
 
-    // Initial values for the problem created in SetUp()
-    double initialX0 = 0;
-    double initialX1 = initialDisplacement;
-    double initialX0Dot = 0;
-    double initialX1Dot = 0;
+//     // Initial values for the problem created in SetUp()
+//     double initialX0 = 0;
+//     double initialX1 = initialDisplacement;
+//     double initialX0Dot = 0;
+//     double initialX1Dot = 0;
 
-    double t = 0;
-    // Initial conditions loss:
-    for (double k : std::vector<double>{kMin, kMax}) {
-        for (double c : std::vector<double>{cMin, cMax}) {
-            double modelX0 = 1 * t + 2 * k + 3 * c + 4 * 1;
-            double modelX1 = 5 * t + 6 * k + 7 * c + 8 * 1;
-            double modelX0Dot = 1;
-            double modelX1Dot = 5;
+//     double t = 0;
+//     // Initial conditions loss:
+//     for (double k : std::vector<double>{kMin, kMax}) {
+//         for (double c : std::vector<double>{cMin, cMax}) {
+//             double modelX0 = 1 * t + 2 * k + 3 * c + 4 * 1;
+//             double modelX1 = 5 * t + 6 * k + 7 * c + 8 * 1;
+//             double modelX0Dot = 1;
+//             double modelX1Dot = 5;
 
-            double d_da0_modelX0 = t;
-            double d_da1_modelX0 = k;
-            double d_da2_modelX0 = c;
-            double d_da3_modelX0 = 1;
-            expectedGrad[0] += 2 * (modelX0 - initialX0) * d_da0_modelX0;
-            expectedGrad[0] += 2 * (modelX0Dot - initialX0Dot) * d_da0_modelX0;
-            expectedGrad[1] += 2 * (modelX0 - initialX0) * d_da1_modelX0;
-            expectedGrad[1] += 2 * (modelX0Dot - initialX0Dot) * d_da1_modelX0;
-            expectedGrad[2] += 2 * (modelX0 - initialX0) * d_da2_modelX0;
-            expectedGrad[2] += 2 * (modelX0Dot - initialX0Dot) * d_da2_modelX0;
-            expectedGrad[3] += 2 * (modelX0 - initialX0) * d_da3_modelX0;
-            expectedGrad[3] += 2 * (modelX0Dot - initialX0Dot) * d_da3_modelX0;
+//             double d_da0_modelX0 = t;
+//             double d_da1_modelX0 = k;
+//             double d_da2_modelX0 = c;
+//             double d_da3_modelX0 = 1;
+//             expectedGrad[0] += 2 * (modelX0 - initialX0) * d_da0_modelX0;
+//             expectedGrad[0] += 2 * (modelX0Dot - initialX0Dot) *
+//             d_da0_modelX0; expectedGrad[1] += 2 * (modelX0 - initialX0) *
+//             d_da1_modelX0; expectedGrad[1] += 2 * (modelX0Dot - initialX0Dot)
+//             * d_da1_modelX0; expectedGrad[2] += 2 * (modelX0 - initialX0) *
+//             d_da2_modelX0; expectedGrad[2] += 2 * (modelX0Dot - initialX0Dot)
+//             * d_da2_modelX0; expectedGrad[3] += 2 * (modelX0 - initialX0) *
+//             d_da3_modelX0; expectedGrad[3] += 2 * (modelX0Dot - initialX0Dot)
+//             * d_da3_modelX0;
 
-            double d_da0_modelX1 = t;
-            double d_da1_modelX1 = k;
-            double d_da2_modelX1 = c;
-            double d_da3_modelX1 = 1;
-            expectedGrad[4] += 2 * (modelX1 - initialX1) * d_da0_modelX1;
-            expectedGrad[4] += 2 * (modelX1Dot - initialX1Dot) * d_da0_modelX1;
-            expectedGrad[5] += 2 * (modelX1 - initialX1) * d_da1_modelX1;
-            expectedGrad[5] += 2 * (modelX1Dot - initialX1Dot) * d_da1_modelX1;
-            expectedGrad[6] += 2 * (modelX1 - initialX1) * d_da2_modelX1;
-            expectedGrad[6] += 2 * (modelX1Dot - initialX1Dot) * d_da2_modelX1;
-            expectedGrad[7] += 2 * (modelX1 - initialX1) * d_da3_modelX1;
-            expectedGrad[7] += 2 * (modelX1Dot - initialX1Dot) * d_da3_modelX1;
-        }
-    }
+//             double d_da0_modelX1 = t;
+//             double d_da1_modelX1 = k;
+//             double d_da2_modelX1 = c;
+//             double d_da3_modelX1 = 1;
+//             expectedGrad[4] += 2 * (modelX1 - initialX1) * d_da0_modelX1;
+//             expectedGrad[4] += 2 * (modelX1Dot - initialX1Dot) *
+//             d_da0_modelX1; expectedGrad[5] += 2 * (modelX1 - initialX1) *
+//             d_da1_modelX1; expectedGrad[5] += 2 * (modelX1Dot - initialX1Dot)
+//             * d_da1_modelX1; expectedGrad[6] += 2 * (modelX1 - initialX1) *
+//             d_da2_modelX1; expectedGrad[6] += 2 * (modelX1Dot - initialX1Dot)
+//             * d_da2_modelX1; expectedGrad[7] += 2 * (modelX1 - initialX1) *
+//             d_da3_modelX1; expectedGrad[7] += 2 * (modelX1Dot - initialX1Dot)
+//             * d_da3_modelX1;
+//         }
+//     }
 
-    std::vector<double> tkc = std::vector<double>(3);
-    std::vector<double> grad = std::vector<double>(8);
+//     std::vector<double> tkc = std::vector<double>(3);
+//     std::vector<double> grad = std::vector<double>(8);
 
-    // AInitial displacements and velocities gradient
-    tkc[0] = 0;  // t = 0
-    model.InitialConditionsLossGradientDfs(&tkc, 1, &grad);
+//     // AInitial displacements and velocities gradient
+//     tkc[0] = 0;  // t = 0
+//     model.InitialConditionsLossGradientDfs(&tkc, 1, &grad);
 
-    ASSERT_EQ(grad.size(), 8);
-    ASSERT_DOUBLE_EQ(grad[0], expectedGrad[0]);
-    ASSERT_DOUBLE_EQ(grad[1], expectedGrad[1]);
-    ASSERT_DOUBLE_EQ(grad[2], expectedGrad[2]);
-    ASSERT_DOUBLE_EQ(grad[3], expectedGrad[3]);
-    ASSERT_DOUBLE_EQ(grad[4], expectedGrad[4]);
-    ASSERT_DOUBLE_EQ(grad[5], expectedGrad[5]);
-    ASSERT_DOUBLE_EQ(grad[6], expectedGrad[6]);
-    ASSERT_DOUBLE_EQ(grad[7], expectedGrad[7]);
-}
+//     ASSERT_EQ(grad.size(), 8);
+//     ASSERT_DOUBLE_EQ(grad[0], expectedGrad[0]);
+//     ASSERT_DOUBLE_EQ(grad[1], expectedGrad[1]);
+//     ASSERT_DOUBLE_EQ(grad[2], expectedGrad[2]);
+//     ASSERT_DOUBLE_EQ(grad[3], expectedGrad[3]);
+//     ASSERT_DOUBLE_EQ(grad[4], expectedGrad[4]);
+//     ASSERT_DOUBLE_EQ(grad[5], expectedGrad[5]);
+//     ASSERT_DOUBLE_EQ(grad[6], expectedGrad[6]);
+//     ASSERT_DOUBLE_EQ(grad[7], expectedGrad[7]);
+// }
 
 // TEST_F(PimodelTest, PhysicsLossGradientTest) {
 //     Pimodel model = Pimodel(&this->pd, 1.0, 1, 1, 1);

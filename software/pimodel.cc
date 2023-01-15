@@ -26,13 +26,13 @@ Pimodel::Pimodel(ProblemDescription* p, double finalT, int timeDiscretization,
     // the system. The first polynomial represents the position of the first
     // mass , and so on. The input of each polynomial is the values of the
     // springs, the dampers, and time.
-    this->polys = bst::matrix<Poly>(p->NumberOfMasses(), 1);
+    this->models = bst::matrix<Poly>(p->NumberOfMasses(), 1);
     Poly poly;
     Maybe<Void> r;
     for (int i = 0; i < p->NumberOfMasses(); i++) {
         r = poly.Build(nSprings + nDampers + 1, order);
         assert(!r.isError);
-        this->polys(i, 0) = poly;
+        this->models(i, 0) = poly;
     }
 
     this->finalT = finalT;
@@ -55,7 +55,7 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
         std::vector<double>(this->p->NumberOfMasses());
     Maybe<double> position;
     for (int i = 0; i < int(positions.size()); i++) {
-        position = this->polys(i, 0)(tkc);
+        position = this->models(i, 0)(*tkc);
         assert(!position.isError);
         positions[i] = position.val;
     }
@@ -64,31 +64,19 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
 }
 
 int Pimodel::nParameters() {
-    return this->polys(0, 0).nMonomials() * this->p->NumberOfMasses();
-}
-
-Maybe<Void> Pimodel::GetParameters(std::vector<double>* target) {
-    Maybe<Void> r;
-    if (int(target->size()) != this->nParameters()) {
-        r.isError = true;
-        r.errMsg = "Invalid target length";
-        return r;
+    // Optimization: assume all polynomials have the same order (hence, same
+    // numer of monomials), so that this function becomes O(1), and not O(n).
+    // This is currently the case, but we might want to change this in the
+    // future.
+    bool optimize = true;
+    if (optimize) {
+        return this->models(0, 0).nMonomials() * this->p->NumberOfMasses();
     }
-
-    int nTerms = this->polys(0, 0).nMonomials();
-    std::vector<double> coefs = std::vector<double>(nTerms);
-    int targetI = 0;
+    int rv = 0;
     for (int pIndex = 0; pIndex < this->p->NumberOfMasses(); pIndex++) {
-        r = this->polys(pIndex, 0).GetCoefficients(&coefs);
-        if (r.isError) {
-            return r;
-        }
-        for (int i = 0; i < nTerms; i++) {
-            target->at(targetI) = coefs[i];
-            targetI += 1;
-        }
+        rv += this->models(pIndex, 0).nMonomials();
     }
-    return r;
+    return rv;
 }
 
 Maybe<Void> Pimodel::SetParameters(std::vector<double>* parameters) {
@@ -99,65 +87,81 @@ Maybe<Void> Pimodel::SetParameters(std::vector<double>* parameters) {
         return r;
     }
 
-    int nTerms = this->polys(0, 0).nMonomials();
-    std::vector<double> coefs = std::vector<double>(nTerms);
     int parametersI = 0;
+    Maybe<double> Dai;
     for (int pIndex = 0; pIndex < this->p->NumberOfMasses(); pIndex++) {
-        for (int i = 0; i < nTerms; i++) {
-            coefs[i] = parameters->at(parametersI);
+        for (int m = 0; m < this->models(pIndex, 0).nMonomials(); m++) {
+            this->models(pIndex, 0).monomials[m].a =
+                parameters->at(parametersI);
             parametersI += 1;
         }
-        r = this->polys(pIndex, 0).SetCoefficients(&coefs);
-        if (r.isError) {
-            return r;
+    }
+    return r;
+}
+
+Maybe<Void> Pimodel::GetParameters(std::vector<double>* target) {
+    Maybe<Void> r;
+    if (int(target->size()) != this->nParameters()) {
+        r.isError = true;
+        r.errMsg = "Invalid target length";
+        return r;
+    }
+
+    int targetI = 0;
+    Maybe<double> Dai;
+    for (int pIndex = 0; pIndex < this->p->NumberOfMasses(); pIndex++) {
+        for (int m = 0; m < this->models(pIndex, 0).nMonomials(); m++) {
+            target->at(targetI) = this->models(pIndex, 0).monomials[m].a;
+            targetI += 1;
         }
     }
     return r;
 }
 
 Problem Pimodel::problemFromTkc(std::vector<double>* tkc) {
-    std::vector<double> DNA = std::vector<double>(tkc->size() - 1);
-    std::copy(tkc->begin() + 1, tkc->end(), DNA.begin());
-    Maybe<Problem> problem = this->p->BuildFromVector(DNA);
+    std::vector<double> kc = std::vector<double>(tkc->size() - 1);
+    std::copy(tkc->begin() + 1, tkc->end(), kc.begin());
+    Maybe<Problem> problem = this->p->BuildFromVector(kc);
     assert(!problem.isError);
     return problem.val;
 }
 
 std::vector<double> Pimodel::getXModel(std::vector<double>* tkc) {
+    // X: State vector. Displacements followed by velocities.
     auto X = std::vector<double>(this->p->NumberOfMasses() * 2);
 
     Maybe<Void> err;
     Maybe<double> eval;
     for (int i = 0; i < this->p->NumberOfMasses(); i++) {
-        // Fill positions
-        eval = this->polys(i, 0)(tkc);
+        // Fill displacements
+        eval = this->models(i, 0)(*tkc);
         assert(!eval.isError);
         X[i] = eval.val;
     }
     Poly dp_dt;
     for (int i = 0; i < this->p->NumberOfMasses(); i++) {
         // Fill velocities
-        dp_dt = this->polys(i, 0);
+        dp_dt = this->models(i, 0);
         err = dp_dt.Dxi(0);
         assert(!err.isError);
-        eval = dp_dt(tkc);
+        eval = dp_dt(*tkc);
         assert(!eval.isError);
         X[Problem::GetMassVelIndex(this->p->NumberOfMasses(), i)] = eval.val;
     }
     return X;
 }
 
-std::vector<Poly> Pimodel::getAccelsFromModel() {
-    std::vector<Poly> A = std::vector<Poly>(this->p->NumberOfMasses());
+std::vector<Polys> Pimodel::getAccelsFromModel() {
+    std::vector<Polys> A = std::vector<Polys>(this->p->NumberOfMasses());
     for (int i = 0; i < this->p->NumberOfMasses(); i++) {
-        A[i] = this->polys(i, 0);
+        A[i] = Polys(this->models(i, 0));
         assert(!A[i].Dxi(0).isError);
         assert(!A[i].Dxi(0).isError);
     }
     return A;
 }
 
-bst::matrix<Poly> Pimodel::getAccelsFromDiffEq(Problem* problem) {
+bst::matrix<Polys> Pimodel::getAccelsFromDiffEq(Problem* problem) {
     // See SetXDot at problem.h for reference
     int nMasses = problem->masses.size();
     std::vector<double> coefs = std::vector<double>(4);
@@ -166,27 +170,14 @@ bst::matrix<Poly> Pimodel::getAccelsFromDiffEq(Problem* problem) {
     bst::matrix<Poly> Disps = bst::matrix<Poly>(nMasses, 1);
     bst::matrix<Poly> Vels = bst::matrix<Poly>(nMasses, 1);
     for (int i = 0; i < nMasses; i++) {
-        Disps(i, 0) = this->polys(i, 0);
-        Disps(i, 0).GetCoefficients(&coefs);
-        Vels(i, 0) = this->polys(i, 0);
-        Vels(i, 0).GetCoefficients(&coefs);
+        Disps(i, 0) = this->models(i, 0);
+        Vels(i, 0) = this->models(i, 0);
         assert(!Vels(i, 0).Dxi(0).isError);
-        Vels(i, 0).GetCoefficients(&coefs);
     }
 
-    Disps(0, 0).GetCoefficients(&coefs);
-    Disps(1, 0).GetCoefficients(&coefs);
-    double k = problem->K(0, 0);
-    k = problem->K(0, 1);
-    k = problem->K(1, 0);
-    k = problem->K(1, 1);
-    matrix<Poly> kx = prod(problem->K, Disps);
-    kx(0, 0).GetCoefficients(&coefs);
-    kx(1, 0).GetCoefficients(&coefs);
-    matrix<Poly> cxDot = prod(problem->C, Vels);
-    cxDot(0, 0).GetCoefficients(&coefs);
-    cxDot(1, 0).GetCoefficients(&coefs);
-    matrix<Poly> Accels = prod(problem->MInv, kx + cxDot);
+    matrix<Polys> kx = prod(problem->K, Disps);
+    matrix<Polys> cxDot = prod(problem->C, Vels);
+    matrix<Polys> Accels = prod(problem->MInv, kx + cxDot);
     return Accels;
 }
 
@@ -207,49 +198,6 @@ std::vector<double> Pimodel::getInitialX() {
         initialX[Problem::GetMassVelIndex(nMasses, massId)] = 0;
     }
     return initialX;
-}
-
-void Pimodel::PhysicsLossDfs(std::vector<double>* tkc, int tkcIndex,
-                             double* loss) {
-    if (tkcIndex == int(tkc->size())) {
-        Problem problem = this->problemFromTkc(tkc);
-
-        bst::matrix<Poly> AccelsFromDiffEq = getAccelsFromDiffEq(&problem);
-
-        std::vector<Poly> AccelsFromModel = this->getAccelsFromModel();
-
-        Maybe<double> residueEval;
-        Poly residue;
-        for (int m = 0; m < int(p->masses.size()); m++) {
-            residue = AccelsFromModel[m] + (-1) * AccelsFromDiffEq(m, 0);
-            residueEval = residue(tkc);
-            assert(!residueEval.isError);
-            (*loss) = (*loss) + pow(residueEval.val, 2);
-        }
-        return;
-    }
-
-    double min;
-    double max;
-    int discretization;
-    if (tkcIndex == 0) {
-        min = 0;
-        max = this->finalT;
-        discretization = this->timeDiscretization;
-    } else {
-        if (tkcIndex - 1 < int(this->p->springs.size())) {
-            min = this->p->springs[tkcIndex - 1].kMin;
-            max = this->p->springs[tkcIndex - 1].kMax;
-        } else {
-            min = this->p->dampers[tkcIndex - 1 - this->p->springs.size()].cMin;
-            max = this->p->dampers[tkcIndex - 1 - this->p->springs.size()].cMax;
-        }
-        discretization = this->kcDiscretization;
-    }
-    for (int i = 0; i <= this->kcDiscretization; i++) {
-        tkc->at(tkcIndex) = min + (max - min) / this->kcDiscretization * i;
-        this->PhysicsLossDfs(tkc, tkcIndex + 1, loss);
-    }
 }
 
 void Pimodel::InitialConditionsLossDfs(std::vector<double>* tkc, int tkcIndex,
@@ -293,7 +241,48 @@ void Pimodel::InitialConditionsLossDfs(std::vector<double>* tkc, int tkcIndex,
         this->InitialConditionsLossDfs(tkc, tkcIndex + 1, loss);
     }
 }
+void Pimodel::PhysicsLossDfs(std::vector<double>* tkc, int tkcIndex,
+                             double* loss) {
+    if (tkcIndex == int(tkc->size())) {
+        Problem problem = this->problemFromTkc(tkc);
 
+        bst::matrix<Polys> AccelsFromDiffEq = getAccelsFromDiffEq(&problem);
+
+        std::vector<Polys> AccelsFromModel = this->getAccelsFromModel();
+
+        Maybe<double> residueEval;
+        Polys residue;
+        for (int m = 0; m < int(p->masses.size()); m++) {
+            residue = AccelsFromModel[m] + (-1.0) * AccelsFromDiffEq(m, 0);
+            residueEval = residue(*tkc);
+            assert(!residueEval.isError);
+            (*loss) = (*loss) + pow(residueEval.val, 2);
+        }
+        return;
+    }
+
+    double min;
+    double max;
+    int discretization;
+    if (tkcIndex == 0) {
+        min = 0;
+        max = this->finalT;
+        discretization = this->timeDiscretization;
+    } else {
+        if (tkcIndex - 1 < int(this->p->springs.size())) {
+            min = this->p->springs[tkcIndex - 1].kMin;
+            max = this->p->springs[tkcIndex - 1].kMax;
+        } else {
+            min = this->p->dampers[tkcIndex - 1 - this->p->springs.size()].cMin;
+            max = this->p->dampers[tkcIndex - 1 - this->p->springs.size()].cMax;
+        }
+        discretization = this->kcDiscretization;
+    }
+    for (int i = 0; i <= discretization; i++) {
+        tkc->at(tkcIndex) = min + (max - min) / discretization * i;
+        this->PhysicsLossDfs(tkc, tkcIndex + 1, loss);
+    }
+}
 double Pimodel::Loss() {
     std::vector<double> tkc = std::vector<double>(this->inputSize());
     double loss = 0;
@@ -410,8 +399,13 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
                        initialX[Problem::GetMassDispIndex(nMasses, m)]);
 
             std::vector<double> piGrad =
-                std::vector<double>(this->polys(m, 0).nMonomials());
-            this->polys(m, 0).Da(tkc, &piGrad);
+                std::vector<double>(this->models(m, 0).nMonomials());
+            Maybe<double> maybeDouble;
+            for (int a = 0; a < this->models(m, 0).nMonomials(); a++) {
+                maybeDouble = this->models(m, 0).Dai(a, *tkc);
+                assert(!maybeDouble.isError);
+                piGrad[a] = maybeDouble.val;
+            }
 
             for (int i = 0; i < int(piGrad.size()); i++) {
                 grad->at(gradIndex) += 2 * residue * piGrad[i];
@@ -425,10 +419,15 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
                        initialX[Problem::GetMassVelIndex(nMasses, m)]);
 
             std::vector<double> piGrad =
-                std::vector<double>(this->polys(m, 0).nMonomials());
-            pVel = this->polys(m, 0);
+                std::vector<double>(this->models(m, 0).nMonomials());
+            pVel = this->models(m, 0);
             assert(!pVel.Dxi(0).isError);
-            pVel.Da(tkc, &piGrad);
+            Maybe<double> maybeDouble;
+            for (int a = 0; a < pVel.nMonomials(); a++) {
+                maybeDouble = pVel.Dai(a, *tkc);
+                assert(!maybeDouble.isError);
+                piGrad[a] = maybeDouble.val;
+            }
 
             for (int i = 0; i < int(piGrad.size()); i++) {
                 grad->at(gradIndex) += 2 * residue * piGrad[i];
@@ -454,72 +453,71 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
     }
 }
 
-// THIS IS WRONG AND MUST BE FIXED
-// XDotDotFromDiffEq also depends on the parameters of the model,
-// thus it can't be treated like a constant as in the initial conditions loss
-// gradient
-void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
-                                     std::vector<double>* grad) {
-    if (tkcIndex == int(tkc->size())) {
-        Problem problem = this->problemFromTkc(tkc);
+// // THIS IS WRONG AND MUST BE FIXED
+// // XDotDotFromDiffEq also depends on the parameters of the model,
+// // thus it can't be treated like a constant as in the initial conditions loss
+// // gradient
+// void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
+//                                      std::vector<double>* grad) {
+//     if (tkcIndex == int(tkc->size())) {
+//         Problem problem = this->problemFromTkc(tkc);
 
-        bst::matrix<Poly> AccelsFromDiffEq = getAccelsFromDiffEq(&problem);
+//         bst::matrix<Poly> AccelsFromDiffEq = getAccelsFromDiffEq(&problem);
 
-        std::vector<Poly> AccelsFromModel = this->getAccelsFromModel();
+//         std::vector<Poly> AccelsFromModel = this->getAccelsFromModel();
 
-        int nMasses = problem.masses.size();
+//         int nMasses = problem.masses.size();
 
-        auto residueGrad = std::vector<double>(this->polys(0, 0).nMonomials());
-        Poly residue;
-        Maybe<double> residueEval;
-        int gradIndex = 0;
-        for (int m = 0; m < nMasses; m++) {
-            residue = AccelsFromModel[m] + (-1) * AccelsFromDiffEq(m, 0);
-            residueEval = residue(tkc);
-            assert(!residueEval.isError);
+//         auto residueGrad = std::vector<double>(this->models(0,
+//         0).nMonomials()); Poly residue; Maybe<double> residueEval; int
+//         gradIndex = 0; for (int m = 0; m < nMasses; m++) {
+//             residue = AccelsFromModel[m] + (-1) * AccelsFromDiffEq(m, 0);
+//             residueEval = residue(tkc);
+//             assert(!residueEval.isError);
 
-            residue.Da(tkc, &residueGrad);
-            for (int i = 0; i < int(residueGrad.size()); i++) {
-                grad->at(gradIndex) += 2 * (residueEval.val) * residueGrad[i];
-                gradIndex += 1;
-            }
-        }
-        return;
-    }
+//             residue.Da(tkc, &residueGrad);
+//             for (int i = 0; i < int(residueGrad.size()); i++) {
+//                 grad->at(gradIndex) += 2 * (residueEval.val) *
+//                 residueGrad[i]; gradIndex += 1;
+//             }
+//         }
+//         return;
+//     }
 
-    double min;
-    double max;
-    int discretization;
-    if (tkcIndex == 0) {
-        min = 0;
-        max = this->finalT;
-        discretization = this->timeDiscretization;
-    } else {
-        if (tkcIndex - 1 < int(this->p->springs.size())) {
-            min = this->p->springs[tkcIndex - 1].kMin;
-            max = this->p->springs[tkcIndex - 1].kMax;
-        } else {
-            min = this->p->dampers[tkcIndex - 1 - this->p->springs.size()].cMin;
-            max = this->p->dampers[tkcIndex - 1 - this->p->springs.size()].cMax;
-        }
-        discretization = this->kcDiscretization;
-    }
-    for (int i = 0; i <= discretization; i++) {
-        tkc->at(tkcIndex) = min + (max - min) / discretization * i;
-        this->PhysicsLossGradientDfs(tkc, tkcIndex + 1, grad);
-    }
-}
+//     double min;
+//     double max;
+//     int discretization;
+//     if (tkcIndex == 0) {
+//         min = 0;
+//         max = this->finalT;
+//         discretization = this->timeDiscretization;
+//     } else {
+//         if (tkcIndex - 1 < int(this->p->springs.size())) {
+//             min = this->p->springs[tkcIndex - 1].kMin;
+//             max = this->p->springs[tkcIndex - 1].kMax;
+//         } else {
+//             min = this->p->dampers[tkcIndex - 1 -
+//             this->p->springs.size()].cMin; max = this->p->dampers[tkcIndex -
+//             1 - this->p->springs.size()].cMax;
+//         }
+//         discretization = this->kcDiscretization;
+//     }
+//     for (int i = 0; i <= discretization; i++) {
+//         tkc->at(tkcIndex) = min + (max - min) / discretization * i;
+//         this->PhysicsLossGradientDfs(tkc, tkcIndex + 1, grad);
+//     }
+// }
 
 std::vector<double> Pimodel::LossGradient() {
-    std::vector<double> tkc = std::vector<double>(this->inputSize());
-    std::vector<double> grad = std::vector<double>(this->nParameters());
+    // std::vector<double> tkc = std::vector<double>(this->inputSize());
+    // std::vector<double> grad = std::vector<double>(this->nParameters());
 
-    // AInitial displacements and velocities gradient
-    tkc[0] = 0;  // t = 0
-    this->InitialConditionsLossGradientDfs(&tkc, 1, &grad);
+    // // AInitial displacements and velocities gradient
+    // tkc[0] = 0;  // t = 0
+    // this->InitialConditionsLossGradientDfs(&tkc, 1, &grad);
 
-    // Physics loss gradient
-    this->PhysicsLossGradientDfs(&tkc, 0, &grad);
+    // // Physics loss gradient
+    // this->PhysicsLossGradientDfs(&tkc, 0, &grad);
 
-    return grad;
+    // return grad;
 }
