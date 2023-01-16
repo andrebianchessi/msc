@@ -57,6 +57,7 @@ TEST(PolyConstructorTest, constructorTest) {
     ASSERT_FALSE(r.isError);
     ASSERT_EQ(p.monomials.size(), 1);
     ASSERT_EQ(p.monomials[0].a, 0);
+    ASSERT_EQ(p.monomials[0].k, 1);
     ASSERT_EQ(p.monomials[0].exps.size(), 0);
 
     // P = 0*x^2 + 0*xy + 0*x + 0*y^2 + 0*y + 0*1
@@ -65,31 +66,37 @@ TEST(PolyConstructorTest, constructorTest) {
     ASSERT_EQ(p.monomials.size(), 6);
     // 0*x^2
     ASSERT_EQ(p.monomials[0].a, 0);
+    ASSERT_EQ(p.monomials[0].k, 1);
     ASSERT_EQ(p.monomials[0].exps.size(), 2);
     ASSERT_EQ(p.monomials[0].exps[0], 2);
     ASSERT_EQ(p.monomials[0].exps[1], 0);
     // 0*xy
     ASSERT_EQ(p.monomials[1].a, 0);
+    ASSERT_EQ(p.monomials[1].k, 1);
     ASSERT_EQ(p.monomials[1].exps.size(), 2);
     ASSERT_EQ(p.monomials[1].exps[0], 1);
     ASSERT_EQ(p.monomials[1].exps[1], 1);
     // 0*x
     ASSERT_EQ(p.monomials[2].a, 0);
+    ASSERT_EQ(p.monomials[2].k, 1);
     ASSERT_EQ(p.monomials[2].exps.size(), 2);
     ASSERT_EQ(p.monomials[2].exps[0], 1);
     ASSERT_EQ(p.monomials[2].exps[1], 0);
     // 0*y^2
     ASSERT_EQ(p.monomials[3].a, 0);
+    ASSERT_EQ(p.monomials[3].k, 1);
     ASSERT_EQ(p.monomials[3].exps.size(), 2);
     ASSERT_EQ(p.monomials[3].exps[0], 0);
     ASSERT_EQ(p.monomials[3].exps[1], 2);
     // 0*y
     ASSERT_EQ(p.monomials[4].a, 0);
+    ASSERT_EQ(p.monomials[4].k, 1);
     ASSERT_EQ(p.monomials[4].exps.size(), 2);
     ASSERT_EQ(p.monomials[4].exps[0], 0);
     ASSERT_EQ(p.monomials[4].exps[1], 1);
     // 0*1
     ASSERT_EQ(p.monomials[5].a, 0);
+    ASSERT_EQ(p.monomials[5].k, 1);
     ASSERT_EQ(p.monomials[5].exps.size(), 2);
     ASSERT_EQ(p.monomials[5].exps[0], 0);
     ASSERT_EQ(p.monomials[5].exps[1], 0);
@@ -204,17 +211,25 @@ TEST_F(PolyTest, DxiTest) {
     ASSERT_TRUE(p.Dxi(-1).isError);
 
     p = n2o2;
-    // P = 1x^2 + 2xy + 3x + 4y^2 + 5y + 6
+    // P = a0x^2 + a1*xy + a2*x + a3*y^2 + a4*y + a5*1
     ASSERT_FALSE(p.Dxi(0).isError);
+    // P = 2*a0x + a1*y + a2 + 0*a3*y^2 + 0*a4*y + 0*a5*1
+    double a0 = 1;
+    double a1 = 2;
+    double a2 = 3;
     eval = p(xy);
     ASSERT_FALSE(eval.isError);
-    ASSERT_EQ(eval.val, 1.0 * 2 * x + 2.0 * y + 3.0);
+    ASSERT_EQ(eval.val, 2 * a0 * x + 1 * a1 * y + a2);
 
     p = n2o2;
+    // P = a0x^2 + a1*xy + a2*x + a3*y^2 + a4*y + a5*1
     ASSERT_FALSE(p.Dxi(1).isError);
+    // P = a1*x + 2*a3*y + a4
     eval = p(xy);
+    double a3 = 4;
+    double a4 = 5;
     ASSERT_FALSE(eval.isError);
-    ASSERT_EQ(eval.val, 2.0 * x + 4.0 * 2 * y + 5.0);
+    ASSERT_EQ(eval.val, a1 * x + 2 * a3 * y + a4);
 }
 
 TEST_F(PolyTest, DxiTest2) {
@@ -229,41 +244,43 @@ TEST_F(PolyTest, DxiTest2) {
     ASSERT_TRUE(p.Dxi(-1).isError);
     ASSERT_TRUE(p.Dxi(2).isError);
 
-    // n2o2 = 1x^2 + 2xy + 3x + 4y^2 + 5y + 6
-    // dn2o2/dx = 2x + 2y + 3 + 0 + 0 + 0
+    // a1 = 1, a2 = 2 ... a6 = 6
+    // n2o2 = a1x^2 + a2xy + a3x + a4y^2 + a5y + a6
+    // dn2o2/dx = 2*a1*x + 1*a2*y + 1*a3*1 + 0 + 0 + 0
     err = p.Dxi(0);
     ASSERT_FALSE(err.isError);
-    ASSERT_EQ(p.monomials[0].a, 2);
+    // Note Dxi does not change the a values
+    ASSERT_EQ(p.monomials[0].a, 1);
     ASSERT_EQ(p.monomials[1].a, 2);
     ASSERT_EQ(p.monomials[2].a, 3);
-    ASSERT_EQ(p.monomials[3].a, 0);
-    ASSERT_EQ(p.monomials[4].a, 0);
-    ASSERT_EQ(p.monomials[5].a, 0);
+    ASSERT_EQ(p.monomials[3].a, 4);
+    ASSERT_EQ(p.monomials[4].a, 5);
+    ASSERT_EQ(p.monomials[5].a, 6);
+    ASSERT_EQ(p.monomials[0].k, 2);
+    ASSERT_EQ(p.monomials[1].k, 1);
+    ASSERT_EQ(p.monomials[2].k, 1);
+    ASSERT_EQ(p.monomials[3].k, 0);
+    ASSERT_EQ(p.monomials[4].k, 0);
+    ASSERT_EQ(p.monomials[5].k, 0);
     ASSERT_DOUBLE_EQ(p(xy).val, 2 * x + 2 * y + 3);
 
-    // p = 2x + 2y + 3 + 0 + 0 + 0
-    // dp/dy = 0 + 2 + 0 + 0 + 0 + 0
+    // p = 2*a1*x + 1*a2*y + 1*a3*1 + 0 + 0 + 0
+    // dp/dy = 0 + 1*a2*1 + 0 + 0 + 0 + 0
     err = p.Dxi(1);
     ASSERT_FALSE(err.isError);
-    ASSERT_EQ(p.monomials[0].a, 0);
+    ASSERT_EQ(p.monomials[0].a, 1);
     ASSERT_EQ(p.monomials[1].a, 2);
-    ASSERT_EQ(p.monomials[2].a, 0);
-    ASSERT_EQ(p.monomials[3].a, 0);
-    ASSERT_EQ(p.monomials[4].a, 0);
-    ASSERT_EQ(p.monomials[5].a, 0);
+    ASSERT_EQ(p.monomials[2].a, 3);
+    ASSERT_EQ(p.monomials[3].a, 4);
+    ASSERT_EQ(p.monomials[4].a, 5);
+    ASSERT_EQ(p.monomials[5].a, 6);
+    ASSERT_EQ(p.monomials[0].k, 0);
+    ASSERT_EQ(p.monomials[1].k, 1);
+    ASSERT_EQ(p.monomials[2].k, 0);
+    ASSERT_EQ(p.monomials[3].k, 0);
+    ASSERT_EQ(p.monomials[4].k, 0);
+    ASSERT_EQ(p.monomials[5].k, 0);
     ASSERT_DOUBLE_EQ(p(xy).val, 2);
-
-    // p = 0 + 2 + 0 + 0 + 0 + 0
-    // dp/dx = 0 + 0 + 0 + 0 + 0 + 0
-    err = p.Dxi(0);
-    ASSERT_FALSE(err.isError);
-    ASSERT_EQ(p.monomials[0].a, 0);
-    ASSERT_EQ(p.monomials[1].a, 0);
-    ASSERT_EQ(p.monomials[2].a, 0);
-    ASSERT_EQ(p.monomials[3].a, 0);
-    ASSERT_EQ(p.monomials[4].a, 0);
-    ASSERT_EQ(p.monomials[5].a, 0);
-    ASSERT_DOUBLE_EQ(p(xy).val, 0.0);
 }
 
 TEST_F(PolyTest, DaTest) {
@@ -465,83 +482,130 @@ TEST_F(PolyTest, DxiPolysTest) {
 }
 
 TEST_F(PolyTest, DaPolysTest) {
-    double x = 8.1;
-    double y = 4.2;
+    double x = 7;
+    double y = 8;
     std::vector<double> xy = {x, y};
-    Maybe<double> eval;
+    std::map<std::tuple<int, int>, double> map;
     Polys ps;
-
-    ps = Polys(n2o2Zeros);
-    // Doesn't return error if polys doesn't contain poly with given id
-    eval = ps.Dai(100, 0, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, 0);
-    ASSERT_TRUE(ps.Dai(0, 6, xy).isError);
 
     ps = n2o2Zeros + n2o2Twos + 7.0 * n2o2;
     // ps = 0*x^2 + 0*xy + 0*x + 0*y^2 + 0*y + 0
     //      + 2*x^2 + 2*xy + 2*x + 2*y^2 + 2*y + 2
     //      + 7*(1x^2 + 2xy + 3x + 4y^2 + 5y + 6)
 
+    map = ps.Da(xy);
+    ASSERT_EQ(map.size(), 6 * 3);
+
     // p0
-    eval = ps.Dai(0, 0, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, x * x);
-    eval = ps.Dai(0, 1, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, x * y);
-    eval = ps.Dai(0, 2, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, x);
-    eval = ps.Dai(0, 3, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, y * y);
-    eval = ps.Dai(0, 4, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, y);
-    eval = ps.Dai(0, 5, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, 1);
+    auto val = map[std::tuple<int, int>{0, 0}];
+    ASSERT_DOUBLE_EQ(val, x * x);
+    val = map[std::tuple<int, int>{0, 1}];
+    ASSERT_DOUBLE_EQ(val, x * y);
+    val = map[std::tuple<int, int>{0, 2}];
+    ASSERT_DOUBLE_EQ(val, x);
+    val = map[std::tuple<int, int>{0, 3}];
+    ASSERT_DOUBLE_EQ(val, y * y);
+    val = map[std::tuple<int, int>{0, 4}];
+    ASSERT_DOUBLE_EQ(val, y);
+    val = map[std::tuple<int, int>{0, 5}];
+    ASSERT_DOUBLE_EQ(val, 1);
 
     // p1
-    eval = ps.Dai(1, 0, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, x * x);
-    eval = ps.Dai(1, 1, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, x * y);
-    eval = ps.Dai(1, 2, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, x);
-    eval = ps.Dai(1, 3, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, y * y);
-    eval = ps.Dai(1, 4, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, y);
-    eval = ps.Dai(1, 5, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, 1);
+    val = map[std::tuple<int, int>{1, 0}];
+    ASSERT_DOUBLE_EQ(val, x * x);
+    val = map[std::tuple<int, int>{1, 1}];
+    ASSERT_DOUBLE_EQ(val, x * y);
+    val = map[std::tuple<int, int>{1, 2}];
+    ASSERT_DOUBLE_EQ(val, x);
+    val = map[std::tuple<int, int>{1, 3}];
+    ASSERT_DOUBLE_EQ(val, y * y);
+    val = map[std::tuple<int, int>{1, 4}];
+    ASSERT_DOUBLE_EQ(val, y);
+    val = map[std::tuple<int, int>{1, 5}];
+    ASSERT_DOUBLE_EQ(val, 1);
 
     // p2
-    eval = ps.Dai(2, 0, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, 7 * x * x);
-    eval = ps.Dai(2, 1, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, 7 * x * y);
-    eval = ps.Dai(2, 2, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, 7 * x);
-    eval = ps.Dai(2, 3, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, 7 * y * y);
-    eval = ps.Dai(2, 4, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, 7 * y);
-    eval = ps.Dai(2, 5, xy);
-    ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val, 7 * 1);
+    val = map[std::tuple<int, int>{2, 0}];
+    ASSERT_DOUBLE_EQ(val, 7 * x * x);
+    val = map[std::tuple<int, int>{2, 1}];
+    ASSERT_DOUBLE_EQ(val, 7 * x * y);
+    val = map[std::tuple<int, int>{2, 2}];
+    ASSERT_DOUBLE_EQ(val, 7 * x);
+    val = map[std::tuple<int, int>{2, 3}];
+    ASSERT_DOUBLE_EQ(val, 7 * y * y);
+    val = map[std::tuple<int, int>{2, 4}];
+    ASSERT_DOUBLE_EQ(val, 7 * y);
+    val = map[std::tuple<int, int>{2, 5}];
+    ASSERT_DOUBLE_EQ(val, 7 * 1);
+
+    ps = n2o2Twos;
+    // a = 2
+    // ps = a*x^2 + a*xy + a*x + a*y^2 + a*y + a
+    ps.Dxi(0);
+    // ps = 2*a*x + 1*a*y + 1*a + 0*a*y^2 + 0*a*y + 0*a
+    ps += 5 * n2o2Twos;
+    // ps = (2*a*x + 1*a*y + 1*a + 0*a*y^2 + 0*a*y + 0*a)
+    //     +5*(a*x^2 + a*xy + a*x + a*y^2 + a*y + a)
+    ASSERT_EQ(ps.polys.size(), 2);
+
+    // dn2o2Twos/dx
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials.size(), 6);
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials[0].a, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials[1].a, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials[2].a, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials[3].a, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials[4].a, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials[5].a, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials[0].k, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials[1].k, 1);
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials[2].k, 1);
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials[3].k, 0);
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials[4].k, 0);
+    ASSERT_DOUBLE_EQ(ps.polys[0].monomials[5].k, 0);
+    ASSERT_EQ(ps.polys[0].monomials[0].exps[0], 1);
+    ASSERT_EQ(ps.polys[0].monomials[0].exps[1], 0);
+    ASSERT_EQ(ps.polys[0].monomials[1].exps[0], 0);
+    ASSERT_EQ(ps.polys[0].monomials[1].exps[1], 1);
+    ASSERT_EQ(ps.polys[0].monomials[2].exps[0], 0);
+    ASSERT_EQ(ps.polys[0].monomials[2].exps[1], 0);
+    ASSERT_EQ(ps.polys[0].monomials[3].exps[0], 0);
+    ASSERT_EQ(ps.polys[0].monomials[3].exps[1], 2);
+    ASSERT_EQ(ps.polys[0].monomials[4].exps[0], 0);
+    ASSERT_EQ(ps.polys[0].monomials[4].exps[1], 1);
+    ASSERT_EQ(ps.polys[0].monomials[5].exps[0], 0);
+    ASSERT_EQ(ps.polys[0].monomials[5].exps[1], 0);
+
+    // 5*dn2o2
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials.size(), 6);
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials[0].a, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials[1].a, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials[2].a, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials[3].a, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials[4].a, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials[5].a, 2);
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials[0].k, 1);
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials[1].k, 1);
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials[2].k, 1);
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials[3].k, 1);
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials[4].k, 1);
+    ASSERT_DOUBLE_EQ(ps.polys[1].monomials[5].k, 1);
+    ASSERT_EQ(ps.polys[1].monomials[0].exps[0], 2);
+    ASSERT_EQ(ps.polys[1].monomials[0].exps[1], 0);
+    ASSERT_EQ(ps.polys[1].monomials[1].exps[0], 1);
+    ASSERT_EQ(ps.polys[1].monomials[1].exps[1], 1);
+    ASSERT_EQ(ps.polys[1].monomials[2].exps[0], 1);
+    ASSERT_EQ(ps.polys[1].monomials[2].exps[1], 0);
+    ASSERT_EQ(ps.polys[1].monomials[3].exps[0], 0);
+    ASSERT_EQ(ps.polys[1].monomials[3].exps[1], 2);
+    ASSERT_EQ(ps.polys[1].monomials[4].exps[0], 0);
+    ASSERT_EQ(ps.polys[1].monomials[4].exps[1], 1);
+    ASSERT_EQ(ps.polys[1].monomials[5].exps[0], 0);
+    ASSERT_EQ(ps.polys[1].monomials[5].exps[1], 0);
+
+    map = ps.Da(xy);
+    // dps/da0 = 2*x + 5*x^2
+    val = map[std::tuple<int, int>{n2o2Twos.id, 0}];
+    ASSERT_DOUBLE_EQ(val, 2 * x + 5 * x * x);
 }
 
 TEST_F(PolyTest, EqualityOperatorTest) {

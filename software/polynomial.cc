@@ -13,6 +13,7 @@ Monomial::Monomial(std::vector<int> exps) {
         assert(e >= 0);
     }
     this->a = 0;
+    this->k = 1;
     this->exps = exps;
 }
 
@@ -24,7 +25,7 @@ Maybe<double> Monomial::operator()(std::vector<double>& X) const {
         return r;
     }
 
-    double prod = this->a;
+    double prod = this->k * this->a;
     for (int e = 0; e < int(this->exps.size()); e++) {
         prod *= pow(X.at(e), this->exps[e]);
     }
@@ -42,11 +43,11 @@ Maybe<Void> Monomial::Dxi(int i) {
     }
 
     if (this->exps.at(i) >= 1) {
-        this->a *= this->exps.at(i);
+        this->k *= this->exps.at(i);
         this->exps.at(i) -= 1;
         return r;
     }
-    this->a = 0;
+    this->k = 0;
     return r;
 }
 
@@ -57,8 +58,12 @@ Maybe<double> Monomial::Da(std::vector<double>& X) const {
         r.errMsg = "X of invalid length";
         return r;
     }
-    double prod = 1;
+    double prod = this->k;
     for (int e = 0; e < int(this->exps.size()); e++) {
+        if (prod == 0) {
+            // small optimization
+            break;
+        }
         prod *= pow(X.at(e), this->exps[e]);
     }
 
@@ -322,19 +327,23 @@ Maybe<Void> Polys::Dxi(int i) {
     return r;
 }
 
-Maybe<double> Polys::Dai(int pId, int i, std::vector<double>& X) const {
-    Maybe<double> r;
-    r.val = 0;
+std::map<std::tuple<int, int>, double> Polys::Da(std::vector<double>& X) const {
+    std::map<std::tuple<int, int>, double> map;
 
-    Maybe<double> maybeVal;
-    for (int pi = 0; pi < int(this->polys.size()); pi++) {
-        if (this->polys[pi].id == pId) {
-            maybeVal = this->polys[pi].Dai(i, X);
-            if (maybeVal.isError) {
-                return maybeVal;
+    Maybe<double> eval;
+    std::tuple<int, int> t;
+    int pId;
+    for (int p = 0; p < int(this->polys.size()); p++) {
+        for (int m = 0; m < this->polys[p].nMonomials(); m++) {
+            pId = this->polys[p].id;
+            t = std::tuple<int, int>{pId, m};
+            if (map.find(t) == map.end()) {
+                map.insert({t, 0.0});
             }
-            r.val += this->k[pi] * maybeVal.val;
+            eval = this->polys[p].Dai(m, X);
+            assert(!eval.isError);
+            map[t] += this->k[p] * eval.val;
         }
     }
-    return r;
+    return map;
 }

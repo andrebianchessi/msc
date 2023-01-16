@@ -77,6 +77,8 @@ TEST_F(PimodelTest, ConstructorTest) {
     // There should be one polynomial for each mass
     ASSERT_EQ(simpleModel->models.size1(), 2);
     ASSERT_EQ(simpleModel->models.size2(), 1);
+    ASSERT_EQ(simpleModel->models(0, 0).id, 0);
+    ASSERT_EQ(simpleModel->models(1, 0).id, 1);
 }
 
 TEST_F(PimodelTest, OperatorTest) {
@@ -451,82 +453,112 @@ TEST_F(PimodelTest, LossTest) {
     ASSERT_DOUBLE_EQ(expectedLoss, loss);
 }
 
-// TEST_F(PimodelTest, InitialConditionsLossGradientTest) {
-//     Pimodel model = Pimodel(&this->pd, 1.0, 1, 1, 1);
-//     std::vector<double> params = std::vector<double>(8);
-//     params = {1, 2, 3, 4, 5, 6, 7, 8};
-//     ASSERT_FALSE(model.SetParameters(&params).isError);
-//     // modelX0(t,k,c) = 1*t + 2*k + 3*c + 4*1
-//     // modelX1(t,k,c) = 5*t + 6*k + 7*c + 8*1
-//     // modelXDot0(t,k,c) = 1
-//     // modelXDot1(t,k,c) = 5
-//     // modelXDotDot0(t,k,c) = 0
-//     // modelXDotDot1(t,k,c) = 0
+TEST_F(PimodelTest, InitialConditionsLossGradientTest) {
+    Pimodel model = Pimodel(&this->pd, 1.0, 1, 1, 1);
+    std::vector<double> params = std::vector<double>(8);
+    double a0 = 13.0;
+    double a1 = 26.0;
+    double a2 = 332.0;
+    double a3 = 44.0;
+    double a4 = 56.0;
+    double a5 = 61.0;
+    double a6 = 722.0;
+    double a7 = 58.0;
+    params = {a0, a1, a2, a3, a4, a5, a6, a7};
+    ASSERT_FALSE(model.SetParameters(&params).isError);
+    // modelX0(t,k,c) = a0*t + a1*k + a2*c + a3*1
+    // modelX1(t,k,c) = a4*t + a5*k + a6*c + a7*1
+    // modelXDot0(t,k,c) = a0
+    // modelXDot1(t,k,c) = a4
+    // modelXDotDot0(t,k,c) = 0
+    // modelXDotDot1(t,k,c) = 0
 
-//     std::vector<double> expectedGrad = std::vector<double>(8);
+    std::vector<double> expectedGrad = std::vector<double>(8);
 
-//     // Initial values for the problem created in SetUp()
-//     double initialX0 = 0;
-//     double initialX1 = initialDisplacement;
-//     double initialX0Dot = 0;
-//     double initialX1Dot = 0;
+    // Initial values for the problem created in SetUp()
+    double initialX0 = 0;
+    double initialX1 = initialDisplacement;
+    double initialX0Dot = 0;
+    double initialX1Dot = 0;
 
-//     double t = 0;
-//     // Initial conditions loss:
-//     for (double k : std::vector<double>{kMin, kMax}) {
-//         for (double c : std::vector<double>{cMin, cMax}) {
-//             double modelX0 = 1 * t + 2 * k + 3 * c + 4 * 1;
-//             double modelX1 = 5 * t + 6 * k + 7 * c + 8 * 1;
-//             double modelX0Dot = 1;
-//             double modelX1Dot = 5;
+    double t = 0;
+    // Initial conditions loss:
+    for (double k : std::vector<double>{kMin, kMax}) {
+        for (double c : std::vector<double>{cMin, cMax}) {
+            double modelX0 = a0 * t + a1 * k + a2 * c + a3 * 1;
+            double modelX1 = a4 * t + a5 * k + a6 * c + a7 * 1;
+            double modelX0Dot = a0 * 1;
+            double modelX1Dot = a4 * 1;
 
-//             double d_da0_modelX0 = t;
-//             double d_da1_modelX0 = k;
-//             double d_da2_modelX0 = c;
-//             double d_da3_modelX0 = 1;
-//             expectedGrad[0] += 2 * (modelX0 - initialX0) * d_da0_modelX0;
-//             expectedGrad[0] += 2 * (modelX0Dot - initialX0Dot) *
-//             d_da0_modelX0; expectedGrad[1] += 2 * (modelX0 - initialX0) *
-//             d_da1_modelX0; expectedGrad[1] += 2 * (modelX0Dot - initialX0Dot)
-//             * d_da1_modelX0; expectedGrad[2] += 2 * (modelX0 - initialX0) *
-//             d_da2_modelX0; expectedGrad[2] += 2 * (modelX0Dot - initialX0Dot)
-//             * d_da2_modelX0; expectedGrad[3] += 2 * (modelX0 - initialX0) *
-//             d_da3_modelX0; expectedGrad[3] += 2 * (modelX0Dot - initialX0Dot)
-//             * d_da3_modelX0;
+            double d_da0_modelX0 = t;
+            double d_da1_modelX0 = k;
+            double d_da2_modelX0 = c;
+            double d_da3_modelX0 = 1;
+            double d_da0_modelX0Dot = 1;
+            double d_da1_modelX0Dot = 0;
+            double d_da2_modelX0Dot = 0;
+            double d_da3_modelX0Dot = 0;
 
-//             double d_da0_modelX1 = t;
-//             double d_da1_modelX1 = k;
-//             double d_da2_modelX1 = c;
-//             double d_da3_modelX1 = 1;
-//             expectedGrad[4] += 2 * (modelX1 - initialX1) * d_da0_modelX1;
-//             expectedGrad[4] += 2 * (modelX1Dot - initialX1Dot) *
-//             d_da0_modelX1; expectedGrad[5] += 2 * (modelX1 - initialX1) *
-//             d_da1_modelX1; expectedGrad[5] += 2 * (modelX1Dot - initialX1Dot)
-//             * d_da1_modelX1; expectedGrad[6] += 2 * (modelX1 - initialX1) *
-//             d_da2_modelX1; expectedGrad[6] += 2 * (modelX1Dot - initialX1Dot)
-//             * d_da2_modelX1; expectedGrad[7] += 2 * (modelX1 - initialX1) *
-//             d_da3_modelX1; expectedGrad[7] += 2 * (modelX1Dot - initialX1Dot)
-//             * d_da3_modelX1;
-//         }
-//     }
+            double d_da4_modelX1 = t;
+            double d_da5_modelX1 = k;
+            double d_da6_modelX1 = c;
+            double d_da7_modelX1 = 1;
+            double d_da4_modelX1Dot = 1;
+            double d_da5_modelX1Dot = 0;
+            double d_da6_modelX1Dot = 0;
+            double d_da7_modelX1Dot = 0;
 
-//     std::vector<double> tkc = std::vector<double>(3);
-//     std::vector<double> grad = std::vector<double>(8);
+            expectedGrad[0] += 2 * (modelX0 - initialX0) * d_da0_modelX0;
+            expectedGrad[0] +=
+                2 * (modelX0Dot - initialX0Dot) * d_da0_modelX0Dot;
 
-//     // AInitial displacements and velocities gradient
-//     tkc[0] = 0;  // t = 0
-//     model.InitialConditionsLossGradientDfs(&tkc, 1, &grad);
+            expectedGrad[1] += 2 * (modelX0 - initialX0) * d_da1_modelX0;
+            expectedGrad[1] +=
+                2 * (modelX0Dot - initialX0Dot) * d_da1_modelX0Dot;
 
-//     ASSERT_EQ(grad.size(), 8);
-//     ASSERT_DOUBLE_EQ(grad[0], expectedGrad[0]);
-//     ASSERT_DOUBLE_EQ(grad[1], expectedGrad[1]);
-//     ASSERT_DOUBLE_EQ(grad[2], expectedGrad[2]);
-//     ASSERT_DOUBLE_EQ(grad[3], expectedGrad[3]);
-//     ASSERT_DOUBLE_EQ(grad[4], expectedGrad[4]);
-//     ASSERT_DOUBLE_EQ(grad[5], expectedGrad[5]);
-//     ASSERT_DOUBLE_EQ(grad[6], expectedGrad[6]);
-//     ASSERT_DOUBLE_EQ(grad[7], expectedGrad[7]);
-// }
+            expectedGrad[2] += 2 * (modelX0 - initialX0) * d_da2_modelX0;
+            expectedGrad[2] +=
+                2 * (modelX0Dot - initialX0Dot) * d_da2_modelX0Dot;
+
+            expectedGrad[3] += 2 * (modelX0 - initialX0) * d_da3_modelX0;
+            expectedGrad[3] +=
+                2 * (modelX0Dot - initialX0Dot) * d_da3_modelX0Dot;
+
+            expectedGrad[4] += 2 * (modelX1 - initialX1) * d_da4_modelX1;
+            expectedGrad[4] +=
+                2 * (modelX1Dot - initialX1Dot) * d_da4_modelX1Dot;
+
+            expectedGrad[5] += 2 * (modelX1 - initialX1) * d_da5_modelX1;
+            expectedGrad[5] +=
+                2 * (modelX1Dot - initialX1Dot) * d_da5_modelX1Dot;
+
+            expectedGrad[6] += 2 * (modelX1 - initialX1) * d_da6_modelX1;
+            expectedGrad[6] +=
+                2 * (modelX1Dot - initialX1Dot) * d_da6_modelX1Dot;
+
+            expectedGrad[7] += 2 * (modelX1 - initialX1) * d_da7_modelX1;
+            expectedGrad[7] +=
+                2 * (modelX1Dot - initialX1Dot) * d_da7_modelX1Dot;
+        }
+    }
+
+    std::vector<double> tkc = std::vector<double>(3);
+    std::vector<double> grad = std::vector<double>(8);
+
+    // AInitial displacements and velocities gradient
+    tkc[0] = 0;  // t = 0
+    model.InitialConditionsLossGradientDfs(&tkc, 1, &grad);
+
+    ASSERT_EQ(grad.size(), 8);
+    EXPECT_DOUBLE_EQ(grad[0], expectedGrad[0]);
+    EXPECT_DOUBLE_EQ(grad[1], expectedGrad[1]);
+    EXPECT_DOUBLE_EQ(grad[2], expectedGrad[2]);
+    EXPECT_DOUBLE_EQ(grad[3], expectedGrad[3]);
+    EXPECT_DOUBLE_EQ(grad[4], expectedGrad[4]);
+    EXPECT_DOUBLE_EQ(grad[5], expectedGrad[5]);
+    EXPECT_DOUBLE_EQ(grad[6], expectedGrad[6]);
+    EXPECT_DOUBLE_EQ(grad[7], expectedGrad[7]);
+}
 
 // TEST_F(PimodelTest, PhysicsLossGradientTest) {
 //     Pimodel model = Pimodel(&this->pd, 1.0, 1, 1, 1);

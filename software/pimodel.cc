@@ -30,7 +30,7 @@ Pimodel::Pimodel(ProblemDescription* p, double finalT, int timeDiscretization,
     Poly poly;
     Maybe<Void> r;
     for (int i = 0; i < p->NumberOfMasses(); i++) {
-        r = poly.Build(nSprings + nDampers + 1, order);
+        r = poly.Build(nSprings + nDampers + 1, order, i);
         assert(!r.isError);
         this->models(i, 0) = poly;
     }
@@ -203,24 +203,31 @@ std::vector<double> Pimodel::getInitialX() {
 void Pimodel::InitialConditionsLossDfs(std::vector<double>* tkc, int tkcIndex,
                                        double* loss) {
     if (tkcIndex == int(tkc->size())) {
-        std::vector<double> XModel = this->getXModel(tkc);
-
         // Create a state vector with the true values of initial displacements
         // and velocities
         auto initialX = this->getInitialX();
 
+        Poly model;
+        Maybe<double> modelEval;
         // Update the loss value with the errors in initial displacement
         // and velocities
         int nMasses = this->p->masses.size();
         for (int m = 0; m < nMasses; m++) {
+            model = this->models(m, 0);
+            modelEval = model(*tkc);
+            assert(!modelEval.isError);
             (*loss) = (*loss) +
-                      pow(XModel[Problem::GetMassDispIndex(nMasses, m)] -
+                      pow(modelEval.val -
                               initialX[Problem::GetMassDispIndex(nMasses, m)],
                           2);
         }
         for (int m = 0; m < nMasses; m++) {
+            model = this->models(m, 0);
+            assert(!model.Dxi(0).isError);
+            modelEval = model(*tkc);
+            assert(!modelEval.isError);
             (*loss) = (*loss) +
-                      pow(XModel[Problem::GetMassVelIndex(nMasses, m)] -
+                      pow(modelEval.val -
                               initialX[Problem::GetMassVelIndex(nMasses, m)],
                           2);
         }
@@ -296,145 +303,51 @@ double Pimodel::Loss() {
     return loss;
 }
 
-// Maybe<Void> Da(std::vector<Poly>* polys, std::vector<double>* X,
-//                std::vector<double>* target) {
-//     Maybe<Void> r;
-//     for (int i = 0; i < int(polys->size()) - 1; i++) {
-//         if ((*polys)[i].n != (*polys)[i + 1].n) {
-//             r.isError = true;
-//             r.errMsg = "all polynomials must have the same number of inputs";
-//             return r;
-//         }
-//     }
-//     if (int(X->size()) != (*polys)[0].n) {
-//         r.isError = true;
-//         r.errMsg = "X of invalid length";
-//         return r;
-//     }
-//     int nTermsTotal = 0;
-//     for (int i = 0; i < int(polys->size()); i++) {
-//         nTermsTotal += (*polys)[i].nMonomials();
-//     }
-//     if (int(target->size()) != nTermsTotal) {
-//         r.isError = true;
-//         r.errMsg = "target must have same length as the number of terms";
-//         return r;
-//     }
-
-//     int gradIndex = 0;
-
-//     std::vector<double> piGrad;
-//     for (int pi = 0; pi < int((*polys).size()); pi++) {
-//         piGrad = std::vector<double>((*polys)[pi].nMonomials());
-//         (*polys)[pi].Da(X, &piGrad);
-//         for (int i = 0; i < int(piGrad.size()); i++) {
-//             target->at(gradIndex) += piGrad[i];
-//             gradIndex += 1;
-//         }
-//     }
-//     return r;
-// }
-
-// Maybe<Void> Da(boost::numeric::ublas::matrix<Poly>* polys,
-//                std::vector<double>* X, std::vector<double>* target) {
-//     Maybe<Void> r;
-//     if ((*polys).size2() != 1) {
-//         r.isError = true;
-//         r.errMsg = "(*polys) must be column matrix";
-//         return r;
-//     }
-//     for (int i = 0; i < int((*polys).size1()) - 1; i++) {
-//         if ((*polys)(i, 0).n != (*polys)(i + 1, 0).n) {
-//             r.isError = true;
-//             r.errMsg = "all polynomials must have the same number of inputs";
-//             return r;
-//         }
-//     }
-//     if (int(X->size()) != (*polys)(0, 0).n) {
-//         r.isError = true;
-//         r.errMsg = "X of invalid length";
-//         return r;
-//     }
-//     int nTermsTotal = 0;
-//     for (int i = 0; i < int((*polys).size1()); i++) {
-//         nTermsTotal += (*polys)(i, 0).nMonomials();
-//     }
-//     if (int(target->size()) != nTermsTotal) {
-//         r.isError = true;
-//         r.errMsg = "target must have same length as the number of terms";
-//         return r;
-//     }
-
-//     int gradIndex = 0;
-
-//     std::vector<double> piGrad;
-//     for (int pi = 0; pi < int((*polys).size1()); pi++) {
-//         piGrad = std::vector<double>((*polys)(pi, 0).nMonomials());
-//         (*polys)(pi, 0).Da(X, &piGrad);
-//         for (int i = 0; i < int(piGrad.size()); i++) {
-//             target->at(gradIndex) += piGrad[i];
-//             gradIndex += 1;
-//         }
-//     }
-//     return r;
-// }
-
 void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
                                                int tkcIndex,
                                                std::vector<double>* grad) {
     if (tkcIndex == int(tkc->size())) {
-        std::vector<double> XModel = this->getXModel(tkc);
-
         // Create a state vector with the true values of initial displacements
         // and velocities
         auto initialX = this->getInitialX();
 
-        int nMasses = p->masses.size();
-
-        // Set the gradient
-        double residue;
-        int gradIndex = 0;
-        for (int m = 0; m < nMasses; m++) {
-            residue = (XModel[Problem::GetMassDispIndex(nMasses, m)] -
-                       initialX[Problem::GetMassDispIndex(nMasses, m)]);
-
-            std::vector<double> piGrad =
-                std::vector<double>(this->models(m, 0).nMonomials());
-            Maybe<double> maybeDouble;
-            for (int a = 0; a < this->models(m, 0).nMonomials(); a++) {
-                maybeDouble = this->models(m, 0).Dai(a, *tkc);
-                assert(!maybeDouble.isError);
-                piGrad[a] = maybeDouble.val;
-            }
-
-            for (int i = 0; i < int(piGrad.size()); i++) {
-                grad->at(gradIndex) += 2 * residue * piGrad[i];
-                gradIndex += 1;
-            }
+        Maybe<double> eval;
+        Polys lossPolys = Polys();
+        // Update the loss value with the errors in initial displacement
+        // and velocities
+        int nMasses = this->p->masses.size();
+        for (int pId = 0; pId < nMasses; pId++) {
+            eval = this->models(pId, 0)(*tkc);
+            assert(!eval.isError);
+            lossPolys +=
+                2 *
+                (eval.val - initialX[Problem::GetMassDispIndex(nMasses, pId)]) *
+                this->models(pId, 0);
         }
-        Poly pVel;
-        gradIndex = 0;
-        for (int m = 0; m < nMasses; m++) {
-            residue = (XModel[Problem::GetMassVelIndex(nMasses, m)] -
-                       initialX[Problem::GetMassVelIndex(nMasses, m)]);
-
-            std::vector<double> piGrad =
-                std::vector<double>(this->models(m, 0).nMonomials());
-            pVel = this->models(m, 0);
-            assert(!pVel.Dxi(0).isError);
-            Maybe<double> maybeDouble;
-            for (int a = 0; a < pVel.nMonomials(); a++) {
-                maybeDouble = pVel.Dai(a, *tkc);
-                assert(!maybeDouble.isError);
-                piGrad[a] = maybeDouble.val;
-            }
-
-            for (int i = 0; i < int(piGrad.size()); i++) {
-                grad->at(gradIndex) += 2 * residue * piGrad[i];
-                gradIndex += 1;
-            }
+        Poly model;
+        for (int pId = 0; pId < nMasses; pId++) {
+            model = this->models(pId, 0);
+            assert(!model.Dxi(0).isError);
+            eval = model(*tkc);
+            assert(!eval.isError);
+            lossPolys +=
+                2 *
+                (eval.val - initialX[Problem::GetMassVelIndex(nMasses, pId)]) *
+                model;
         }
 
+        int gradI = 0;
+        std::map<std::tuple<int, int>, double> dMap = lossPolys.Da(*tkc);
+        std::tuple<int, int> dMapKey;
+        for (int pId = 0; pId < nMasses; pId++) {
+            for (int i = 0; i < this->models(pId, 0).nMonomials(); i++) {
+                dMapKey = {pId, i};
+                if (dMap.find(dMapKey) != dMap.end()) {
+                    (*grad)[gradI] += dMap[dMapKey];
+                }
+                gradI += 1;
+            }
+        }
         return;
     }
 
@@ -455,14 +368,17 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
 
 // // THIS IS WRONG AND MUST BE FIXED
 // // XDotDotFromDiffEq also depends on the parameters of the model,
-// // thus it can't be treated like a constant as in the initial conditions loss
+// // thus it can't be treated like a constant as in the initial conditions
+// loss
 // // gradient
-// void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
+// void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int
+// tkcIndex,
 //                                      std::vector<double>* grad) {
 //     if (tkcIndex == int(tkc->size())) {
 //         Problem problem = this->problemFromTkc(tkc);
 
-//         bst::matrix<Poly> AccelsFromDiffEq = getAccelsFromDiffEq(&problem);
+//         bst::matrix<Poly> AccelsFromDiffEq =
+//         getAccelsFromDiffEq(&problem);
 
 //         std::vector<Poly> AccelsFromModel = this->getAccelsFromModel();
 
@@ -497,8 +413,9 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
 //             max = this->p->springs[tkcIndex - 1].kMax;
 //         } else {
 //             min = this->p->dampers[tkcIndex - 1 -
-//             this->p->springs.size()].cMin; max = this->p->dampers[tkcIndex -
-//             1 - this->p->springs.size()].cMax;
+//             this->p->springs.size()].cMin; max =
+//             this->p->dampers[tkcIndex - 1 -
+//             this->p->springs.size()].cMax;
 //         }
 //         discretization = this->kcDiscretization;
 //     }

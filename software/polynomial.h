@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <memory>
+#include <tuple>
 #include <vector>
 
 #include "maybe.h"
@@ -15,6 +16,7 @@ class Monomial {
 
    public:
     double a;
+    double k;  // scalar that multiplies this entity
 
     // [e0, e1, ...]
     std::vector<int> exps;
@@ -104,6 +106,7 @@ class Poly {
     FRIEND_TEST(PolyTest, PolysConstructorTest);
     FRIEND_TEST(PolyTest, MatrixMultiplicationTest);
     FRIEND_TEST(PimodelTest, getAccelsFromDiffEqTest);
+    FRIEND_TEST(PolyTest, DaPolysTest);
 
     // Auxiliary function used in Build method.
     void buildDfs(std::vector<int>& exponents, int exponentsSum,
@@ -136,9 +139,9 @@ class Polys {
     Maybe<double> operator()(std::vector<double>& X) const;
     Maybe<Void> Dxi(int i);
 
-    // Returns the derivative with respect to the i-th coefficient of
-    // the polynomial with id = pId
-    Maybe<double> Dai(int pId, int i, std::vector<double>& X) const;
+    // Returns a map in which the key (i, j) represents the non-zero derivatives
+    // of the polynomial with id=i with respect to the j-th coefficient
+    std::map<std::tuple<int, int>, double> Da(std::vector<double>& X) const;
 };
 
 Polys operator*(double k, const Poly& p);
