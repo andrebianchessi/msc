@@ -56,6 +56,7 @@ class Pimodel : public Model {
     // displacement (x) of mass 0, as a function of time and the values of the
     // springs and the masses
     boost::numeric::ublas::matrix<Poly> models;
+    std::vector<std::vector<double>> modelsCoefficients;
 
     // This model describes the system from t = 0 to t = finalT
     double finalT;

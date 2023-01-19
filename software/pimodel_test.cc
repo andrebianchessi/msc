@@ -267,8 +267,10 @@ TEST_F(PimodelTest, getAccelsFromDiffEqTest) {
         (-kMin * (1 * t + 2 * k + 3 * c + 4 * 1) +
          kMin * (5 * t + 6 * k + 7 * c + 8 * 1) - cMin * 1 + cMin * 5);
     std::vector<double> tkc = {t, k, c};
-    ASSERT_DOUBLE_EQ(A(0, 0)(tkc).val, expectedEval);
-    ASSERT_DOUBLE_EQ(A(1, 0)(tkc).val, -expectedEval);
+    std::vector<std::vector<double>> coefs = std::vector<std::vector<double>>{
+        std::vector<double>{1, 2, 3, 4}, std::vector<double>{5, 6, 7, 8}};
+    ASSERT_DOUBLE_EQ(A(0, 0)(coefs, tkc).val, expectedEval);
+    ASSERT_DOUBLE_EQ(A(1, 0)(coefs, tkc).val, -expectedEval);
 }
 
 TEST_F(PimodelTest, getInitialXTest) {

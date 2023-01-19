@@ -27,12 +27,16 @@ Pimodel::Pimodel(ProblemDescription* p, double finalT, int timeDiscretization,
     // mass , and so on. The input of each polynomial is the values of the
     // springs, the dampers, and time.
     this->models = bst::matrix<Poly>(p->NumberOfMasses(), 1);
+    this->modelsCoefficients =
+        std::vector<std::vector<double>>(p->NumberOfMasses());
+
     Poly poly;
     Maybe<Void> r;
     for (int i = 0; i < p->NumberOfMasses(); i++) {
         r = poly.Build(nSprings + nDampers + 1, order, i);
         assert(!r.isError);
         this->models(i, 0) = poly;
+        this->modelsCoefficients[i] = std::vector<double>(poly.nMonomials());
     }
 
     this->finalT = finalT;
@@ -55,7 +59,7 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
         std::vector<double>(this->p->NumberOfMasses());
     Maybe<double> position;
     for (int i = 0; i < int(positions.size()); i++) {
-        position = this->models(i, 0)(*tkc);
+        position = this->models(i, 0)(this->modelsCoefficients[i], *tkc);
         assert(!position.isError);
         positions[i] = position.val;
     }
@@ -91,8 +95,7 @@ Maybe<Void> Pimodel::SetParameters(std::vector<double>* parameters) {
     Maybe<double> Dai;
     for (int pIndex = 0; pIndex < this->p->NumberOfMasses(); pIndex++) {
         for (int m = 0; m < this->models(pIndex, 0).nMonomials(); m++) {
-            this->models(pIndex, 0).monomials[m].a =
-                parameters->at(parametersI);
+            this->modelsCoefficients[pIndex][m] = parameters->at(parametersI);
             parametersI += 1;
         }
     }
@@ -111,7 +114,7 @@ Maybe<Void> Pimodel::GetParameters(std::vector<double>* target) {
     Maybe<double> Dai;
     for (int pIndex = 0; pIndex < this->p->NumberOfMasses(); pIndex++) {
         for (int m = 0; m < this->models(pIndex, 0).nMonomials(); m++) {
-            target->at(targetI) = this->models(pIndex, 0).monomials[m].a;
+            target->at(targetI) = this->modelsCoefficients[pIndex][m];
             targetI += 1;
         }
     }
@@ -134,7 +137,7 @@ std::vector<double> Pimodel::getXModel(std::vector<double>* tkc) {
     Maybe<double> eval;
     for (int i = 0; i < this->p->NumberOfMasses(); i++) {
         // Fill displacements
-        eval = this->models(i, 0)(*tkc);
+        eval = this->models(i, 0)(this->modelsCoefficients[i], *tkc);
         assert(!eval.isError);
         X[i] = eval.val;
     }
@@ -144,7 +147,7 @@ std::vector<double> Pimodel::getXModel(std::vector<double>* tkc) {
         dp_dt = this->models(i, 0);
         err = dp_dt.Dxi(0);
         assert(!err.isError);
-        eval = dp_dt(*tkc);
+        eval = dp_dt(this->modelsCoefficients[i], *tkc);
         assert(!eval.isError);
         X[Problem::GetMassVelIndex(this->p->NumberOfMasses(), i)] = eval.val;
     }
@@ -213,7 +216,7 @@ void Pimodel::InitialConditionsLossDfs(std::vector<double>* tkc, int tkcIndex,
         int nMasses = this->p->masses.size();
         for (int m = 0; m < nMasses; m++) {
             model = this->models(m, 0);
-            modelEval = model(*tkc);
+            modelEval = model(this->modelsCoefficients[m], *tkc);
             assert(!modelEval.isError);
             (*loss) = (*loss) +
                       pow(modelEval.val -
@@ -223,7 +226,7 @@ void Pimodel::InitialConditionsLossDfs(std::vector<double>* tkc, int tkcIndex,
         for (int m = 0; m < nMasses; m++) {
             model = this->models(m, 0);
             assert(!model.Dxi(0).isError);
-            modelEval = model(*tkc);
+            modelEval = model(this->modelsCoefficients[m], *tkc);
             assert(!modelEval.isError);
             (*loss) = (*loss) +
                       pow(modelEval.val -
@@ -261,11 +264,11 @@ void Pimodel::PhysicsLossDfs(std::vector<double>* tkc, int tkcIndex,
         for (int m = 0; m < int(p->masses.size()); m++) {
             if (problem.massIsFixed(m)) {
                 residue = AccelsFromModel[m];
-                residueEval = residue(*tkc);
+                residueEval = residue(this->modelsCoefficients, *tkc);
                 assert(!residueEval.isError);
             } else {
                 residue = AccelsFromModel[m] + (-1.0) * AccelsFromDiffEq(m, 0);
-                residueEval = residue(*tkc);
+                residueEval = residue(this->modelsCoefficients, *tkc);
                 assert(!residueEval.isError);
             }
             (*loss) = (*loss) + pow(residueEval.val, 2);
@@ -322,7 +325,7 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
         // and velocities
         int nMasses = this->p->masses.size();
         for (int pId = 0; pId < nMasses; pId++) {
-            eval = this->models(pId, 0)(*tkc);
+            eval = this->models(pId, 0)(this->modelsCoefficients[pId], *tkc);
             assert(!eval.isError);
             lossPolys +=
                 2 *
@@ -333,7 +336,7 @@ void Pimodel::InitialConditionsLossGradientDfs(std::vector<double>* tkc,
         for (int pId = 0; pId < nMasses; pId++) {
             model = this->models(pId, 0);
             assert(!model.Dxi(0).isError);
-            eval = model(*tkc);
+            eval = model(this->modelsCoefficients[pId], *tkc);
             assert(!eval.isError);
             lossPolys +=
                 2 *
@@ -387,11 +390,11 @@ void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
         for (int m = 0; m < int(p->masses.size()); m++) {
             if (problem.massIsFixed(m)) {
                 residue = AccelsFromModel[m];
-                residueEval = residue(*tkc);
+                residueEval = residue(this->modelsCoefficients, *tkc);
                 assert(!residueEval.isError);
             } else {
                 residue = AccelsFromModel[m] + (-1.0) * AccelsFromDiffEq(m, 0);
-                residueEval = residue(*tkc);
+                residueEval = residue(this->modelsCoefficients, *tkc);
                 assert(!residueEval.isError);
             }
             lossPolys += 2 * (residueEval.val) * (residue);
