@@ -12,12 +12,11 @@ Monomial::Monomial(std::vector<int> exps) {
     for (auto e : exps) {
         assert(e >= 0);
     }
-    this->a = 0;
     this->k = 1;
     this->exps = exps;
 }
 
-Maybe<double> Monomial::operator()(std::vector<double>& X) const {
+Maybe<double> Monomial::operator()(double a, std::vector<double>& X) const {
     Maybe<double> r;
     if (X.size() != this->exps.size()) {
         r.isError = true;
@@ -25,7 +24,7 @@ Maybe<double> Monomial::operator()(std::vector<double>& X) const {
         return r;
     }
 
-    double prod = this->k * this->a;
+    double prod = this->k * a;
     for (int e = 0; e < int(this->exps.size()); e++) {
         prod *= pow(X.at(e), this->exps[e]);
     }
@@ -116,7 +115,8 @@ Maybe<Void> Poly::Build(int n, int order, int id) {
 
 int Poly::nMonomials() const { return this->monomials.size(); }
 
-Maybe<double> Poly::operator()(std::vector<double>& X) const {
+Maybe<double> Poly::operator()(std::vector<double>& a,
+                               std::vector<double>& X) const {
     Maybe<double> r;
     if (int(X.size()) != this->n) {
         r.isError = true;
@@ -126,7 +126,7 @@ Maybe<double> Poly::operator()(std::vector<double>& X) const {
     Maybe<double> maybeVal;
     double val = 0;
     for (int m = 0; m < int(this->monomials.size()); m++) {
-        maybeVal = this->monomials[m](X);
+        maybeVal = this->monomials[m](a[m], X);
         if (maybeVal.isError) {
             r.isError = true;
             r.errMsg = maybeVal.errMsg;
@@ -237,9 +237,6 @@ bool operator==(Polys const& right, Polys const& left) {
             return false;
         }
         for (int m = 0; m < right.polys[i].nMonomials(); m++) {
-            if (right.polys[i].monomials[m].a != left.polys[i].monomials[m].a) {
-                return false;
-            }
             if (right.polys[i].monomials[m].exps !=
                 left.polys[i].monomials[m].exps) {
                 return false;
@@ -253,11 +250,17 @@ bool operator!=(Polys const& right, Polys const& left) {
     return !(right == left);
 }
 
-Maybe<double> Polys::operator()(std::vector<double>& X) const {
+Maybe<double> Polys::operator()(std::vector<std::vector<double>>& a,
+                                std::vector<double>& X) const {
     Maybe<double> r;
     double val = 0;
     for (int p = 0; p < int(this->polys.size()); p++) {
-        r = this->polys[p](X);
+        if (this->polys[p].id >= int(a.size())) {
+            r.isError = true;
+            r.errMsg = "a[i] must contain the coefficients of poly with id = i";
+            return r;
+        }
+        r = this->polys[p](a[this->polys[p].id], X);
         if (r.isError) {
             return r;
         }

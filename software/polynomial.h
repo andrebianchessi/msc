@@ -15,7 +15,6 @@ class Monomial {
     // a*x0^e0*x1^e1*...*xi^ei
 
    public:
-    double a;
     double k;  // scalar that multiplies this entity
 
     // [e0, e1, ...]
@@ -23,7 +22,7 @@ class Monomial {
 
     Monomial(std::vector<int> exps);
 
-    Maybe<double> operator()(std::vector<double>& X) const;
+    Maybe<double> operator()(double a, std::vector<double>& X) const;
 
     // Differentiate with respect to xi
     Maybe<Void> Dxi(int i);
@@ -82,7 +81,8 @@ class Poly {
     Maybe<Void> Build(int n, int order) { return this->Build(n, order, 0); };
 
     // Evaluates the polynomial for the given values of the variables
-    Maybe<double> operator()(std::vector<double>& X) const;
+    Maybe<double> operator()(std::vector<double>& a,
+                             std::vector<double>& X) const;
 
     // Sets this polynomial as the derivative of this polynomial
     // with respect to i-th variable.
@@ -136,7 +136,8 @@ class Polys {
     Polys& operator+=(const Polys& right);
     Polys& operator*=(double k);
 
-    Maybe<double> operator()(std::vector<double>& X) const;
+    Maybe<double> operator()(std::vector<std::vector<double>>& a,
+                             std::vector<double>& X) const;
     Maybe<Void> Dxi(int i);
 
     // Returns a map in which the key (i, j) represents the non-zero derivatives
