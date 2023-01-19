@@ -364,3 +364,13 @@ cc_test(
     ":utils"
   ]
 )
+
+cc_binary(
+  name = "pimodel_binary_test",
+  srcs = [
+    "pimodel_binary_test.cc"
+  ],
+  deps = [
+    ":pimodel"
+  ]
+)
