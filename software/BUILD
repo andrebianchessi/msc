@@ -140,7 +140,8 @@ cc_test(
 cc_library(
   name = "utils",
   srcs = [
-    "utils.h"
+    "utils.h",
+    "utils.cc"
   ],
   hdrs = [
     "utils.h"
@@ -352,6 +353,7 @@ cc_library(
 
 cc_test(
   name = "pimodel_test",
+  size = "enormous",
   srcs = [
     "pimodel_test.cc"
   ],
