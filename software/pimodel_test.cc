@@ -360,9 +360,8 @@ TEST_F(PimodelTest, PhysicsLossTest) {
                 double modelX0DotDot = 0;
                 double modelX1DotDot = 0;
 
-                double x0DotDot = 1 / m *
-                                  (-k * modelX0 + k * modelX1 - c * modelX0Dot +
-                                   c * modelX1Dot);
+                // Mass 0 is fixed
+                double x0DotDot = 0;
                 double x1DotDot = 1 / m *
                                   (k * modelX0 - k * modelX1 + c * modelX0Dot -
                                    c * modelX1Dot);
@@ -436,9 +435,8 @@ TEST_F(PimodelTest, LossTest) {
                 double modelX0DotDot = 2;
                 double modelX1DotDot = 22;
 
-                double x0DotDot = 1 / m *
-                                  (-k * modelX0 + k * modelX1 - c * modelX0Dot +
-                                   c * modelX1Dot);
+                // Mass 0 is fixed
+                double x0DotDot = 0;
                 double x1DotDot = 1 / m *
                                   (k * modelX0 - k * modelX1 + c * modelX0Dot -
                                    c * modelX1Dot);
@@ -593,9 +591,8 @@ TEST_F(PimodelTest, PhysicsLossGradientTest) {
                 double modelX0DotDot = 0;
                 double modelX1DotDot = 0;
 
-                double X0DotDot = 1 / m *
-                                  (-k * modelX0 + k * modelX1 - c * modelX0Dot +
-                                   c * modelX1Dot);
+                // Mass 0 is fixed
+                double X0DotDot = 0;
                 double X1DotDot = 1 / m *
                                   (k * modelX0 - k * modelX1 + c * modelX0Dot -
                                    c * modelX1Dot);
@@ -639,66 +636,42 @@ TEST_F(PimodelTest, PhysicsLossGradientTest) {
                 double d_dai_modelX0DotDot = 0;
                 double d_dai_modelX1DotDot = 0;
 
-                double d_da0_X0DotDot =
-                    1 / m *
-                    (-k * d_da0_modelX0 + k * d_da0_modelX1 -
-                     c * d_da0_modelX0Dot + c * d_da0_modelX1Dot);
+                double d_da0_X0DotDot = 0;
                 double d_da0_X1DotDot =
                     1 / m *
                     (k * d_da0_modelX0 - k * d_da0_modelX1 +
                      c * d_da0_modelX0Dot - c * d_da0_modelX1Dot);
-                double d_da1_X0DotDot =
-                    1 / m *
-                    (-k * d_da1_modelX0 + k * d_da1_modelX1 -
-                     c * d_da1_modelX0Dot + c * d_da1_modelX1Dot);
+                double d_da1_X0DotDot = 0;
                 double d_da1_X1DotDot =
                     1 / m *
                     (k * d_da1_modelX0 - k * d_da1_modelX1 +
                      c * d_da1_modelX0Dot - c * d_da1_modelX1Dot);
-                double d_da2_X0DotDot =
-                    1 / m *
-                    (-k * d_da2_modelX0 + k * d_da2_modelX1 -
-                     c * d_da2_modelX0Dot + c * d_da2_modelX1Dot);
+                double d_da2_X0DotDot = 0;
                 double d_da2_X1DotDot =
                     1 / m *
                     (k * d_da2_modelX0 - k * d_da2_modelX1 +
                      c * d_da2_modelX0Dot - c * d_da2_modelX1Dot);
-                double d_da3_X0DotDot =
-                    1 / m *
-                    (-k * d_da3_modelX0 + k * d_da3_modelX1 -
-                     c * d_da3_modelX0Dot + c * d_da3_modelX1Dot);
+                double d_da3_X0DotDot = 0;
                 double d_da3_X1DotDot =
                     1 / m *
                     (k * d_da3_modelX0 - k * d_da3_modelX1 +
                      c * d_da3_modelX0Dot - c * d_da3_modelX1Dot);
-                double d_da4_X0DotDot =
-                    1 / m *
-                    (-k * d_da4_modelX0 + k * d_da4_modelX1 -
-                     c * d_da4_modelX0Dot + c * d_da4_modelX1Dot);
+                double d_da4_X0DotDot = 0;
                 double d_da4_X1DotDot =
                     1 / m *
                     (k * d_da4_modelX0 - k * d_da4_modelX1 +
                      c * d_da4_modelX0Dot - c * d_da4_modelX1Dot);
-                double d_da5_X0DotDot =
-                    1 / m *
-                    (-k * d_da5_modelX0 + k * d_da5_modelX1 -
-                     c * d_da5_modelX0Dot + c * d_da5_modelX1Dot);
+                double d_da5_X0DotDot = 0;
                 double d_da5_X1DotDot =
                     1 / m *
                     (k * d_da5_modelX0 - k * d_da5_modelX1 +
                      c * d_da5_modelX0Dot - c * d_da5_modelX1Dot);
-                double d_da6_X0DotDot =
-                    1 / m *
-                    (-k * d_da6_modelX0 + k * d_da6_modelX1 -
-                     c * d_da6_modelX0Dot + c * d_da6_modelX1Dot);
+                double d_da6_X0DotDot = 0;
                 double d_da6_X1DotDot =
                     1 / m *
                     (k * d_da6_modelX0 - k * d_da6_modelX1 +
                      c * d_da6_modelX0Dot - c * d_da6_modelX1Dot);
-                double d_da7_X0DotDot =
-                    1 / m *
-                    (-k * d_da7_modelX0 + k * d_da7_modelX1 -
-                     c * d_da7_modelX0Dot + c * d_da7_modelX1Dot);
+                double d_da7_X0DotDot = 0;
                 double d_da7_X1DotDot =
                     1 / m *
                     (k * d_da7_modelX0 - k * d_da7_modelX1 +
@@ -760,22 +733,30 @@ TEST_F(PimodelTest, PhysicsLossGradientTest) {
 
 // // Training is not showing good results. Better implement more unit-tests
 // // to check if everything is working as intended.
-// TEST_F(PimodelTest, TrainTest) {
-//     double T = 15.0;
-//     int timeDiscretization = 10;
+// TEST(PimodelTrainingTest, TrainTest) {
+//     auto pd = ProblemDescription();
+//     pd.AddMass(1, 0.0, 0.0);
+//     pd.AddMass(1, 1.0, 0.0);
+//     pd.AddSpring(0, 1, 0.0, 1.0);
+//     pd.AddDamper(0, 1, 0.0, 1.0);
+//     pd.SetFixedMass(0);
+//     pd.AddInitialDisp(1, 1.0);
+
+//     double T = 1.0;
+//     int timeDiscretization = 5;
 //     int kcDiscretization = 1;
-//     int order = 10;
+//     int order = 4;
 
 //     // Train model
 //     Pimodel model =
-//         Pimodel(&this->pd, T, timeDiscretization, kcDiscretization, order);
-//     double lr = 0.001;
-//     model.Train(lr, lr / 4, true);
+//         Pimodel(&pd, T, timeDiscretization, kcDiscretization, order);
+//     double lr = 0.0001;
+//     model.Train(lr, lr, true);
 
 //     // Get problem using intermediate value for k and c, and integrate it
-//     double k = (kMin + kMax) / 2;
-//     double c = (cMin + cMax) / 2;
-//     Maybe<Problem> mP = this->pd.BuildFromVector(std::vector<double>{k, c});
+//     double k = 0.5;
+//     double c = 0.5;
+//     Maybe<Problem> mP = pd.BuildFromVector(std::vector<double>{k, c});
 //     ASSERT_FALSE(mP.isError);
 //     Problem p = mP.val;
 //     p.Integrate(T);

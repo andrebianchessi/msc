@@ -259,9 +259,15 @@ void Pimodel::PhysicsLossDfs(std::vector<double>* tkc, int tkcIndex,
         Maybe<double> residueEval;
         Polys residue;
         for (int m = 0; m < int(p->masses.size()); m++) {
-            residue = AccelsFromModel[m] + (-1.0) * AccelsFromDiffEq(m, 0);
-            residueEval = residue(*tkc);
-            assert(!residueEval.isError);
+            if (problem.massIsFixed(m)) {
+                residue = AccelsFromModel[m];
+                residueEval = residue(*tkc);
+                assert(!residueEval.isError);
+            } else {
+                residue = AccelsFromModel[m] + (-1.0) * AccelsFromDiffEq(m, 0);
+                residueEval = residue(*tkc);
+                assert(!residueEval.isError);
+            }
             (*loss) = (*loss) + pow(residueEval.val, 2);
         }
         return;
@@ -379,9 +385,15 @@ void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
         Maybe<double> residueEval;
         Polys residue;
         for (int m = 0; m < int(p->masses.size()); m++) {
-            residue = AccelsFromModel[m] + (-1.0) * AccelsFromDiffEq(m, 0);
-            residueEval = residue(*tkc);
-            assert(!residueEval.isError);
+            if (problem.massIsFixed(m)) {
+                residue = AccelsFromModel[m];
+                residueEval = residue(*tkc);
+                assert(!residueEval.isError);
+            } else {
+                residue = AccelsFromModel[m] + (-1.0) * AccelsFromDiffEq(m, 0);
+                residueEval = residue(*tkc);
+                assert(!residueEval.isError);
+            }
             lossPolys += 2 * (residueEval.val) * (residue);
         }
 
