@@ -6,6 +6,8 @@
 
 #include "maybe.h"
 
+const double MIN_STEP_IMPROVEMENT = 0.0001;  // 0.01 %
+
 StatusAndValue Model::GradientDescentStep(double step) {
     StatusAndValue status;
 
@@ -25,9 +27,9 @@ StatusAndValue Model::GradientDescentStep(double step) {
     this->SetParameters(&parameters_1);
     double loss_1 = this->Loss();
 
-    // If the loss function decreased, return true
-    // else, reset the parameters and return false
-    if (loss_1 < loss_0) {
+    // If the loss function decreased more than MIN_STEP_IMPROVEMENT, return
+    // true. Else, reset the parameters and return false
+    if (loss_1 < loss_0 && loss_0 - loss_1 > MIN_STEP_IMPROVEMENT * loss_0) {
         status.success = true;
         status.value = loss_1;
         return status;

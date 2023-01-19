@@ -392,7 +392,7 @@ void Pimodel::PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
             for (int i = 0; i < this->models(pId, 0).nMonomials(); i++) {
                 dMapKey = {pId, i};
                 if (dMap.find(dMapKey) != dMap.end()) {
-                    assert(gradI < (*grad).size());
+                    assert(gradI < int((*grad).size()));
                     (*grad)[gradI] += dMap[dMapKey];
                 }
                 gradI += 1;
