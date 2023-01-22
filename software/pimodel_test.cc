@@ -434,10 +434,6 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
     ASSERT_EQ(simpleModel->physicsResidues.size(), 16);
 
     std::vector<double> tkc;
-    double initialX0 = 0;
-    double initialX1 = initialDisplacement;
-    double initialX0Dot = 0;
-    double initialX1Dot = 0;
 
     Poly x0, x1, x0Dot, x1Dot, x0DotDot, x1DotDot;
 
@@ -611,344 +607,282 @@ TEST_F(PimodelTest, LossTest) {
     ASSERT_DOUBLE_EQ(expectedLoss, loss);
 }
 
-// TEST_F(PimodelTest, InitialConditionsLossGradientTest) {
-//     Pimodel model = Pimodel(&this->pd, 1.0, 1, 1, 1);
-//     std::vector<double> params = std::vector<double>(8);
-//     double a0 = 13.0;
-//     double a1 = 26.0;
-//     double a2 = 332.0;
-//     double a3 = 44.0;
-//     double a4 = 56.0;
-//     double a5 = 61.0;
-//     double a6 = 722.0;
-//     double a7 = 58.0;
-//     params = {a0, a1, a2, a3, a4, a5, a6, a7};
-//     ASSERT_FALSE(model.SetParameters(&params).isError);
-//     // modelX0(t,k,c) = a0*t + a1*k + a2*c + a3*1
-//     // modelX1(t,k,c) = a4*t + a5*k + a6*c + a7*1
-//     // modelXDot0(t,k,c) = a0
-//     // modelXDot1(t,k,c) = a4
-//     // modelXDotDot0(t,k,c) = 0
-//     // modelXDotDot1(t,k,c) = 0
+TEST_F(PimodelTest, LossGradientTest) {
+    Pimodel model = Pimodel(&this->pd, tMax, 1, 1, 1);
+    std::vector<double> params = std::vector<double>(8);
+    double a0 = 13.0;
+    double a1 = 26.0;
+    double a2 = 332.0;
+    double a3 = 44.0;
+    double a4 = 56.0;
+    double a5 = 61.0;
+    double a6 = 722.0;
+    double a7 = 58.0;
+    params = {a0, a1, a2, a3, a4, a5, a6, a7};
+    ASSERT_FALSE(model.SetParameters(&params).isError);
+    // modelX0(t,k,c) = a0*t + a1*k + a2*c + a3*1
+    // modelX1(t,k,c) = a4*t + a5*k + a6*c + a7*1
+    // modelXDot0(t,k,c) = a0
+    // modelXDot1(t,k,c) = a4
+    // modelXDotDot0(t,k,c) = 0
+    // modelXDotDot1(t,k,c) = 0
 
-//     std::vector<double> expectedGrad = std::vector<double>(8);
+    std::vector<double> expectedGrad = std::vector<double>(8);
 
-//     // Initial values for the problem created in SetUp()
-//     double initialX0 = 0;
-//     double initialX1 = initialDisplacement;
-//     double initialX0Dot = 0;
-//     double initialX1Dot = 0;
+    // Initial values for the problem created in SetUp()
+    double initialX0 = 0;
+    double initialX1 = initialDisplacement;
+    double initialX0Dot = 0;
+    double initialX1Dot = 0;
 
-//     double t = 0;
-//     // Initial conditions loss:
-//     for (double k : std::vector<double>{kMin, kMax}) {
-//         for (double c : std::vector<double>{cMin, cMax}) {
-//             double modelX0 = a0 * t + a1 * k + a2 * c + a3 * 1;
-//             double modelX1 = a4 * t + a5 * k + a6 * c + a7 * 1;
-//             double modelX0Dot = a0 * 1;
-//             double modelX1Dot = a4 * 1;
+    double t = 0;
+    // Initial conditions loss:
+    for (double k : std::vector<double>{kMin, kMax}) {
+        for (double c : std::vector<double>{cMin, cMax}) {
+            double modelX0 = a0 * t + a1 * k + a2 * c + a3 * 1;
+            double modelX1 = a4 * t + a5 * k + a6 * c + a7 * 1;
+            double modelX0Dot = a0 * 1;
+            double modelX1Dot = a4 * 1;
 
-//             double d_da0_modelX0 = t;
-//             double d_da1_modelX0 = k;
-//             double d_da2_modelX0 = c;
-//             double d_da3_modelX0 = 1;
-//             double d_da0_modelX0Dot = 1;
-//             double d_da1_modelX0Dot = 0;
-//             double d_da2_modelX0Dot = 0;
-//             double d_da3_modelX0Dot = 0;
+            double d_da0_modelX0 = t;
+            double d_da1_modelX0 = k;
+            double d_da2_modelX0 = c;
+            double d_da3_modelX0 = 1;
+            double d_da0_modelX0Dot = 1;
+            double d_da1_modelX0Dot = 0;
+            double d_da2_modelX0Dot = 0;
+            double d_da3_modelX0Dot = 0;
 
-//             double d_da4_modelX1 = t;
-//             double d_da5_modelX1 = k;
-//             double d_da6_modelX1 = c;
-//             double d_da7_modelX1 = 1;
-//             double d_da4_modelX1Dot = 1;
-//             double d_da5_modelX1Dot = 0;
-//             double d_da6_modelX1Dot = 0;
-//             double d_da7_modelX1Dot = 0;
+            double d_da4_modelX1 = t;
+            double d_da5_modelX1 = k;
+            double d_da6_modelX1 = c;
+            double d_da7_modelX1 = 1;
+            double d_da4_modelX1Dot = 1;
+            double d_da5_modelX1Dot = 0;
+            double d_da6_modelX1Dot = 0;
+            double d_da7_modelX1Dot = 0;
 
-//             expectedGrad[0] += 2 * (modelX0 - initialX0) * d_da0_modelX0;
-//             expectedGrad[0] +=
-//                 2 * (modelX0Dot - initialX0Dot) * d_da0_modelX0Dot;
+            expectedGrad[0] += (modelX0 - initialX0) * d_da0_modelX0;
+            expectedGrad[0] += (modelX0Dot - initialX0Dot) * d_da0_modelX0Dot;
 
-//             expectedGrad[1] += 2 * (modelX0 - initialX0) * d_da1_modelX0;
-//             expectedGrad[1] +=
-//                 2 * (modelX0Dot - initialX0Dot) * d_da1_modelX0Dot;
+            expectedGrad[1] += (modelX0 - initialX0) * d_da1_modelX0;
+            expectedGrad[1] += (modelX0Dot - initialX0Dot) * d_da1_modelX0Dot;
 
-//             expectedGrad[2] += 2 * (modelX0 - initialX0) * d_da2_modelX0;
-//             expectedGrad[2] +=
-//                 2 * (modelX0Dot - initialX0Dot) * d_da2_modelX0Dot;
+            expectedGrad[2] += (modelX0 - initialX0) * d_da2_modelX0;
+            expectedGrad[2] += (modelX0Dot - initialX0Dot) * d_da2_modelX0Dot;
 
-//             expectedGrad[3] += 2 * (modelX0 - initialX0) * d_da3_modelX0;
-//             expectedGrad[3] +=
-//                 2 * (modelX0Dot - initialX0Dot) * d_da3_modelX0Dot;
+            expectedGrad[3] += (modelX0 - initialX0) * d_da3_modelX0;
+            expectedGrad[3] += (modelX0Dot - initialX0Dot) * d_da3_modelX0Dot;
 
-//             expectedGrad[4] += 2 * (modelX1 - initialX1) * d_da4_modelX1;
-//             expectedGrad[4] +=
-//                 2 * (modelX1Dot - initialX1Dot) * d_da4_modelX1Dot;
+            expectedGrad[4] += (modelX1 - initialX1) * d_da4_modelX1;
+            expectedGrad[4] += (modelX1Dot - initialX1Dot) * d_da4_modelX1Dot;
 
-//             expectedGrad[5] += 2 * (modelX1 - initialX1) * d_da5_modelX1;
-//             expectedGrad[5] +=
-//                 2 * (modelX1Dot - initialX1Dot) * d_da5_modelX1Dot;
+            expectedGrad[5] += (modelX1 - initialX1) * d_da5_modelX1;
+            expectedGrad[5] += (modelX1Dot - initialX1Dot) * d_da5_modelX1Dot;
 
-//             expectedGrad[6] += 2 * (modelX1 - initialX1) * d_da6_modelX1;
-//             expectedGrad[6] +=
-//                 2 * (modelX1Dot - initialX1Dot) * d_da6_modelX1Dot;
+            expectedGrad[6] += (modelX1 - initialX1) * d_da6_modelX1;
+            expectedGrad[6] += (modelX1Dot - initialX1Dot) * d_da6_modelX1Dot;
 
-//             expectedGrad[7] += 2 * (modelX1 - initialX1) * d_da7_modelX1;
-//             expectedGrad[7] +=
-//                 2 * (modelX1Dot - initialX1Dot) * d_da7_modelX1Dot;
-//         }
-//     }
+            expectedGrad[7] += (modelX1 - initialX1) * d_da7_modelX1;
+            expectedGrad[7] += (modelX1Dot - initialX1Dot) * d_da7_modelX1Dot;
+        }
+    }
 
-//     std::vector<double> tkc = std::vector<double>(3);
-//     std::vector<double> grad = std::vector<double>(8);
+    // Physics loss:
+    for (double t : std::vector<double>{0, tMax}) {
+        for (double k : std::vector<double>{kMin, kMax}) {
+            for (double c : std::vector<double>{cMin, cMax}) {
+                double modelX0 = a0 * t + a1 * k + a2 * c + a3 * 1;
+                double modelX1 = a4 * t + a5 * k + a6 * c + a7 * 1;
+                double modelX0Dot = a0;
+                double modelX1Dot = a4;
+                double modelX0DotDot = 0;
+                double modelX1DotDot = 0;
 
-//     // AInitial displacements and velocities gradient
-//     tkc[0] = 0;  // t = 0
-//     model.InitialConditionsLossGradientDfs(&tkc, 1, &grad);
+                // Mass 0 is fixed
+                double X0DotDot = 0;
+                double X1DotDot = 1 / m *
+                                  (k * modelX0 - k * modelX1 + c * modelX0Dot -
+                                   c * modelX1Dot);
 
-//     ASSERT_EQ(grad.size(), 8);
-//     EXPECT_DOUBLE_EQ(grad[0], expectedGrad[0]);
-//     EXPECT_DOUBLE_EQ(grad[1], expectedGrad[1]);
-//     EXPECT_DOUBLE_EQ(grad[2], expectedGrad[2]);
-//     EXPECT_DOUBLE_EQ(grad[3], expectedGrad[3]);
-//     EXPECT_DOUBLE_EQ(grad[4], expectedGrad[4]);
-//     EXPECT_DOUBLE_EQ(grad[5], expectedGrad[5]);
-//     EXPECT_DOUBLE_EQ(grad[6], expectedGrad[6]);
-//     EXPECT_DOUBLE_EQ(grad[7], expectedGrad[7]);
-// }
+                double d_da0_modelX0 = t;
+                double d_da1_modelX0 = k;
+                double d_da2_modelX0 = c;
+                double d_da3_modelX0 = 1;
+                double d_da4_modelX0 = 0;
+                double d_da5_modelX0 = 0;
+                double d_da6_modelX0 = 0;
+                double d_da7_modelX0 = 0;
+                double d_da0_modelX1 = 0;
+                double d_da1_modelX1 = 0;
+                double d_da2_modelX1 = 0;
+                double d_da3_modelX1 = 0;
+                double d_da4_modelX1 = t;
+                double d_da5_modelX1 = k;
+                double d_da6_modelX1 = c;
+                double d_da7_modelX1 = 1;
 
-// TEST_F(PimodelTest, PhysicsLossGradientTest) {
-//     Pimodel model = Pimodel(&this->pd, tMax, 1, 1, 1);
-//     std::vector<double> params = std::vector<double>(20);
-//     double a0 = 1;
-//     double a1 = 1;
-//     double a2 = 1;
-//     double a3 = 1;
-//     double a4 = 1;
-//     double a5 = 1;
-//     double a6 = 1;
-//     double a7 = 1;
-//     params = {a0, a1, a2, a3, a4, a5, a6, a7};
-//     ASSERT_FALSE(model.SetParameters(&params).isError);
-//     // modelX0(t,k,c) = a0*t + a1*k + a2*c + a3*1
-//     // modelX1(t,k,c) = a4*t + a5*k + a6*c + a7*1
-//     // modelXDot0(t,k,c) = a0
-//     // modelXDot1(t,k,c) = a4
-//     // modelXDotDot0(t,k,c) = 0
-//     // modelXDotDot1(t,k,c) = 0
+                double d_da0_modelX0Dot = 1;
+                double d_da1_modelX0Dot = 0;
+                double d_da2_modelX0Dot = 0;
+                double d_da3_modelX0Dot = 0;
+                double d_da4_modelX0Dot = 0;
+                double d_da5_modelX0Dot = 0;
+                double d_da6_modelX0Dot = 0;
+                double d_da7_modelX0Dot = 0;
+                double d_da0_modelX1Dot = 0;
+                double d_da1_modelX1Dot = 0;
+                double d_da2_modelX1Dot = 0;
+                double d_da3_modelX1Dot = 0;
+                double d_da4_modelX1Dot = 1;
+                double d_da5_modelX1Dot = 0;
+                double d_da6_modelX1Dot = 0;
+                double d_da7_modelX1Dot = 0;
 
-//     std::vector<double> expectedGrad = std::vector<double>(8);
+                // modelX0DotDot = modelX1DotDot = 0
+                // -> All derivatives are 0
+                double d_dai_modelX0DotDot = 0;
+                double d_dai_modelX1DotDot = 0;
 
-//     // Physics loss:
-//     for (double t : std::vector<double>{0, tMax}) {
-//         for (double k : std::vector<double>{kMin, kMax}) {
-//             for (double c : std::vector<double>{cMin, cMax}) {
-//                 double modelX0 = a0 * t + a1 * k + a2 * c + a3 * 1;
-//                 double modelX1 = a4 * t + a5 * k + a6 * c + a7 * 1;
-//                 double modelX0Dot = a0;
-//                 double modelX1Dot = a4;
-//                 double modelX0DotDot = 0;
-//                 double modelX1DotDot = 0;
+                double d_da0_X0DotDot = 0;
+                double d_da0_X1DotDot =
+                    1 / m *
+                    (k * d_da0_modelX0 - k * d_da0_modelX1 +
+                     c * d_da0_modelX0Dot - c * d_da0_modelX1Dot);
+                double d_da1_X0DotDot = 0;
+                double d_da1_X1DotDot =
+                    1 / m *
+                    (k * d_da1_modelX0 - k * d_da1_modelX1 +
+                     c * d_da1_modelX0Dot - c * d_da1_modelX1Dot);
+                double d_da2_X0DotDot = 0;
+                double d_da2_X1DotDot =
+                    1 / m *
+                    (k * d_da2_modelX0 - k * d_da2_modelX1 +
+                     c * d_da2_modelX0Dot - c * d_da2_modelX1Dot);
+                double d_da3_X0DotDot = 0;
+                double d_da3_X1DotDot =
+                    1 / m *
+                    (k * d_da3_modelX0 - k * d_da3_modelX1 +
+                     c * d_da3_modelX0Dot - c * d_da3_modelX1Dot);
+                double d_da4_X0DotDot = 0;
+                double d_da4_X1DotDot =
+                    1 / m *
+                    (k * d_da4_modelX0 - k * d_da4_modelX1 +
+                     c * d_da4_modelX0Dot - c * d_da4_modelX1Dot);
+                double d_da5_X0DotDot = 0;
+                double d_da5_X1DotDot =
+                    1 / m *
+                    (k * d_da5_modelX0 - k * d_da5_modelX1 +
+                     c * d_da5_modelX0Dot - c * d_da5_modelX1Dot);
+                double d_da6_X0DotDot = 0;
+                double d_da6_X1DotDot =
+                    1 / m *
+                    (k * d_da6_modelX0 - k * d_da6_modelX1 +
+                     c * d_da6_modelX0Dot - c * d_da6_modelX1Dot);
+                double d_da7_X0DotDot = 0;
+                double d_da7_X1DotDot =
+                    1 / m *
+                    (k * d_da7_modelX0 - k * d_da7_modelX1 +
+                     c * d_da7_modelX0Dot - c * d_da7_modelX1Dot);
 
-//                 // Mass 0 is fixed
-//                 double X0DotDot = 0;
-//                 double X1DotDot = 1 / m *
-//                                   (k * modelX0 - k * modelX1 + c * modelX0Dot
-//                                   -
-//                                    c * modelX1Dot);
+                expectedGrad[0] += (modelX0DotDot - X0DotDot) *
+                                       (d_dai_modelX0DotDot - d_da0_X0DotDot) +
+                                   (modelX1DotDot - X1DotDot) *
+                                       (d_dai_modelX1DotDot - d_da0_X1DotDot);
+                expectedGrad[1] += (modelX0DotDot - X0DotDot) *
+                                       (d_dai_modelX0DotDot - d_da1_X0DotDot) +
+                                   (modelX1DotDot - X1DotDot) *
+                                       (d_dai_modelX1DotDot - d_da1_X1DotDot);
+                expectedGrad[2] += (modelX0DotDot - X0DotDot) *
+                                       (d_dai_modelX0DotDot - d_da2_X0DotDot) +
+                                   (modelX1DotDot - X1DotDot) *
+                                       (d_dai_modelX1DotDot - d_da2_X1DotDot);
+                expectedGrad[3] += (modelX0DotDot - X0DotDot) *
+                                       (d_dai_modelX0DotDot - d_da3_X0DotDot) +
+                                   (modelX1DotDot - X1DotDot) *
+                                       (d_dai_modelX1DotDot - d_da3_X1DotDot);
+                expectedGrad[4] += (modelX0DotDot - X0DotDot) *
+                                       (d_dai_modelX0DotDot - d_da4_X0DotDot) +
+                                   (modelX1DotDot - X1DotDot) *
+                                       (d_dai_modelX1DotDot - d_da4_X1DotDot);
+                expectedGrad[5] += (modelX0DotDot - X0DotDot) *
+                                       (d_dai_modelX0DotDot - d_da5_X0DotDot) +
+                                   (modelX1DotDot - X1DotDot) *
+                                       (d_dai_modelX1DotDot - d_da5_X1DotDot);
+                expectedGrad[6] += (modelX0DotDot - X0DotDot) *
+                                       (d_dai_modelX0DotDot - d_da6_X0DotDot) +
+                                   (modelX1DotDot - X1DotDot) *
+                                       (d_dai_modelX1DotDot - d_da6_X1DotDot);
+                expectedGrad[7] += (modelX0DotDot - X0DotDot) *
+                                       (d_dai_modelX0DotDot - d_da7_X0DotDot) +
+                                   (modelX1DotDot - X1DotDot) *
+                                       (d_dai_modelX1DotDot - d_da7_X1DotDot);
+            }
+        }
+    }
 
-//                 double d_da0_modelX0 = t;
-//                 double d_da1_modelX0 = k;
-//                 double d_da2_modelX0 = c;
-//                 double d_da3_modelX0 = 1;
-//                 double d_da4_modelX0 = 0;
-//                 double d_da5_modelX0 = 0;
-//                 double d_da6_modelX0 = 0;
-//                 double d_da7_modelX0 = 0;
-//                 double d_da0_modelX1 = 0;
-//                 double d_da1_modelX1 = 0;
-//                 double d_da2_modelX1 = 0;
-//                 double d_da3_modelX1 = 0;
-//                 double d_da4_modelX1 = t;
-//                 double d_da5_modelX1 = k;
-//                 double d_da6_modelX1 = c;
-//                 double d_da7_modelX1 = 1;
+    std::vector<double> grad = model.LossGradient();
 
-//                 double d_da0_modelX0Dot = 1;
-//                 double d_da1_modelX0Dot = 0;
-//                 double d_da2_modelX0Dot = 0;
-//                 double d_da3_modelX0Dot = 0;
-//                 double d_da4_modelX0Dot = 0;
-//                 double d_da5_modelX0Dot = 0;
-//                 double d_da6_modelX0Dot = 0;
-//                 double d_da7_modelX0Dot = 0;
-//                 double d_da0_modelX1Dot = 0;
-//                 double d_da1_modelX1Dot = 0;
-//                 double d_da2_modelX1Dot = 0;
-//                 double d_da3_modelX1Dot = 0;
-//                 double d_da4_modelX1Dot = 1;
-//                 double d_da5_modelX1Dot = 0;
-//                 double d_da6_modelX1Dot = 0;
-//                 double d_da7_modelX1Dot = 0;
+    ASSERT_EQ(grad.size(), 8);
+    EXPECT_DOUBLE_EQ(grad[0], expectedGrad[0]);
+    EXPECT_DOUBLE_EQ(grad[1], expectedGrad[1]);
+    EXPECT_DOUBLE_EQ(grad[2], expectedGrad[2]);
+    EXPECT_DOUBLE_EQ(grad[3], expectedGrad[3]);
+    EXPECT_DOUBLE_EQ(grad[4], expectedGrad[4]);
+    EXPECT_DOUBLE_EQ(grad[5], expectedGrad[5]);
+    EXPECT_DOUBLE_EQ(grad[6], expectedGrad[6]);
+    EXPECT_DOUBLE_EQ(grad[7], expectedGrad[7]);
+}
 
-//                 // modelX0DotDot = modelX1DotDot = 0
-//                 // -> All derivatives are 0
-//                 double d_dai_modelX0DotDot = 0;
-//                 double d_dai_modelX1DotDot = 0;
+TEST(PimodelTrainingTest, TrainTest) {
+    double kMin = 0.0;
+    double kMax = 1.0;
+    double cMin = 0.0;
+    double cMax = 1.0;
+    double tMax = 1.0;
+    double initialDisp = 10.0;
 
-//                 double d_da0_X0DotDot = 0;
-//                 double d_da0_X1DotDot =
-//                     1 / m *
-//                     (k * d_da0_modelX0 - k * d_da0_modelX1 +
-//                      c * d_da0_modelX0Dot - c * d_da0_modelX1Dot);
-//                 double d_da1_X0DotDot = 0;
-//                 double d_da1_X1DotDot =
-//                     1 / m *
-//                     (k * d_da1_modelX0 - k * d_da1_modelX1 +
-//                      c * d_da1_modelX0Dot - c * d_da1_modelX1Dot);
-//                 double d_da2_X0DotDot = 0;
-//                 double d_da2_X1DotDot =
-//                     1 / m *
-//                     (k * d_da2_modelX0 - k * d_da2_modelX1 +
-//                      c * d_da2_modelX0Dot - c * d_da2_modelX1Dot);
-//                 double d_da3_X0DotDot = 0;
-//                 double d_da3_X1DotDot =
-//                     1 / m *
-//                     (k * d_da3_modelX0 - k * d_da3_modelX1 +
-//                      c * d_da3_modelX0Dot - c * d_da3_modelX1Dot);
-//                 double d_da4_X0DotDot = 0;
-//                 double d_da4_X1DotDot =
-//                     1 / m *
-//                     (k * d_da4_modelX0 - k * d_da4_modelX1 +
-//                      c * d_da4_modelX0Dot - c * d_da4_modelX1Dot);
-//                 double d_da5_X0DotDot = 0;
-//                 double d_da5_X1DotDot =
-//                     1 / m *
-//                     (k * d_da5_modelX0 - k * d_da5_modelX1 +
-//                      c * d_da5_modelX0Dot - c * d_da5_modelX1Dot);
-//                 double d_da6_X0DotDot = 0;
-//                 double d_da6_X1DotDot =
-//                     1 / m *
-//                     (k * d_da6_modelX0 - k * d_da6_modelX1 +
-//                      c * d_da6_modelX0Dot - c * d_da6_modelX1Dot);
-//                 double d_da7_X0DotDot = 0;
-//                 double d_da7_X1DotDot =
-//                     1 / m *
-//                     (k * d_da7_modelX0 - k * d_da7_modelX1 +
-//                      c * d_da7_modelX0Dot - c * d_da7_modelX1Dot);
+    auto pd = ProblemDescription();
+    pd.AddMass(1, 0.0, 0.0);
+    pd.AddMass(1, 1.0, 0.0);
+    pd.AddSpring(0, 1, kMin, kMax);
+    pd.AddDamper(0, 1, cMin, cMax);
+    pd.SetFixedMass(0);
+    pd.AddInitialDisp(1, initialDisp);
 
-//                 expectedGrad[0] += 2 * (modelX0DotDot - X0DotDot) *
-//                                        (d_dai_modelX0DotDot - d_da0_X0DotDot)
-//                                        +
-//                                    2 * (modelX1DotDot - X1DotDot) *
-//                                        (d_dai_modelX1DotDot -
-//                                        d_da0_X1DotDot);
-//                 expectedGrad[1] += 2 * (modelX0DotDot - X0DotDot) *
-//                                        (d_dai_modelX0DotDot - d_da1_X0DotDot)
-//                                        +
-//                                    2 * (modelX1DotDot - X1DotDot) *
-//                                        (d_dai_modelX1DotDot -
-//                                        d_da1_X1DotDot);
-//                 expectedGrad[2] += 2 * (modelX0DotDot - X0DotDot) *
-//                                        (d_dai_modelX0DotDot - d_da2_X0DotDot)
-//                                        +
-//                                    2 * (modelX1DotDot - X1DotDot) *
-//                                        (d_dai_modelX1DotDot -
-//                                        d_da2_X1DotDot);
-//                 expectedGrad[3] += 2 * (modelX0DotDot - X0DotDot) *
-//                                        (d_dai_modelX0DotDot - d_da3_X0DotDot)
-//                                        +
-//                                    2 * (modelX1DotDot - X1DotDot) *
-//                                        (d_dai_modelX1DotDot -
-//                                        d_da3_X1DotDot);
-//                 expectedGrad[4] += 2 * (modelX0DotDot - X0DotDot) *
-//                                        (d_dai_modelX0DotDot - d_da4_X0DotDot)
-//                                        +
-//                                    2 * (modelX1DotDot - X1DotDot) *
-//                                        (d_dai_modelX1DotDot -
-//                                        d_da4_X1DotDot);
-//                 expectedGrad[5] += 2 * (modelX0DotDot - X0DotDot) *
-//                                        (d_dai_modelX0DotDot - d_da5_X0DotDot)
-//                                        +
-//                                    2 * (modelX1DotDot - X1DotDot) *
-//                                        (d_dai_modelX1DotDot -
-//                                        d_da5_X1DotDot);
-//                 expectedGrad[6] += 2 * (modelX0DotDot - X0DotDot) *
-//                                        (d_dai_modelX0DotDot - d_da6_X0DotDot)
-//                                        +
-//                                    2 * (modelX1DotDot - X1DotDot) *
-//                                        (d_dai_modelX1DotDot -
-//                                        d_da6_X1DotDot);
-//                 expectedGrad[7] += 2 * (modelX0DotDot - X0DotDot) *
-//                                        (d_dai_modelX0DotDot - d_da7_X0DotDot)
-//                                        +
-//                                    2 * (modelX1DotDot - X1DotDot) *
-//                                        (d_dai_modelX1DotDot -
-//                                        d_da7_X1DotDot);
-//             }
-//         }
-//     }
+    int timeDiscretization = 2;
+    int kcDiscretization = 1;
+    int order = 2;
+    double learningRate = 0.01;
+    double minLearningRate = learningRate;
+    bool log = true;
 
-//     std::vector<double> tkc = std::vector<double>(3);
-//     std::vector<double> grad = std::vector<double>(8);
+    // Train model
+    Pimodel model =
+        Pimodel(&pd, tMax, timeDiscretization, kcDiscretization, order);
+    model.Train(learningRate, minLearningRate, log);
 
-//     // Initial displacements and velocities gradient
-//     tkc[0] = 0;  // t = 0
-//     model.PhysicsLossGradientDfs(&tkc, 0, &grad);
+    // Get problem using intermediate value for k and c, and integrate it.
+    // Then, compare the model's prediction with the problem's result.
+    double k = (kMin + kMax) / 2;
+    double c = (cMin + cMax) / 2;
+    Maybe<Problem> mP = pd.BuildFromVector(std::vector<double>{k, c});
+    ASSERT_FALSE(mP.isError);
+    Problem p = mP.val;
+    p.Integrate(tMax);
 
-//     ASSERT_EQ(grad.size(), 8);
-//     EXPECT_DOUBLE_EQ(grad[0], expectedGrad[0]);
-//     EXPECT_DOUBLE_EQ(grad[1], expectedGrad[1]);
-//     ASSERT_DOUBLE_EQ(grad[2], expectedGrad[2]);
-//     ASSERT_DOUBLE_EQ(grad[3], expectedGrad[3]);
-//     ASSERT_DOUBLE_EQ(grad[4], expectedGrad[4]);
-//     ASSERT_DOUBLE_EQ(grad[5], expectedGrad[5]);
-//     ASSERT_DOUBLE_EQ(grad[6], expectedGrad[6]);
-//     ASSERT_DOUBLE_EQ(grad[7], expectedGrad[7]);
-// };
+    std::vector<double> tkc = std::vector<double>{0.0, k, c};
+    Maybe<std::vector<double>> X;
+    std::cout << "t,x0,modelX0,x1,modelX1" << std::endl;
+    for (int i = 0; i < int(p.t.size()); i++) {
+        tkc[0] = p.t[i];
+        X = model(&tkc);
+        ASSERT_FALSE(X.isError);
 
-// TEST(PimodelTrainingTest, TrainTest) {
-//     auto pd = ProblemDescription();
-//     pd.AddMass(1, 0.0, 0.0);
-//     pd.AddMass(1, 1.0, 0.0);
-//     pd.AddSpring(0, 1, 0.0, 1.0);
-//     pd.AddDamper(0, 1, 0.0, 1.0);
-//     pd.SetFixedMass(0);
-//     pd.AddInitialDisp(1, 1.0);
-
-//     double T = 1.0;
-//     int timeDiscretization = 1;
-//     int kcDiscretization = 1;
-//     int order = 1;
-
-//     // Train model
-//     Pimodel model =
-//         Pimodel(&pd, T, timeDiscretization, kcDiscretization, order);
-//     double lr = 0.000000001;
-//     model.Train(lr, lr, true);
-
-//     // Get problem using intermediate value for k and c, and integrate it
-//     double k = 0.5;
-//     double c = 0.5;
-//     Maybe<Problem> mP = pd.BuildFromVector(std::vector<double>{k, c});
-//     ASSERT_FALSE(mP.isError);
-//     Problem p = mP.val;
-//     p.Integrate(T);
-
-//     // Compare the model's prediction with the problem's result
-//     std::vector<double> tkc = std::vector<double>{0.0, k, c};
-//     Maybe<std::vector<double>> X;
-//     std::cout << "t,x0,modelX0,x1,modelX1" << std::endl;
-//     for (int i = 0; i < int(p.t.size()); i++) {
-//         tkc[0] = p.t[i];
-//         X = model(&tkc);
-//         ASSERT_FALSE(X.isError);
-
-//         std::cout << p.t[i] << ",";
-//         std::cout << p.XHistory[i][0] << ",";
-//         std::cout << X.val[0] << ",";
-//         std::cout << p.XHistory[i][1] << ",";
-//         std::cout << X.val[1] << std::endl;
-//     }
-// }
+        std::cout << p.t[i] << ",";
+        std::cout << p.XHistory[i][0] << ",";
+        std::cout << X.val[0] << ",";
+        std::cout << p.XHistory[i][1] << ",";
+        std::cout << X.val[1] << std::endl;
+    }
+}

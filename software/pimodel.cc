@@ -340,4 +340,41 @@ double Pimodel::Loss() {
     return rv;
 }
 
-std::vector<double> Pimodel::LossGradient() {}
+std::vector<double> Pimodel::LossGradient() {
+    std::vector<double> grad = std::vector<double>(this->nParameters());
+
+    Maybe<double> maybe;
+    Polys residueD = Polys();  // "derivatives" of the residues
+
+    for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
+        maybe = this->initialDispResidues[i](this->modelsCoefficients);
+        assert(!maybe.isError);
+        residueD += maybe.val * this->initialDispResidues[i];
+    }
+    for (int i = 0; i < int(this->initialVelResidues.size()); i++) {
+        maybe = this->initialVelResidues[i](this->modelsCoefficients);
+        assert(!maybe.isError);
+        residueD += maybe.val * this->initialVelResidues[i];
+    }
+    for (int i = 0; i < int(this->physicsResidues.size()); i++) {
+        maybe = this->physicsResidues[i](this->modelsCoefficients);
+        assert(!maybe.isError);
+        residueD += maybe.val * this->physicsResidues[i];
+    }
+
+    std::map<std::tuple<int, int>, double> gradMap = residueD.Da();
+
+    std::tuple<int, int> gradMapKey;
+    int gradI = 0;
+    for (int pId = 0; pId < int(this->models.size1()); pId++) {
+        for (int i = 0; i < this->models(pId, 0).nMonomials(); i++) {
+            gradMapKey = {pId, i};
+            if (gradMap.find(gradMapKey) != gradMap.end()) {
+                grad[gradI] += gradMap[gradMapKey];
+            }
+            gradI += 1;
+        }
+    }
+
+    return grad;
+}

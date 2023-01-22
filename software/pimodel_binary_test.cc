@@ -1,33 +1,41 @@
 #include "pimodel.h"
 
 int main(int argc, char *argv[]) {
+    double kMin = 0.0;
+    double kMax = 1.0;
+    double cMin = 0.0;
+    double cMax = 1.0;
+    double tMax = 1.0;
+    double initialDisp = 100.0;
+
     auto pd = ProblemDescription();
     pd.AddMass(1, 0.0, 0.0);
     pd.AddMass(1, 1.0, 0.0);
-    pd.AddSpring(0, 1, 0.0, 1.0);
-    pd.AddDamper(0, 1, 0.0, 1.0);
+    pd.AddSpring(0, 1, kMin, kMax);
+    pd.AddDamper(0, 1, cMin, cMax);
     pd.SetFixedMass(0);
-    pd.AddInitialDisp(1, 1.0);
+    pd.AddInitialDisp(1, initialDisp);
 
-    double T = 1.0;
-    int timeDiscretization = 20;
-    int kcDiscretization = 1;
-    int order = 4;
+    int timeDiscretization = 5;
+    int kcDiscretization = 2;
+    int order = 2;
+    double learningRate = 0.01;
+    double minLearningRate = learningRate / (2 * 2 * 2 * 2);
+    bool log = true;
 
     // Train model
     Pimodel model =
-        Pimodel(&pd, T, timeDiscretization, kcDiscretization, order);
-    double lr = 0.00005;
-    model.Train(lr, lr / 2, true);
+        Pimodel(&pd, tMax, timeDiscretization, kcDiscretization, order);
+    model.Train(learningRate, minLearningRate, log);
 
-    // Get problem using intermediate value for k and c, and integrate it
-    double k = 0.5;
-    double c = 0.5;
+    // Get problem using intermediate value for k and c, and integrate it.
+    // Then, compare the model's prediction with the problem's result.
+    double k = (kMin + kMax) / 2;
+    double c = (cMin + cMax) / 2;
     Maybe<Problem> mP = pd.BuildFromVector(std::vector<double>{k, c});
     Problem p = mP.val;
-    p.Integrate(T);
+    p.Integrate(tMax);
 
-    // Compare the model's prediction with the problem's result
     std::vector<double> tkc = std::vector<double>{0.0, k, c};
     Maybe<std::vector<double>> X;
     std::cout << "t,x0,modelX0,x1,modelX1" << std::endl;

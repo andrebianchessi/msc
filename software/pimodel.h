@@ -47,6 +47,7 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, InitialConditionsResiduesTest);
     FRIEND_TEST(PimodelTest, PhysicsResiduesTest);
     FRIEND_TEST(PimodelTest, LossTest);
+    FRIEND_TEST(PimodelTest, LossGradientTest);
 
     ProblemDescription* p;
 
