@@ -80,9 +80,14 @@ class Poly {
     Maybe<Void> Build(int n, int order, int id);
     Maybe<Void> Build(int n, int order) { return this->Build(n, order, 0); };
 
-    // Evaluates the polynomial for the given values of the variables
-    Maybe<double> operator()(std::vector<double>& a,
-                             std::vector<double>& X) const;
+    // Getter and setter for X, which hold the values of the variables in which
+    // this instance is evaluated
+    std::vector<double> GetX() const;
+    void SetX(std::vector<double> X);
+
+    // Evaluates the polynomial for the given values of its coefficients and
+    // X value set
+    Maybe<double> operator()(std::vector<double>& a) const;
 
     // Sets this polynomial as the derivative of this polynomial
     // with respect to i-th variable.
@@ -97,16 +102,20 @@ class Poly {
     // P = 1.0x^2 + 2.0xy + 3.0x + 4.0y^2 + 5.0y + 6.0
     // Da0 = 7^2
     // Da1 = 7*8
-    Maybe<double> Dai(int i, std::vector<double>& X) const;
+    Maybe<double> Dai(int i) const;
 
    private:
+    std::vector<double> X;
+
     FRIEND_TEST(PolyConstructorTest, constructorTest);
+    FRIEND_TEST(PolyTest, GetSetXTest);
     FRIEND_TEST(PolyTest, copyConstructorAndAssignment);
     FRIEND_TEST(PolyTest, DxiTest2);
     FRIEND_TEST(PolyTest, PolysConstructorTest);
     FRIEND_TEST(PolyTest, MatrixMultiplicationTest);
     FRIEND_TEST(PimodelTest, getAccelsFromDiffEqTest);
     FRIEND_TEST(PolyTest, DaPolysTest);
+    FRIEND_TEST(PimodelTest, InitialConditionsResiduesTest);
 
     // Auxiliary function used in Build method.
     void buildDfs(std::vector<int>& exponents, int exponentsSum,
@@ -116,6 +125,8 @@ class Poly {
     friend class PolyTest;
     friend class Pimodel;
     friend bool operator==(Polys const& right, Polys const& left);
+    friend Polys operator+(Poly const& p, double k);
+    friend Polys operator+(double k, Poly const& p);
 
     // Indicates Build still wasn't called yet
     bool isZero;
@@ -129,6 +140,7 @@ class Polys {
    public:
     std::vector<Poly> polys;
     std::vector<double> k;
+    double plus;  // Scalar that is added to the Polys instance. Defaults to 0
     Polys();
     Polys(const Poly& p);
 
@@ -136,13 +148,12 @@ class Polys {
     Polys& operator+=(const Polys& right);
     Polys& operator*=(double k);
 
-    Maybe<double> operator()(std::vector<std::vector<double>>& a,
-                             std::vector<double>& X) const;
+    Maybe<double> operator()(std::vector<std::vector<double>>& a) const;
     Maybe<Void> Dxi(int i);
 
     // Returns a map in which the key (i, j) represents the non-zero derivatives
     // of the polynomial with id=i with respect to the j-th coefficient
-    std::map<std::tuple<int, int>, double> Da(std::vector<double>& X) const;
+    std::map<std::tuple<int, int>, double> Da() const;
 };
 
 Polys operator*(double k, const Poly& p);
@@ -152,6 +163,10 @@ Polys operator+(Polys const& left, Poly const& right);
 Polys operator+(Poly const& left, Polys const& right);
 Polys operator+(Polys const& left, Polys const& right);
 Polys operator*(double k, Polys const& right);
+
+// Scalar sum
+Polys operator+(Poly const& p, double k);
+Polys operator+(double k, Poly const& p);
 
 // Note: order of monomials is considered for equality
 bool operator==(Polys const& right, Polys const& left);

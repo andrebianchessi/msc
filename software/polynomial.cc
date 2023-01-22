@@ -97,6 +97,8 @@ Maybe<Void> Poly::Build(int n, int order, int id) {
 
     this->id = id;
     this->n = n;
+    this->X = std::vector<double>(n);
+
     this->order = order;
     // Source:
     // https://mathoverflow.net/questions/225953/number-of-polynomial-terms-for-certain-degree-and-certain-number-of-variables/225963#225963?newreg=2a0208ceb740461d8eaa21e304b0e341
@@ -113,17 +115,18 @@ Maybe<Void> Poly::Build(int n, int order, int id) {
     return r;
 };
 
+std::vector<double> Poly::GetX() const { return this->X; }
+void Poly::SetX(std::vector<double> X) {
+    assert(int(X.size()) == this->n);
+    this->X = X;
+}
+
 int Poly::nMonomials() const { return this->monomials.size(); }
 
-Maybe<double> Poly::operator()(std::vector<double>& a,
-                               std::vector<double>& X) const {
+Maybe<double> Poly::operator()(std::vector<double>& a) const {
     Maybe<double> r;
-    if (int(X.size()) != this->n) {
-        r.isError = true;
-        r.errMsg = "X of invalid length";
-        return r;
-    }
     Maybe<double> maybeVal;
+    std::vector<double> X = this->GetX();
     double val = 0;
     for (int m = 0; m < int(this->monomials.size()); m++) {
         maybeVal = this->monomials[m](a[m], X);
@@ -141,16 +144,19 @@ Maybe<double> Poly::operator()(std::vector<double>& a,
 Polys::Polys() {
     this->polys = std::vector<Poly>(0);
     this->k = std::vector<double>(0);
+    this->plus = 0;
 }
 
 Polys::Polys(const Poly& p) {
     if (p.isZero) {
         this->polys = std::vector<Poly>(0);
         this->k = std::vector<double>(0);
+        this->plus = 0;
         return;
     }
     this->polys = std::vector<Poly>{p};
     this->k = std::vector<double>{1.0};
+    this->plus = 0;
 }
 Polys operator*(double k, const Poly& p) {
     Polys ps = Polys(p);
@@ -192,6 +198,13 @@ Polys operator+(Polys const& left, Polys const& right) {
     }
     return p;
 };
+
+Polys operator+(Poly const& p, double k) {
+    Polys copy = Polys(p);
+    copy.plus += k;
+    return copy;
+}
+Polys operator+(double k, Poly const& p) { return p + k; }
 
 Polys& Polys::operator+=(const Poly& right) {
     (*this) = (*this) + right;
@@ -250,17 +263,16 @@ bool operator!=(Polys const& right, Polys const& left) {
     return !(right == left);
 }
 
-Maybe<double> Polys::operator()(std::vector<std::vector<double>>& a,
-                                std::vector<double>& X) const {
+Maybe<double> Polys::operator()(std::vector<std::vector<double>>& a) const {
     Maybe<double> r;
-    double val = 0;
+    double val = this->plus;
     for (int p = 0; p < int(this->polys.size()); p++) {
         if (this->polys[p].id >= int(a.size())) {
             r.isError = true;
             r.errMsg = "a[i] must contain the coefficients of poly with id = i";
             return r;
         }
-        r = this->polys[p](a[this->polys[p].id], X);
+        r = this->polys[p](a[this->polys[p].id]);
         if (r.isError) {
             return r;
         }
@@ -288,19 +300,14 @@ Maybe<Void> Poly::Dxi(int i) {
     return r;
 }
 
-Maybe<double> Poly::Dai(int i, std::vector<double>& X) const {
+Maybe<double> Poly::Dai(int i) const {
     Maybe<double> r;
-    if (int(X.size()) != this->n) {
-        r.isError = true;
-        r.errMsg = "X of invalid length";
-        return r;
-    }
     if (i < 0 || i >= this->nMonomials()) {
         r.isError = true;
         r.errMsg = "invalid i";
         return r;
     }
-
+    std::vector<double> X = this->GetX();
     Maybe<double> maybeDa = this->monomials[i].Da(X);
     if (maybeDa.isError) {
         return maybeDa;
@@ -330,9 +337,8 @@ Maybe<Void> Polys::Dxi(int i) {
     return r;
 }
 
-std::map<std::tuple<int, int>, double> Polys::Da(std::vector<double>& X) const {
+std::map<std::tuple<int, int>, double> Polys::Da() const {
     std::map<std::tuple<int, int>, double> map;
-
     Maybe<double> eval;
     std::tuple<int, int> t;
     int pId;
@@ -343,7 +349,7 @@ std::map<std::tuple<int, int>, double> Polys::Da(std::vector<double>& X) const {
             if (map.find(t) == map.end()) {
                 map.insert({t, 0.0});
             }
-            eval = this->polys[p].Dai(m, X);
+            eval = this->polys[p].Dai(m);
             assert(!eval.isError);
             map[t] += this->k[p] * eval.val;
         }

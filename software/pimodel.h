@@ -40,14 +40,13 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, SetParametersTest);
     FRIEND_TEST(PimodelTest, ProblemFromTkcTest);
     FRIEND_TEST(PimodelTest, getXModelTest);
-    FRIEND_TEST(PimodelTest, getAccelsFromModelTest);
     FRIEND_TEST(PimodelTest, getAccelsFromDiffEqTest);
     FRIEND_TEST(PimodelTest, getInitialXTest);
-    FRIEND_TEST(PimodelTest, InitialConditionsLossTest);
-    FRIEND_TEST(PimodelTest, PhysicsLossTest);
+    FRIEND_TEST(PimodelTest, InitialConditionsResiduesTkcTest);
+    FRIEND_TEST(PimodelTest, PhysicsResiduesTkcTest);
+    FRIEND_TEST(PimodelTest, InitialConditionsResiduesTest);
+    FRIEND_TEST(PimodelTest, PhysicsResiduesTest);
     FRIEND_TEST(PimodelTest, LossTest);
-    FRIEND_TEST(PimodelTest, InitialConditionsLossGradientTest);
-    FRIEND_TEST(PimodelTest, PhysicsLossGradientTest);
 
     ProblemDescription* p;
 
@@ -57,6 +56,19 @@ class Pimodel : public Model {
     // springs and the masses
     boost::numeric::ublas::matrix<Poly> models;
     std::vector<std::vector<double>> modelsCoefficients;
+
+    // Residues of initial displacement
+    std::vector<Polys> initialDispResidues;
+    // Residues of initial velocity
+    std::vector<Polys> initialVelResidues;
+    // Values of time, spring coefficients and damper coefficients in which
+    // the initial displacement and velocity residues must be calculated to make
+    // up the loss function
+    std::vector<std::vector<double>> initialConditionsResiduesTkc;
+
+    // Physical residue
+    std::vector<Polys> physicsResidues;
+    std::vector<std::vector<double>> physicsResiduesTkc;
 
     // This model describes the system from t = 0 to t = finalT
     double finalT;
@@ -76,20 +88,17 @@ class Pimodel : public Model {
     Maybe<Void> SetParameters(std::vector<double>* parameters) override;
 
     double Loss() override;
-    // Auxiliary functions used inside Loss() that calculates the losses
-    // using "Depth-First-Search"
-    void InitialConditionsLossDfs(std::vector<double>* tkc, int tkcIndex,
-                                  double* loss);
-    void PhysicsLossDfs(std::vector<double>* tkc, int tkcIndex, double* loss);
+
+    void AddInitialConditionsResiduesTkc(std::vector<double>* tkc,
+                                         int tkcIndex);
+    void AddPhysicsResiduesTkc(std::vector<double>* tkc, int tkcIndex);
+    void AddResiduesTkc();
+
+    void AddInitialConditionsResidues();
+    void AddPhysicsResidues();
+    void AddResidues();
 
     std::vector<double> LossGradient() override;
-    // Auxiliary functions used inside LossGradient() that calculates the
-    // gradients using "Depth-First-Search"
-    void InitialConditionsLossGradientDfs(std::vector<double>* tkc,
-                                          int tkcIndex,
-                                          std::vector<double>* grad);
-    void PhysicsLossGradientDfs(std::vector<double>* tkc, int tkcIndex,
-                                std::vector<double>* grad);
 
     // Auxiliary functions:
 
@@ -103,11 +112,8 @@ class Pimodel : public Model {
     // using the polynomials
     std::vector<double> getXModel(std::vector<double>* tkc);
 
-    // Get polynomials that model the accelerations by taking second time
-    // derivative of the polynomials
-    std::vector<Polys> getAccelsFromModel();
-
     // Gets the polynomials that represent the acceleration of each mass
     // by using the differential equation from the discrete element method
-    boost::numeric::ublas::matrix<Polys> getAccelsFromDiffEq(Problem* problem);
+    boost::numeric::ublas::matrix<Polys> getAccelsFromDiffEq(
+        Problem* problem, std::vector<double>& tkc);
 };

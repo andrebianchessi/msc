@@ -122,13 +122,41 @@ class PolyTest : public testing::Test {
     }
 };
 
+TEST_F(PolyTest, GetSetXTest) {
+    auto xGet = n2o2.GetX();
+    ASSERT_EQ(xGet.size(), 2);
+    ASSERT_DOUBLE_EQ(xGet[0], 0);
+    ASSERT_DOUBLE_EQ(xGet[1], 0);
+
+    std::vector<double> X;
+    double x1 = 9.0;
+    double x2 = 17.0;
+    X = {x1, x2};
+    n2o2.SetX(X);
+    ASSERT_EQ(n2o2.X.size(), 2);
+    ASSERT_DOUBLE_EQ(n2o2.X[0], x1);
+    ASSERT_DOUBLE_EQ(n2o2.X[1], x2);
+
+    xGet = n2o2.GetX();
+    ASSERT_EQ(xGet.size(), 2);
+    ASSERT_DOUBLE_EQ(xGet[0], x1);
+    ASSERT_DOUBLE_EQ(xGet[1], x2);
+
+    X = {};  // too short
+    ASSERT_DEATH({ n2o2.SetX(X); }, "");
+
+    X = {1.0, 1.0, 2.0};  // too long
+    ASSERT_DEATH({ n2o2.SetX(X); }, "");
+}
+
 TEST_F(PolyTest, operatorTest) {
     std::vector<double> X;
     double x1 = 9.0;
     double x2 = 17.0;
     X = {x1, x2};
 
-    auto eval = n2o2(all, X);
+    n2o2.SetX(X);
+    auto eval = n2o2(all);
     double expected = 1.0 * x1 * x1 + 2.0 * x1 * x2 + 3.0 * x1 + 4.0 * x2 * x2 +
                       5.0 * x2 + 6.0;
     ASSERT_FALSE(eval.isError);
@@ -166,37 +194,42 @@ TEST_F(PolyTest, DxiTest) {
     Poly p;
 
     p = n2o2;
+    p.SetX(xy);
     ASSERT_FALSE(p.Dxi(0).isError);
-    eval = p(zeros, xy);
+    eval = p(zeros);
     ASSERT_FALSE(eval.isError);
     ASSERT_EQ(eval.val, 0);
 
     p = n2o2;
+    p.SetX(xy);
     ASSERT_FALSE(p.Dxi(1).isError);
-    eval = p(zeros, xy);
+    eval = p(zeros);
     ASSERT_FALSE(eval.isError);
     ASSERT_EQ(eval.val, 0);
 
     p = n2o2;
+    p.SetX(xy);
     ASSERT_TRUE(p.Dxi(2).isError);
     ASSERT_TRUE(p.Dxi(-1).isError);
 
     p = n2o2;
+    p.SetX(xy);
     // P = a0x^2 + a1*xy + a2*x + a3*y^2 + a4*y + a5*1
     ASSERT_FALSE(p.Dxi(0).isError);
     // P = 2*a0x + a1*y + a2 + 0*a3*y^2 + 0*a4*y + 0*a5*1
     double a0 = 1;
     double a1 = 2;
     double a2 = 3;
-    eval = p(all, xy);
+    eval = p(all);
     ASSERT_FALSE(eval.isError);
     ASSERT_EQ(eval.val, 2 * a0 * x + 1 * a1 * y + a2);
 
     p = n2o2;
+    p.SetX(xy);
     // P = a0x^2 + a1*xy + a2*x + a3*y^2 + a4*y + a5*1
     ASSERT_FALSE(p.Dxi(1).isError);
     // P = a1*x + 2*a3*y + a4
-    eval = p(all, xy);
+    eval = p(all);
     double a3 = 4;
     double a4 = 5;
     ASSERT_FALSE(eval.isError);
@@ -211,6 +244,7 @@ TEST_F(PolyTest, DxiTest2) {
 
     Poly p;
     p = this->n2o2;
+    p.SetX(xy);
 
     ASSERT_TRUE(p.Dxi(-1).isError);
     ASSERT_TRUE(p.Dxi(2).isError);
@@ -226,7 +260,7 @@ TEST_F(PolyTest, DxiTest2) {
     ASSERT_EQ(p.monomials[3].k, 0);
     ASSERT_EQ(p.monomials[4].k, 0);
     ASSERT_EQ(p.monomials[5].k, 0);
-    ASSERT_DOUBLE_EQ(p(all, xy).val, 2 * x + 2 * y + 3);
+    ASSERT_DOUBLE_EQ(p(all).val, 2 * x + 2 * y + 3);
 
     // p = 2*a1*x + 1*a2*y + 1*a3*1 + 0 + 0 + 0
     // dp/dy = 0 + 1*a2*1 + 0 + 0 + 0 + 0
@@ -238,44 +272,41 @@ TEST_F(PolyTest, DxiTest2) {
     ASSERT_EQ(p.monomials[3].k, 0);
     ASSERT_EQ(p.monomials[4].k, 0);
     ASSERT_EQ(p.monomials[5].k, 0);
-    ASSERT_DOUBLE_EQ(p(all, xy).val, 2);
+    ASSERT_DOUBLE_EQ(p(all).val, 2);
 }
 
 TEST_F(PolyTest, DaTest) {
-    std::vector<double> X = {1.0, 2.0};
-    auto r = n2o2.Dai(-1, X);
+    auto r = n2o2.Dai(-1);
     ASSERT_TRUE(r.isError);
 
-    X = {1.0};
-    r = n2o2.Dai(2, X);
-    ASSERT_TRUE(r.isError);
-
+    std::vector<double> X;
     double x = 17.0;
     double y = 29.0;
     X = {x, y};
+    n2o2.SetX(X);
 
     // P = 0*x^2 + 0*xy + 0*x + 0*y^2 + 0*y + 0
-    r = n2o2.Dai(0, X);
+    r = n2o2.Dai(0);
     ASSERT_FALSE(r.isError);
     ASSERT_DOUBLE_EQ(r.val, x * x);
 
-    r = n2o2.Dai(1, X);
+    r = n2o2.Dai(1);
     ASSERT_FALSE(r.isError);
     ASSERT_DOUBLE_EQ(r.val, x * y);
 
-    r = n2o2.Dai(2, X);
+    r = n2o2.Dai(2);
     ASSERT_FALSE(r.isError);
     ASSERT_DOUBLE_EQ(r.val, x);
 
-    r = n2o2.Dai(3, X);
+    r = n2o2.Dai(3);
     ASSERT_FALSE(r.isError);
     ASSERT_DOUBLE_EQ(r.val, y * y);
 
-    r = n2o2.Dai(4, X);
+    r = n2o2.Dai(4);
     ASSERT_FALSE(r.isError);
     ASSERT_DOUBLE_EQ(r.val, y);
 
-    r = n2o2.Dai(5, X);
+    r = n2o2.Dai(5);
     ASSERT_FALSE(r.isError);
     ASSERT_DOUBLE_EQ(r.val, 1);
 }
@@ -300,12 +331,17 @@ TEST_F(PolyTest, PolysConstructorTest) {
 
 TEST_F(PolyTest, MatrixMultiplicationTest) {
     // Tests that the class works correctly with boost matrix multiplication
+    double x = 1;
+    double y = 2;
+    std::vector<double> xy = {x, y};
 
     Poly p0;
     p0.Build(2, 1, 0);
+    p0.SetX(xy);
 
     Poly p1;
     p1.Build(2, 1, 1);
+    p1.SetX(xy);
 
     using namespace boost::numeric::ublas;
 
@@ -359,30 +395,27 @@ TEST_F(PolyTest, MatrixMultiplicationTest) {
     ASSERT_EQ(mult(0, 0).polys[k_p1_index].monomials[2].exps[0], 0);
     ASSERT_EQ(mult(0, 0).polys[k_p1_index].monomials[2].exps[1], 0);
 
-    double x = 1;
-    double y = 2;
     std::vector<double> a0 = std::vector<double>{1, 2, 3};
     std::vector<double> a1 = std::vector<double>{4, 5, 6};
     std::vector<std::vector<double>> a =
         std::vector<std::vector<double>>{a0, a1};
     double p0Val = 1 * x + 2 * y + 3;
     double p1Val = 4 * x + 5 * y + 6;
-    std::vector<double> xy = {x, y};
 
-    auto eval = mult(0, 0)(a, xy);
+    auto eval = mult(0, 0)(a);
     ASSERT_FALSE(eval.isError);
     ASSERT_DOUBLE_EQ(eval.val, -k * p0Val + k * p1Val);
 
-    eval = mult(1, 0)(a, xy);
+    eval = mult(1, 0)(a);
     ASSERT_FALSE(eval.isError);
     ASSERT_DOUBLE_EQ(eval.val, k * p0Val - k * p1Val);
 
     // Test error: a is missing some coefficients
     a = std::vector<std::vector<double>>{a1};
-    eval = mult(1, 0)(a, xy);
+    eval = mult(1, 0)(a);
     ASSERT_TRUE(eval.isError);
     a = std::vector<std::vector<double>>{a0};
-    eval = mult(1, 0)(a, xy);
+    eval = mult(1, 0)(a);
     ASSERT_TRUE(eval.isError);
 }
 
@@ -390,6 +423,8 @@ TEST_F(PolyTest, DxiPolysTest) {
     double x = 987;
     double y = 91;
     std::vector<double> xy = {x, y};
+    n2o2.SetX(xy);
+
     std::vector<std::vector<double>> coefs;
     Maybe<Void> err;
     Maybe<double> eval;
@@ -398,14 +433,14 @@ TEST_F(PolyTest, DxiPolysTest) {
     ps = Polys(n2o2);
     ASSERT_FALSE(ps.Dxi(0).isError);
     coefs = {zeros};
-    eval = ps(coefs, xy);
+    eval = ps(coefs);
     ASSERT_FALSE(eval.isError);
     ASSERT_EQ(eval.val, 0);
 
     ps = Polys(n2o2);
     ASSERT_FALSE(ps.Dxi(1).isError);
     coefs = {zeros};
-    eval = ps(coefs, xy);
+    eval = ps(coefs);
     ASSERT_FALSE(eval.isError);
     ASSERT_EQ(eval.val, 0);
 
@@ -417,14 +452,14 @@ TEST_F(PolyTest, DxiPolysTest) {
     // P = 1x^2 + 2xy + 3x + 4y^2 + 5y + 6
     ASSERT_FALSE(ps.Dxi(0).isError);
     coefs = {all};
-    eval = ps(coefs, xy);
+    eval = ps(coefs);
     ASSERT_FALSE(eval.isError);
     ASSERT_EQ(eval.val, 1.0 * 2 * x + 2.0 * y + 3.0);
 
     ps = Polys(n2o2);
     ASSERT_FALSE(ps.Dxi(1).isError);
     coefs = {all};
-    eval = ps(coefs, xy);
+    eval = ps(coefs);
     ASSERT_FALSE(eval.isError);
     ASSERT_EQ(eval.val, 2.0 * x + 4.0 * 2 * y + 5.0);
 
@@ -434,7 +469,7 @@ TEST_F(PolyTest, DxiPolysTest) {
     // ps = 8*(1x^2 + 2xy + 3x + 4y^2 + 5y + 6)
     ASSERT_FALSE(ps.Dxi(0).isError);
     coefs = {all};
-    eval = ps(coefs, xy);
+    eval = ps(coefs);
     ASSERT_FALSE(eval.isError);
     ASSERT_EQ(eval.val, 8 * (1.0 * 2 * x + 2.0 * y + 3.0));
 }
@@ -446,13 +481,17 @@ TEST_F(PolyTest, DaPolysTest) {
     std::map<std::tuple<int, int>, double> map;
     Polys ps;
 
+    n2o2.SetX(xy);
+    n2o2_1.SetX(xy);
+    n2o2_2.SetX(xy);
+
     ps = n2o2 + n2o2_1 + 7.0 * n2o2_2;
     // ps = p0 + p1 + 7*p2
     // ps = x^2 + xy + x + y^2 + y + 1
     //      + x^2 + xy + x + y^2 + y + 1
     //      + 7*(x^2 + xy + x + y^2 + y + 1)
 
-    map = ps.Da(xy);
+    map = ps.Da();
     ASSERT_EQ(map.size(), 6 * 3);
 
     // p0
@@ -549,7 +588,7 @@ TEST_F(PolyTest, DaPolysTest) {
     ASSERT_EQ(ps.polys[1].monomials[5].exps[0], 0);
     ASSERT_EQ(ps.polys[1].monomials[5].exps[1], 0);
 
-    map = ps.Da(xy);
+    map = ps.Da();
     // dps/da0 = 2*x + 5*x^2
     val = map[std::tuple<int, int>{n2o2.id, 0}];
     ASSERT_DOUBLE_EQ(val, 2 * x + 5 * x * x);
