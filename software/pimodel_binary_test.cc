@@ -1,28 +1,28 @@
 #include "pimodel.h"
 
 int main(int argc, char *argv[]) {
-    double kMin = 0.0;
+    double mass = 1;
+    double kMin = 0.8;
     double kMax = 1.0;
     double cMin = 0.0;
-    double cMax = 1.0;
-    double tMax = 1.0;
-    double initialDisp = 100.0;
+    double cMax = 0.1;
+    double tMax = 5.0;
+    double initialDisp = 1.0;
 
     auto pd = ProblemDescription();
-    pd.AddMass(1, 0.0, 0.0);
-    pd.AddMass(1, 1.0, 0.0);
+    pd.AddMass(mass, 0.0, 0.0);
+    pd.AddMass(mass, 1.0, 0.0);
     pd.AddSpring(0, 1, kMin, kMax);
     pd.AddDamper(0, 1, cMin, cMax);
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int timeDiscretization = 5;
-    int kcDiscretization = 2;
-    int order = 2;
-    double learningRate = 0.01;
-    double minLearningRate = learningRate / (2 * 2 * 2 * 2);
+    int timeDiscretization = 10;
+    int kcDiscretization = 1;
+    int order = 10;
+    double learningRate = 0.000000000000001;
+    double minLearningRate = learningRate / 32;
     bool log = true;
-
     // Train model
     Pimodel model =
         Pimodel(&pd, tMax, timeDiscretization, kcDiscretization, order);
@@ -39,7 +39,8 @@ int main(int argc, char *argv[]) {
     std::vector<double> tkc = std::vector<double>{0.0, k, c};
     Maybe<std::vector<double>> X;
     std::cout << "t,x0,modelX0,x1,modelX1" << std::endl;
-    for (int i = 0; i < int(p.t.size()); i++) {
+    for (int i = 0; i < int(p.t.size());
+         i += std::max(1, int(p.t.size()) / 20)) {
         tkc[0] = p.t[i];
         X = model(&tkc);
 

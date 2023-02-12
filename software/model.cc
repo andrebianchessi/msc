@@ -2,11 +2,13 @@
 
 #include <cassert>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 #include "maybe.h"
 
-const double MIN_STEP_IMPROVEMENT = 0.0001;  // 0.01 %
+const double MIN_STEP_IMPROVEMENT =
+    0.0;  // min relative improvement to early stop
 
 StatusAndValue Model::GradientDescentStep(double step) {
     StatusAndValue status;
@@ -49,16 +51,23 @@ Maybe<double> Model::Train(double learningRate, double minLearningRate,
         return r;
     }
     StatusAndValue stepStatus;
+    auto precision = std::cout.precision();
     while (learningRate >= minLearningRate && learningRate != 0) {
         stepStatus = this->GradientDescentStep(learningRate);
         if (log) {
-            std::cout << "Learning Rate: " << learningRate
-                      << " Loss: " << stepStatus.value << std::endl;
+            std::cout.precision(3);
+            std::cout << "Learning Rate: " << learningRate;
+            std::cout.precision(20);
+            std::cout << " Loss: " << stepStatus.value;
+            stepStatus.success ? std::cout << " -> Step Ok"
+                               : std::cout << " -> Step Not Ok ";
+            std::cout << std::endl;
         }
         if (!stepStatus.success) {
             learningRate = learningRate / 2;
         }
     }
+    std::cout.precision(precision);
     r.val = stepStatus.value;
     return r;
 }

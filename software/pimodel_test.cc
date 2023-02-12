@@ -835,28 +835,28 @@ TEST_F(PimodelTest, LossGradientTest) {
 }
 
 TEST(PimodelTrainingTest, TrainTest) {
-    double kMin = 0.0;
+    double mass = 1;
+    double kMin = 0.8;
     double kMax = 1.0;
     double cMin = 0.0;
-    double cMax = 1.0;
-    double tMax = 1.0;
-    double initialDisp = 10.0;
+    double cMax = 0.2;
+    double tMax = 2.0;
+    double initialDisp = 1.0;
 
     auto pd = ProblemDescription();
-    pd.AddMass(1, 0.0, 0.0);
-    pd.AddMass(1, 1.0, 0.0);
+    pd.AddMass(mass, 0.0, 0.0);
+    pd.AddMass(mass, 1.0, 0.0);
     pd.AddSpring(0, 1, kMin, kMax);
     pd.AddDamper(0, 1, cMin, cMax);
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int timeDiscretization = 2;
+    int timeDiscretization = 4;
     int kcDiscretization = 1;
-    int order = 2;
-    double learningRate = 0.01;
+    int order = 3;
+    double learningRate = 0.001;
     double minLearningRate = learningRate;
     bool log = true;
-
     // Train model
     Pimodel model =
         Pimodel(&pd, tMax, timeDiscretization, kcDiscretization, order);
@@ -874,7 +874,7 @@ TEST(PimodelTrainingTest, TrainTest) {
     std::vector<double> tkc = std::vector<double>{0.0, k, c};
     Maybe<std::vector<double>> X;
     std::cout << "t,x0,modelX0,x1,modelX1" << std::endl;
-    for (int i = 0; i < int(p.t.size()); i++) {
+    for (int i = 0; i < int(p.t.size()); i += 1) {
         tkc[0] = p.t[i];
         X = model(&tkc);
         ASSERT_FALSE(X.isError);
