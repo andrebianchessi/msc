@@ -385,21 +385,17 @@ void Pimodel::AddPhysicsResidues() {
     }
 }
 
-double Pimodel::InitialConditionsWeight() {
-    int nInitialConditionsLossTerms = int(this->initialDispResidues.size()) +
-                                      int(this->initialVelResidues.size());
-    int nPhysicsLossTerms = int(this->physicsResidues.size());
+#define LOSS_TERMS                                                            \
+    int nInitialConditionsLossTerms = int(this->initialDispResidues.size()) + \
+                                      int(this->initialVelResidues.size());   \
+    int nPhysicsLossTerms = int(this->physicsResidues.size());                \
     double nTotalLossTerms = nInitialConditionsLossTerms + nPhysicsLossTerms;
-
+double Pimodel::InitialConditionsWeight() {
+    LOSS_TERMS
     return nPhysicsLossTerms / nTotalLossTerms;
-    double physicsWeight = nInitialConditionsLossTerms / nTotalLossTerms;
 };
 double Pimodel::PhysicsWeight() {
-    int nInitialConditionsLossTerms = int(this->initialDispResidues.size()) +
-                                      int(this->initialVelResidues.size());
-    int nPhysicsLossTerms = int(this->physicsResidues.size());
-    double nTotalLossTerms = nInitialConditionsLossTerms + nPhysicsLossTerms;
-
+    LOSS_TERMS
     return nInitialConditionsLossTerms / nTotalLossTerms;
 };
 

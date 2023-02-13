@@ -6,7 +6,7 @@ int main(int argc, char *argv[]) {
     double kMax = 1.0;
     double cMin = 0.0;
     double cMax = 0.1;
-    double tMax = 3.0;
+    double tMax = 1.5;
     double initialDisp = 1.0;
 
     auto pd = ProblemDescription();
@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int timeBuckets = 10;
+    int timeBuckets = 5;
     int timeDiscretization = 10;
     int kcDiscretization = 1;
     int order = 2;
@@ -47,8 +47,17 @@ int main(int argc, char *argv[]) {
 
         std::cout << p.t[i] << ",";
         std::cout << p.XHistory[i][0] << ",";
-        std::cout << X.val[0] << ",";
+        std::cout << ""
+                  << ",";
         std::cout << p.XHistory[i][1] << ",";
+        std::cout << "" << std::endl;
+    }
+    for (int i = 0; i < 20; i += 1) {
+        tkc[0] = i * tMax / 20;
+        X = model(&tkc);
+
+        std::cout << tkc[0] << ",,";
+        std::cout << X.val[0] << ",,";
         std::cout << X.val[1] << std::endl;
     }
 }
