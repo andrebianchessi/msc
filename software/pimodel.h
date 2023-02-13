@@ -100,8 +100,6 @@ class Pimodel : public Model {
 
     Maybe<Void> SetParameters(std::vector<double>* parameters) override;
 
-    double Loss() override;
-
     void AddInitialConditionsResiduesTkc(std::vector<double>* tkc,
                                          int tkcIndex);
     void AddPhysicsResiduesTkc(std::vector<double>* tkc, int tkcIndex);
@@ -110,6 +108,12 @@ class Pimodel : public Model {
     void AddInitialConditionsResidues();
     void AddPhysicsResidues();
 
+    // Auxiliary functions that return the weight of each type of loss.
+    // Must be called after Add*Residue methods.
+    double InitialConditionsWeight();
+    double PhysicsWeight();
+
+    double Loss() override;
     std::vector<double> LossGradient() override;
 
     // Auxiliary functions:

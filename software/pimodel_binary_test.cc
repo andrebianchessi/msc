@@ -17,12 +17,12 @@ int main(int argc, char *argv[]) {
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int timeBuckets = 10;
+    int timeBuckets = 20;
     int timeDiscretization = 2;
     int kcDiscretization = 1;
-    int order = 2;
+    int order = 1;
     double learningRate = 0.001;
-    int maxSteps = 100;
+    int maxSteps = 1000;
     bool log = true;
     // Train model
     Pimodel model = Pimodel(&pd, tMax, timeBuckets, timeDiscretization,

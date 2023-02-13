@@ -371,17 +371,30 @@ void Pimodel::AddPhysicsResidues() {
     }
 }
 
-double Pimodel::Loss() {
-    double rv = 0;
-    Maybe<double> maybe;
-
+double Pimodel::InitialConditionsWeight() {
     int nInitialConditionsLossTerms = int(this->initialDispResidues.size()) +
                                       int(this->initialVelResidues.size());
     int nPhysicsLossTerms = int(this->physicsResidues.size());
     double nTotalLossTerms = nInitialConditionsLossTerms + nPhysicsLossTerms;
 
-    double initialConditionsWeight = nPhysicsLossTerms / nTotalLossTerms;
+    return nPhysicsLossTerms / nTotalLossTerms;
     double physicsWeight = nInitialConditionsLossTerms / nTotalLossTerms;
+};
+double Pimodel::PhysicsWeight() {
+    int nInitialConditionsLossTerms = int(this->initialDispResidues.size()) +
+                                      int(this->initialVelResidues.size());
+    int nPhysicsLossTerms = int(this->physicsResidues.size());
+    double nTotalLossTerms = nInitialConditionsLossTerms + nPhysicsLossTerms;
+
+    return nInitialConditionsLossTerms / nTotalLossTerms;
+};
+
+double Pimodel::Loss() {
+    double rv = 0;
+    Maybe<double> maybe;
+
+    double initialConditionsWeight = this->InitialConditionsWeight();
+    double physicsWeight = this->PhysicsWeight();
 
     for (int b = 0; b < this->models.size(); b++) {
         for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
@@ -416,13 +429,8 @@ std::vector<double> Pimodel::LossGradient() {
     Maybe<double> maybe;
     Polys residueD = Polys();  // "derivatives" of the residues
 
-    int nInitialConditionsLossTerms = int(this->initialDispResidues.size()) +
-                                      int(this->initialVelResidues.size());
-    int nPhysicsLossTerms = int(this->physicsResidues.size());
-    double nTotalLossTerms = nInitialConditionsLossTerms + nPhysicsLossTerms;
-
-    double initialConditionsWeight = nPhysicsLossTerms / nTotalLossTerms;
-    double physicsWeight = nInitialConditionsLossTerms / nTotalLossTerms;
+    double initialConditionsWeight = this->InitialConditionsWeight();
+    double physicsWeight = this->PhysicsWeight();
 
     for (int b = 0; b < this->models.size(); b++) {
         for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
