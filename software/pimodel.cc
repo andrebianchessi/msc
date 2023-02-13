@@ -375,6 +375,14 @@ double Pimodel::Loss() {
     double rv = 0;
     Maybe<double> maybe;
 
+    int nInitialConditionsLossTerms = int(this->initialDispResidues.size()) +
+                                      int(this->initialVelResidues.size());
+    int nPhysicsLossTerms = int(this->physicsResidues.size());
+    double nTotalLossTerms = nInitialConditionsLossTerms + nPhysicsLossTerms;
+
+    double initialConditionsWeight = nPhysicsLossTerms / nTotalLossTerms;
+    double physicsWeight = nInitialConditionsLossTerms / nTotalLossTerms;
+
     for (int b = 0; b < this->models.size(); b++) {
         for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
             maybe = this->initialDispResidues[i](this->modelsCoefficients[b]);
@@ -389,11 +397,13 @@ double Pimodel::Loss() {
             rv += pow(maybe.val, 2);
         }
     }
+    rv *= initialConditionsWeight;
+
     for (int b = 0; b < this->models.size(); b++) {
         for (int i = 0; i < int(this->physicsResidues.size()); i++) {
             maybe = this->physicsResidues[i](this->modelsCoefficients[b]);
             assert(!maybe.isError);
-            rv += pow(maybe.val, 2);
+            rv += physicsWeight * pow(maybe.val, 2);
         }
     }
 
@@ -406,25 +416,36 @@ std::vector<double> Pimodel::LossGradient() {
     Maybe<double> maybe;
     Polys residueD = Polys();  // "derivatives" of the residues
 
+    int nInitialConditionsLossTerms = int(this->initialDispResidues.size()) +
+                                      int(this->initialVelResidues.size());
+    int nPhysicsLossTerms = int(this->physicsResidues.size());
+    double nTotalLossTerms = nInitialConditionsLossTerms + nPhysicsLossTerms;
+
+    double initialConditionsWeight = nPhysicsLossTerms / nTotalLossTerms;
+    double physicsWeight = nInitialConditionsLossTerms / nTotalLossTerms;
+
     for (int b = 0; b < this->models.size(); b++) {
         for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
             maybe = this->initialDispResidues[i](this->modelsCoefficients[b]);
             assert(!maybe.isError);
-            residueD += maybe.val * this->initialDispResidues[i];
+            residueD += initialConditionsWeight * maybe.val *
+                        this->initialDispResidues[i];
         }
     }
     for (int b = 0; b < this->models.size(); b++) {
         for (int i = 0; i < int(this->initialVelResidues.size()); i++) {
             maybe = this->initialVelResidues[i](this->modelsCoefficients[b]);
             assert(!maybe.isError);
-            residueD += maybe.val * this->initialVelResidues[i];
+            residueD += initialConditionsWeight * maybe.val *
+                        this->initialVelResidues[i];
         }
     }
+
     for (int b = 0; b < this->models.size(); b++) {
         for (int i = 0; i < int(this->physicsResidues.size()); i++) {
             maybe = this->physicsResidues[i](this->modelsCoefficients[b]);
             assert(!maybe.isError);
-            residueD += maybe.val * this->physicsResidues[i];
+            residueD += physicsWeight * maybe.val * this->physicsResidues[i];
         }
     }
 

@@ -692,6 +692,15 @@ TEST_F(PimodelTest, LossTest) {
     // modelX0DotDot(t,k,c) = 2
     // modelX1DotDot(t,k,c) = 22
 
+    int nInitialDispLoss = 3 * 3;  // 3k * 3c
+    int nInitialVelLoss = 3 * 3;   // 3k * 3c
+    int nInitialCondLoss = nInitialDispLoss + nInitialVelLoss;
+    int nPhysicsLoss = 3 * 3 * 3;  // 3t * 3k * 3c
+    double totalLossTerms = nInitialDispLoss + nInitialDispLoss + nPhysicsLoss;
+
+    double initialConditionsLossWeight = nPhysicsLoss / totalLossTerms;
+    double physicsLossWeight = nInitialCondLoss / totalLossTerms;
+
     double expectedLoss = 0;
 
     // Initial values for the problem created in SetUp()
@@ -717,6 +726,7 @@ TEST_F(PimodelTest, LossTest) {
             expectedLoss += pow(modelX1Dot - initialXDot1, 2);
         }
     }
+    expectedLoss *= initialConditionsLossWeight;
 
     // Physics loss:
     for (double t : std::vector<double>{0, tMax / 2, tMax}) {
@@ -739,8 +749,10 @@ TEST_F(PimodelTest, LossTest) {
                 double x1DotDot = 1 / m *
                                   (k * modelX0 - k * modelX1 + c * modelX0Dot -
                                    c * modelX1Dot);
-                expectedLoss += pow(modelX0DotDot - x0DotDot, 2);
-                expectedLoss += pow(modelX1DotDot - x1DotDot, 2);
+                expectedLoss +=
+                    physicsLossWeight * pow(modelX0DotDot - x0DotDot, 2);
+                expectedLoss +=
+                    physicsLossWeight * pow(modelX1DotDot - x1DotDot, 2);
             }
         }
     }
@@ -778,6 +790,15 @@ TEST_F(PimodelTest, LossGradientTest) {
     double initialX0Dot = 0;
     double initialX1Dot = 0;
 
+    int nInitialDispLoss = 2 * 2;  // 2k * 2c
+    int nInitialVelLoss = 2 * 2;   // 2k * 2c
+    int nInitialCondLoss = nInitialDispLoss + nInitialVelLoss;
+    int nPhysicsLoss = 2 * 2 * 2;  // 2t * 2k * 2c
+    double totalLossTerms = nInitialDispLoss + nInitialDispLoss + nPhysicsLoss;
+
+    double initialConditionsLossWeight = nPhysicsLoss / totalLossTerms;
+    double physicsLossWeight = nInitialCondLoss / totalLossTerms;
+
     double t = 0;
     // Initial conditions loss:
     for (double k : std::vector<double>{kMin, kMax}) {
@@ -805,29 +826,45 @@ TEST_F(PimodelTest, LossGradientTest) {
             double d_da6_modelX1Dot = 0;
             double d_da7_modelX1Dot = 0;
 
-            expectedGrad[0] += (modelX0 - initialX0) * d_da0_modelX0;
-            expectedGrad[0] += (modelX0Dot - initialX0Dot) * d_da0_modelX0Dot;
+            expectedGrad[0] += initialConditionsLossWeight *
+                               (modelX0 - initialX0) * d_da0_modelX0;
+            expectedGrad[0] += initialConditionsLossWeight *
+                               (modelX0Dot - initialX0Dot) * d_da0_modelX0Dot;
 
-            expectedGrad[1] += (modelX0 - initialX0) * d_da1_modelX0;
-            expectedGrad[1] += (modelX0Dot - initialX0Dot) * d_da1_modelX0Dot;
+            expectedGrad[1] += initialConditionsLossWeight *
+                               (modelX0 - initialX0) * d_da1_modelX0;
+            expectedGrad[1] += initialConditionsLossWeight *
+                               (modelX0Dot - initialX0Dot) * d_da1_modelX0Dot;
 
-            expectedGrad[2] += (modelX0 - initialX0) * d_da2_modelX0;
-            expectedGrad[2] += (modelX0Dot - initialX0Dot) * d_da2_modelX0Dot;
+            expectedGrad[2] += initialConditionsLossWeight *
+                               (modelX0 - initialX0) * d_da2_modelX0;
+            expectedGrad[2] += initialConditionsLossWeight *
+                               (modelX0Dot - initialX0Dot) * d_da2_modelX0Dot;
 
-            expectedGrad[3] += (modelX0 - initialX0) * d_da3_modelX0;
-            expectedGrad[3] += (modelX0Dot - initialX0Dot) * d_da3_modelX0Dot;
+            expectedGrad[3] += initialConditionsLossWeight *
+                               (modelX0 - initialX0) * d_da3_modelX0;
+            expectedGrad[3] += initialConditionsLossWeight *
+                               (modelX0Dot - initialX0Dot) * d_da3_modelX0Dot;
 
-            expectedGrad[4] += (modelX1 - initialX1) * d_da4_modelX1;
-            expectedGrad[4] += (modelX1Dot - initialX1Dot) * d_da4_modelX1Dot;
+            expectedGrad[4] += initialConditionsLossWeight *
+                               (modelX1 - initialX1) * d_da4_modelX1;
+            expectedGrad[4] += initialConditionsLossWeight *
+                               (modelX1Dot - initialX1Dot) * d_da4_modelX1Dot;
 
-            expectedGrad[5] += (modelX1 - initialX1) * d_da5_modelX1;
-            expectedGrad[5] += (modelX1Dot - initialX1Dot) * d_da5_modelX1Dot;
+            expectedGrad[5] += initialConditionsLossWeight *
+                               (modelX1 - initialX1) * d_da5_modelX1;
+            expectedGrad[5] += initialConditionsLossWeight *
+                               (modelX1Dot - initialX1Dot) * d_da5_modelX1Dot;
 
-            expectedGrad[6] += (modelX1 - initialX1) * d_da6_modelX1;
-            expectedGrad[6] += (modelX1Dot - initialX1Dot) * d_da6_modelX1Dot;
+            expectedGrad[6] += initialConditionsLossWeight *
+                               (modelX1 - initialX1) * d_da6_modelX1;
+            expectedGrad[6] += initialConditionsLossWeight *
+                               (modelX1Dot - initialX1Dot) * d_da6_modelX1Dot;
 
-            expectedGrad[7] += (modelX1 - initialX1) * d_da7_modelX1;
-            expectedGrad[7] += (modelX1Dot - initialX1Dot) * d_da7_modelX1Dot;
+            expectedGrad[7] += initialConditionsLossWeight *
+                               (modelX1 - initialX1) * d_da7_modelX1;
+            expectedGrad[7] += initialConditionsLossWeight *
+                               (modelX1Dot - initialX1Dot) * d_da7_modelX1Dot;
         }
     }
 
@@ -928,38 +965,46 @@ TEST_F(PimodelTest, LossGradientTest) {
                     (k * d_da7_modelX0 - k * d_da7_modelX1 +
                      c * d_da7_modelX0Dot - c * d_da7_modelX1Dot);
 
-                expectedGrad[0] += (modelX0DotDot - X0DotDot) *
-                                       (d_dai_modelX0DotDot - d_da0_X0DotDot) +
-                                   (modelX1DotDot - X1DotDot) *
-                                       (d_dai_modelX1DotDot - d_da0_X1DotDot);
-                expectedGrad[1] += (modelX0DotDot - X0DotDot) *
-                                       (d_dai_modelX0DotDot - d_da1_X0DotDot) +
-                                   (modelX1DotDot - X1DotDot) *
-                                       (d_dai_modelX1DotDot - d_da1_X1DotDot);
-                expectedGrad[2] += (modelX0DotDot - X0DotDot) *
-                                       (d_dai_modelX0DotDot - d_da2_X0DotDot) +
-                                   (modelX1DotDot - X1DotDot) *
-                                       (d_dai_modelX1DotDot - d_da2_X1DotDot);
-                expectedGrad[3] += (modelX0DotDot - X0DotDot) *
-                                       (d_dai_modelX0DotDot - d_da3_X0DotDot) +
-                                   (modelX1DotDot - X1DotDot) *
-                                       (d_dai_modelX1DotDot - d_da3_X1DotDot);
-                expectedGrad[4] += (modelX0DotDot - X0DotDot) *
-                                       (d_dai_modelX0DotDot - d_da4_X0DotDot) +
-                                   (modelX1DotDot - X1DotDot) *
-                                       (d_dai_modelX1DotDot - d_da4_X1DotDot);
-                expectedGrad[5] += (modelX0DotDot - X0DotDot) *
-                                       (d_dai_modelX0DotDot - d_da5_X0DotDot) +
-                                   (modelX1DotDot - X1DotDot) *
-                                       (d_dai_modelX1DotDot - d_da5_X1DotDot);
-                expectedGrad[6] += (modelX0DotDot - X0DotDot) *
-                                       (d_dai_modelX0DotDot - d_da6_X0DotDot) +
-                                   (modelX1DotDot - X1DotDot) *
-                                       (d_dai_modelX1DotDot - d_da6_X1DotDot);
-                expectedGrad[7] += (modelX0DotDot - X0DotDot) *
-                                       (d_dai_modelX0DotDot - d_da7_X0DotDot) +
-                                   (modelX1DotDot - X1DotDot) *
-                                       (d_dai_modelX1DotDot - d_da7_X1DotDot);
+                expectedGrad[0] += physicsLossWeight *
+                                   ((modelX0DotDot - X0DotDot) *
+                                        (d_dai_modelX0DotDot - d_da0_X0DotDot) +
+                                    (modelX1DotDot - X1DotDot) *
+                                        (d_dai_modelX1DotDot - d_da0_X1DotDot));
+                expectedGrad[1] += physicsLossWeight *
+                                   ((modelX0DotDot - X0DotDot) *
+                                        (d_dai_modelX0DotDot - d_da1_X0DotDot) +
+                                    (modelX1DotDot - X1DotDot) *
+                                        (d_dai_modelX1DotDot - d_da1_X1DotDot));
+                expectedGrad[2] += physicsLossWeight *
+                                   ((modelX0DotDot - X0DotDot) *
+                                        (d_dai_modelX0DotDot - d_da2_X0DotDot) +
+                                    (modelX1DotDot - X1DotDot) *
+                                        (d_dai_modelX1DotDot - d_da2_X1DotDot));
+                expectedGrad[3] += physicsLossWeight *
+                                   ((modelX0DotDot - X0DotDot) *
+                                        (d_dai_modelX0DotDot - d_da3_X0DotDot) +
+                                    (modelX1DotDot - X1DotDot) *
+                                        (d_dai_modelX1DotDot - d_da3_X1DotDot));
+                expectedGrad[4] += physicsLossWeight *
+                                   ((modelX0DotDot - X0DotDot) *
+                                        (d_dai_modelX0DotDot - d_da4_X0DotDot) +
+                                    (modelX1DotDot - X1DotDot) *
+                                        (d_dai_modelX1DotDot - d_da4_X1DotDot));
+                expectedGrad[5] += physicsLossWeight *
+                                   ((modelX0DotDot - X0DotDot) *
+                                        (d_dai_modelX0DotDot - d_da5_X0DotDot) +
+                                    (modelX1DotDot - X1DotDot) *
+                                        (d_dai_modelX1DotDot - d_da5_X1DotDot));
+                expectedGrad[6] += physicsLossWeight *
+                                   ((modelX0DotDot - X0DotDot) *
+                                        (d_dai_modelX0DotDot - d_da6_X0DotDot) +
+                                    (modelX1DotDot - X1DotDot) *
+                                        (d_dai_modelX1DotDot - d_da6_X1DotDot));
+                expectedGrad[7] += physicsLossWeight *
+                                   ((modelX0DotDot - X0DotDot) *
+                                        (d_dai_modelX0DotDot - d_da7_X0DotDot) +
+                                    (modelX1DotDot - X1DotDot) *
+                                        (d_dai_modelX1DotDot - d_da7_X1DotDot));
             }
         }
     }
