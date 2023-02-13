@@ -71,3 +71,34 @@ Maybe<double> Model::Train(double learningRate, double minLearningRate,
     r.val = stepStatus.value;
     return r;
 }
+
+Maybe<double> Model::Train(double learningRate, int maxSteps, bool log) {
+    Maybe<double> r;
+    if (learningRate <= 0) {
+        r.isError = true;
+        r.errMsg = "LearningRate must be >0";
+        return r;
+    }
+    int step = 0;
+    StatusAndValue stepStatus;
+    auto precision = std::cout.precision();
+    while (step < maxSteps && learningRate != 0) {
+        stepStatus = this->GradientDescentStep(learningRate);
+        if (log) {
+            std::cout.precision(3);
+            std::cout << "Learning Rate: " << learningRate;
+            std::cout.precision(20);
+            std::cout << " Loss: " << stepStatus.value;
+            stepStatus.success ? std::cout << " -> Step Ok"
+                               : std::cout << " -> Step Not Ok ";
+            std::cout << std::endl;
+        }
+        if (!stepStatus.success) {
+            learningRate = learningRate / 2;
+        }
+        step++;
+    }
+    std::cout.precision(precision);
+    r.val = stepStatus.value;
+    return r;
+}

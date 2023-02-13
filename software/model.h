@@ -20,6 +20,8 @@ class Model {
     // the learning. Function returns the latest loss function value.
     Maybe<double> Train(double learningRate, double minLearningRate, bool log);
 
+    Maybe<double> Train(double learningRate, int maxSteps, bool log);
+
    private:
     // After calling this method, the model's parameters will be set in the
     // target vector
