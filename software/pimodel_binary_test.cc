@@ -6,7 +6,7 @@ int main(int argc, char *argv[]) {
     double kMax = 1.0;
     double cMin = 0.0;
     double cMax = 0.1;
-    double tMax = 5.0;
+    double tMax = 3.0;
     double initialDisp = 1.0;
 
     auto pd = ProblemDescription();
@@ -17,12 +17,12 @@ int main(int argc, char *argv[]) {
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int timeBuckets = 20;
-    int timeDiscretization = 2;
+    int timeBuckets = 10;
+    int timeDiscretization = 10;
     int kcDiscretization = 1;
-    int order = 1;
-    double learningRate = 0.001;
-    int maxSteps = 1000;
+    int order = 2;
+    double learningRate = 1;
+    int maxSteps = 100;
     bool log = true;
     // Train model
     Pimodel model = Pimodel(&pd, tMax, timeBuckets, timeDiscretization,

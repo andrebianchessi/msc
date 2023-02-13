@@ -14,6 +14,21 @@
 
 namespace bst = boost::numeric::ublas;
 
+int Pimodel::modelId(int nMasses, int timeBucket, int massId) {
+    assert(massId < nMasses);
+    assert(timeBucket >= 0);
+    return timeBucket * nMasses + massId;
+}
+int Pimodel::modelId(int timeBucket, int massId) {
+    return Pimodel::modelId(this->nMasses, timeBucket, massId);
+}
+int Pimodel::modelId(double t, int massId) {
+    return Pimodel::modelId(this->nMasses, this->timeBucket(t), massId);
+}
+int Pimodel::modelId(std::vector<double>* tkc, int massId) {
+    return Pimodel::modelId(this->nMasses, this->timeBucket(tkc), massId);
+}
+
 Pimodel::Pimodel(ProblemDescription* p, double finalT, int nTimeBuckets,
                  int timeDiscretization, int kcDiscretization, int order) {
     assert(p->IsOk());
@@ -21,6 +36,8 @@ Pimodel::Pimodel(ProblemDescription* p, double finalT, int nTimeBuckets,
     assert(kcDiscretization >= 1);
     assert(nTimeBuckets >= 1);
     this->p = p;
+    this->nMasses = p->masses.size();
+    this->nTimeBuckets = nTimeBuckets;
     int nSprings = p->springs.size();
     int nDampers = p->dampers.size();
 
@@ -31,23 +48,18 @@ Pimodel::Pimodel(ProblemDescription* p, double finalT, int nTimeBuckets,
     }
     this->timeBuckets[nTimeBuckets] = finalT;
 
-    this->models = std::vector<bst::matrix<Poly>>(nTimeBuckets);
+    this->models = bst::matrix<Poly>(p->NumberOfMasses() * nTimeBuckets, 1);
     this->modelsCoefficients =
-        std::vector<std::vector<std::vector<double>>>(nTimeBuckets);
-    for (int b = 0; b < nTimeBuckets; b++) {
-        this->models[b] = bst::matrix<Poly>(p->NumberOfMasses(), 1);
-        this->modelsCoefficients[b] =
-            std::vector<std::vector<double>>(p->NumberOfMasses());
-    }
+        std::vector<std::vector<double>>(p->NumberOfMasses() * nTimeBuckets);
 
     Poly poly;
     Maybe<Void> r;
     for (int b = 0; b < nTimeBuckets; b++) {
-        for (int i = 0; i < p->NumberOfMasses(); i++) {
-            r = poly.Build(nSprings + nDampers + 1, order, i);
+        for (int massId = 0; massId < p->NumberOfMasses(); massId++) {
+            r = poly.Build(nSprings + nDampers + 1, order, modelId(b, massId));
             assert(!r.isError);
-            this->models[b](i, 0) = poly;
-            this->modelsCoefficients[b][i] =
+            this->models(modelId(b, massId), 0) = poly;
+            this->modelsCoefficients[modelId(b, massId)] =
                 std::vector<double>(poly.nMonomials());
         }
     }
@@ -105,13 +117,12 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
     std::vector<double> positions =
         std::vector<double>(this->p->NumberOfMasses());
     Maybe<double> position;
-    for (int i = 0; i < int(positions.size()); i++) {
-        this->models[this->timeBucket(tkc)](i, 0).SetX(*tkc);
-        auto x = this->models[this->timeBucket(tkc)](i, 0);
-        position = this->models[this->timeBucket(tkc)](
-            i, 0)(this->modelsCoefficients[this->timeBucket(tkc)][i]);
+    for (int massId = 0; massId < int(positions.size()); massId++) {
+        this->models(this->modelId(tkc, massId), 0).SetX(*tkc);
+        position = this->models(this->modelId(tkc, massId), 0)(
+            this->modelsCoefficients[this->modelId(tkc, massId)]);
         assert(!position.isError);
-        positions[i] = position.val;
+        positions[massId] = position.val;
     }
     r.val = positions;
     return r;
@@ -124,15 +135,12 @@ int Pimodel::nParameters() {
     // future.
     bool optimize = true;
     if (optimize) {
-        return this->models.size() *
-               this->models[this->timeBucket(0.0)](0, 0).nMonomials() *
-               this->p->NumberOfMasses();
+        return this->nTimeBuckets * this->models(0, 0).nMonomials() *
+               this->nMasses;
     }
     int rv = 0;
-    for (int b = 0; b < this->models.size(); b++) {
-        for (int pIndex = 0; pIndex < this->p->NumberOfMasses(); pIndex++) {
-            rv += this->models[b](pIndex, 0).nMonomials();
-        }
+    for (int m = 0; m < this->models.size1(); m++) {
+        rv += this->models(m, 0).nMonomials();
     }
     return rv;
 }
@@ -145,11 +153,14 @@ Maybe<Void> Pimodel::SetParameters(std::vector<double>* parameters) {
         return r;
     }
 
+    int modelId;
     int parametersI = 0;
-    for (int b = 0; b < this->models.size(); b++) {
-        for (int pIndex = 0; pIndex < this->p->NumberOfMasses(); pIndex++) {
-            for (int m = 0; m < this->models[b](pIndex, 0).nMonomials(); m++) {
-                this->modelsCoefficients[b][pIndex][m] =
+    for (int b = 0; b < this->nTimeBuckets; b++) {
+        for (int massId = 0; massId < this->nMasses; massId++) {
+            modelId = this->modelId(b, massId);
+            for (int mon = 0; mon < this->models(modelId, 0).nMonomials();
+                 mon++) {
+                this->modelsCoefficients[modelId][mon] =
                     parameters->at(parametersI);
                 parametersI += 1;
             }
@@ -167,10 +178,13 @@ Maybe<Void> Pimodel::GetParameters(std::vector<double>* target) {
     }
 
     int targetI = 0;
-    for (int b = 0; b < this->models.size(); b++) {
-        for (int pIndex = 0; pIndex < this->p->NumberOfMasses(); pIndex++) {
-            for (int m = 0; m < this->models[b](pIndex, 0).nMonomials(); m++) {
-                target->at(targetI) = this->modelsCoefficients[b][pIndex][m];
+    int modelId;
+    for (int b = 0; b < this->nTimeBuckets; b++) {
+        for (int massId = 0; massId < this->nMasses; massId++) {
+            modelId = this->modelId(b, massId);
+            for (int mon = 0; mon < this->models(modelId, 0).nMonomials();
+                 mon++) {
+                target->at(targetI) = this->modelsCoefficients[modelId][mon];
                 targetI += 1;
             }
         }
@@ -190,47 +204,48 @@ std::vector<double> Pimodel::getXModel(std::vector<double>* tkc) {
     // X: State vector. Displacements followed by velocities.
     auto X = std::vector<double>(this->p->NumberOfMasses() * 2);
 
-    int b = this->timeBucket(tkc);
+    int modelId;
     Maybe<Void> err;
     Maybe<double> eval;
-    for (int i = 0; i < this->p->NumberOfMasses(); i++) {
+    for (int massId = 0; massId < this->nMasses; massId++) {
+        modelId = this->modelId(tkc, massId);
         // Fill displacements
-        this->models[b](i, 0).SetX(*tkc);
-        eval = this->models[b](i, 0)(this->modelsCoefficients[b][i]);
+        this->models(modelId, 0).SetX(*tkc);
+        eval = this->models(modelId, 0)(this->modelsCoefficients[modelId]);
         assert(!eval.isError);
-        X[i] = eval.val;
+        X[massId] = eval.val;
     }
     Poly dp_dt;
-    for (int i = 0; i < this->p->NumberOfMasses(); i++) {
-        this->models[b](i, 0).SetX(*tkc);
+    for (int massId = 0; massId < this->nMasses; massId++) {
+        modelId = this->modelId(tkc, massId);
+        this->models(modelId, 0).SetX(*tkc);
         // Fill velocities
-        dp_dt = this->models[b](i, 0);
+        dp_dt = this->models(modelId, 0);
         err = dp_dt.Dxi(0);
         assert(!err.isError);
-        eval = dp_dt(this->modelsCoefficients[b][i]);
+        eval = dp_dt(this->modelsCoefficients[modelId]);
         assert(!eval.isError);
-        X[Problem::GetMassVelIndex(this->p->NumberOfMasses(), i)] = eval.val;
+        X[Problem::GetMassVelIndex(this->p->NumberOfMasses(), massId)] =
+            eval.val;
     }
     return X;
 }
 
 bst::matrix<Polys> Pimodel::getAccelsFromDiffEq(Problem* problem,
                                                 std::vector<double>& tkc) {
-    // See SetXDot at problem.h for reference
-    int nMasses = problem->masses.size();
-
-    int b = this->timeBucket(&tkc);
+    int modId;
 
     // List of displacements and velocities
     bst::matrix<Poly> Disps = bst::matrix<Poly>(nMasses, 1);
     bst::matrix<Poly> Vels = bst::matrix<Poly>(nMasses, 1);
-    for (int i = 0; i < nMasses; i++) {
-        Disps(i, 0) = this->models[b](i, 0);
-        Disps(i, 0).SetX(tkc);
+    for (int massId = 0; massId < nMasses; massId++) {
+        modId = this->modelId(&tkc, massId);
+        Disps(massId, 0) = this->models(modId, 0);
+        Disps(massId, 0).SetX(tkc);
 
-        Vels(i, 0) = this->models[b](i, 0);
-        assert(!Vels(i, 0).Dxi(0).isError);
-        Vels(i, 0).SetX(tkc);
+        Vels(massId, 0) = this->models(modId, 0);
+        assert(!Vels(massId, 0).Dxi(0).isError);
+        Vels(massId, 0).SetX(tkc);
     }
 
     matrix<Polys> kx = prod(problem->K, Disps);
@@ -319,42 +334,41 @@ void Pimodel::AddResiduesTkc() {
 void Pimodel::AddInitialConditionsResidues() {
     auto initialX = this->getInitialX();
 
+    int modId;
     Poly model;
     int b;
-    int nMasses = this->models[0].size1();
-    for (int m = 0; m < nMasses; m++) {
+    for (int massId = 0; massId < this->nMasses; massId++) {
         for (auto tkc : this->initialConditionsResiduesTkc) {
-            b = this->timeBucket(&tkc);
-            model = this->models[b](m, 0);
+            modId = this->modelId(&tkc, massId);
+            model = this->models(modId, 0);
             model.SetX(tkc);
             this->initialDispResidues.push_back(
-                model + (-1) * initialX[Problem::GetMassDispIndex(nMasses, m)]);
+                model +
+                (-1) * initialX[Problem::GetMassDispIndex(nMasses, massId)]);
         }
     }
     Poly modelDot;
-    for (int m = 0; m < nMasses; m++) {
+    for (int massId = 0; massId < this->nMasses; massId++) {
         for (auto tkc : this->initialConditionsResiduesTkc) {
-            b = this->timeBucket(&tkc);
-            modelDot = this->models[b](m, 0);
+            modId = this->modelId(&tkc, massId);
+            modelDot = this->models(modId, 0);
             assert(!modelDot.Dxi(0).isError);
             modelDot.SetX(tkc);
             this->initialVelResidues.push_back(
                 modelDot +
-                (-1) * initialX[Problem::GetMassVelIndex(nMasses, m)]);
+                (-1) * initialX[Problem::GetMassVelIndex(nMasses, massId)]);
         }
     }
 }
 
 void Pimodel::AddPhysicsResidues() {
-    int nMasses = this->models[0].size1();
-
-    int b;
+    int modId;
     Poly modelXDotDot;
     bst::matrix<Polys> AccelsFromDiffEq;
     for (int m = 0; m < nMasses; m++) {
         for (auto tkc : this->physicsResiduesTkc) {
-            b = this->timeBucket(&tkc);
-            modelXDotDot = this->models[b](m, 0);
+            modId = this->modelId(&tkc, m);
+            modelXDotDot = this->models(modId, 0);
             assert(!modelXDotDot.Dxi(0).isError);
             assert(!modelXDotDot.Dxi(0).isError);
             modelXDotDot.SetX(tkc);
@@ -396,28 +410,23 @@ double Pimodel::Loss() {
     double initialConditionsWeight = this->InitialConditionsWeight();
     double physicsWeight = this->PhysicsWeight();
 
-    for (int b = 0; b < this->models.size(); b++) {
-        for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
-            maybe = this->initialDispResidues[i](this->modelsCoefficients[b]);
-            assert(!maybe.isError);
-            rv += pow(maybe.val, 2);
-        }
+    for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
+        maybe = this->initialDispResidues[i](this->modelsCoefficients);
+        assert(!maybe.isError);
+        rv += pow(maybe.val, 2);
     }
-    for (int b = 0; b < this->models.size(); b++) {
-        for (int i = 0; i < int(this->initialVelResidues.size()); i++) {
-            maybe = this->initialVelResidues[i](this->modelsCoefficients[b]);
-            assert(!maybe.isError);
-            rv += pow(maybe.val, 2);
-        }
+    for (int i = 0; i < int(this->initialVelResidues.size()); i++) {
+        maybe = this->initialVelResidues[i](this->modelsCoefficients);
+        assert(!maybe.isError);
+        rv += pow(maybe.val, 2);
     }
+
     rv *= initialConditionsWeight;
 
-    for (int b = 0; b < this->models.size(); b++) {
-        for (int i = 0; i < int(this->physicsResidues.size()); i++) {
-            maybe = this->physicsResidues[i](this->modelsCoefficients[b]);
-            assert(!maybe.isError);
-            rv += physicsWeight * pow(maybe.val, 2);
-        }
+    for (int i = 0; i < int(this->physicsResidues.size()); i++) {
+        maybe = this->physicsResidues[i](this->modelsCoefficients);
+        assert(!maybe.isError);
+        rv += physicsWeight * pow(maybe.val, 2);
     }
 
     return rv;
@@ -432,44 +441,38 @@ std::vector<double> Pimodel::LossGradient() {
     double initialConditionsWeight = this->InitialConditionsWeight();
     double physicsWeight = this->PhysicsWeight();
 
-    for (int b = 0; b < this->models.size(); b++) {
-        for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
-            maybe = this->initialDispResidues[i](this->modelsCoefficients[b]);
-            assert(!maybe.isError);
-            residueD += initialConditionsWeight * maybe.val *
-                        this->initialDispResidues[i];
-        }
-    }
-    for (int b = 0; b < this->models.size(); b++) {
-        for (int i = 0; i < int(this->initialVelResidues.size()); i++) {
-            maybe = this->initialVelResidues[i](this->modelsCoefficients[b]);
-            assert(!maybe.isError);
-            residueD += initialConditionsWeight * maybe.val *
-                        this->initialVelResidues[i];
-        }
+    for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
+        maybe = this->initialDispResidues[i](this->modelsCoefficients);
+        assert(!maybe.isError);
+        residueD +=
+            initialConditionsWeight * maybe.val * this->initialDispResidues[i];
     }
 
-    for (int b = 0; b < this->models.size(); b++) {
-        for (int i = 0; i < int(this->physicsResidues.size()); i++) {
-            maybe = this->physicsResidues[i](this->modelsCoefficients[b]);
-            assert(!maybe.isError);
-            residueD += physicsWeight * maybe.val * this->physicsResidues[i];
-        }
+    for (int i = 0; i < int(this->initialVelResidues.size()); i++) {
+        maybe = this->initialVelResidues[i](this->modelsCoefficients);
+        assert(!maybe.isError);
+        residueD +=
+            initialConditionsWeight * maybe.val * this->initialVelResidues[i];
+    }
+
+    for (int i = 0; i < int(this->physicsResidues.size()); i++) {
+        maybe = this->physicsResidues[i](this->modelsCoefficients);
+        assert(!maybe.isError);
+        residueD += physicsWeight * maybe.val * this->physicsResidues[i];
     }
 
     std::map<std::tuple<int, int>, double> gradMap = residueD.Da();
-
     std::tuple<int, int> gradMapKey;
+    int modelId;
     int gradI = 0;
-    for (int b = 0; b < this->models.size(); b++) {
-        for (int pId = 0; pId < int(this->models[b].size1()); pId++) {
-            for (int i = 0; i < this->models[b](pId, 0).nMonomials(); i++) {
-                gradMapKey = {pId, i};
-                if (gradMap.find(gradMapKey) != gradMap.end()) {
-                    grad[gradI] += gradMap[gradMapKey];
-                }
-                gradI += 1;
+    for (int m = 0; m < this->models.size1(); m++) {
+        modelId = this->models(m, 0).id;
+        for (int mon = 0; mon < this->models(m, 0).nMonomials(); mon++) {
+            gradMapKey = {modelId, mon};
+            if (gradMap.find(gradMapKey) != gradMap.end()) {
+                grad[gradI] += gradMap[gradMapKey];
             }
+            gradI += 1;
         }
     }
 

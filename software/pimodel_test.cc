@@ -91,6 +91,37 @@ class PimodelTest : public testing::Test {
     }
 };
 
+TEST_F(PimodelTest, ModelIdTest) {
+    // massId must be < nMasses
+    ASSERT_DEATH({ Pimodel::modelId(0, 0, 0); }, "");
+
+    // 1 mass
+    // time bucket 0
+    ASSERT_EQ(Pimodel::modelId(1, 0, 0), 0);
+    // time bucket 1
+    ASSERT_EQ(Pimodel::modelId(1, 1, 0), 1);
+    // time bucket 2
+    ASSERT_EQ(Pimodel::modelId(1, 2, 0), 2);
+
+    // 2 masses
+    // [m0t0, m1t0, m0t1, m1t1, m0t2, m1t2]
+    ASSERT_EQ(Pimodel::modelId(2, 0, 0), 0);
+    ASSERT_EQ(Pimodel::modelId(2, 0, 1), 1);
+    ASSERT_EQ(Pimodel::modelId(2, 1, 0), 2);
+    ASSERT_EQ(Pimodel::modelId(2, 1, 1), 3);
+    ASSERT_EQ(Pimodel::modelId(2, 2, 0), 4);
+    ASSERT_EQ(Pimodel::modelId(2, 2, 1), 5);
+
+    // 5 masses
+    // [m0t0,m1t0,m2t0,m3t0,m4t0,m5t0
+    //  m0t1,m1t1,m2t1,m3t1,m4t1,m5t1,
+    //  m0t2,m1t2,m2t2,m3t2,m4t2,m5t2]
+    ASSERT_EQ(Pimodel::modelId(6, 0, 0), 0);
+    ASSERT_EQ(Pimodel::modelId(6, 0, 5), 5);
+    ASSERT_EQ(Pimodel::modelId(6, 1, 2), 8);
+    ASSERT_EQ(Pimodel::modelId(6, 2, 3), 15);
+}
+
 TEST_F(PimodelTest, ConstructorTest) {
     auto t = std::vector<double>{0, tMax};
     ASSERT_EQ(simpleModel->timeBuckets, t);
@@ -99,11 +130,17 @@ TEST_F(PimodelTest, ConstructorTest) {
     t = std::vector<double>{0, tMax / 2, tMax};
     ASSERT_EQ(twoBucketsModel->timeBuckets, t);
 
-    ASSERT_EQ(simpleModel->models.size(), 1);
-    ASSERT_EQ(simpleModel->models[0].size1(), 2);
-    ASSERT_EQ(simpleModel->models[0].size2(), 1);
-    ASSERT_EQ(simpleModel->models[0](0, 0).id, 0);
-    ASSERT_EQ(simpleModel->models[0](1, 0).id, 1);
+    ASSERT_EQ(simpleModel->models.size1(), 2);
+    ASSERT_EQ(simpleModel->models.size2(), 1);
+    ASSERT_EQ(simpleModel->models(0, 0).id, 0);
+    ASSERT_EQ(simpleModel->models(1, 0).id, 1);
+
+    ASSERT_EQ(twoBucketsModel->models.size1(), 4);
+    ASSERT_EQ(twoBucketsModel->models.size2(), 1);
+    ASSERT_EQ(twoBucketsModel->models(0, 0).id, 0);
+    ASSERT_EQ(twoBucketsModel->models(1, 0).id, 1);
+    ASSERT_EQ(twoBucketsModel->models(2, 0).id, 2);
+    ASSERT_EQ(twoBucketsModel->models(3, 0).id, 3);
 }
 
 TEST_F(PimodelTest, TimeBucketTest) {
@@ -195,34 +232,34 @@ TEST_F(PimodelTest, SetParametersTest) {
     ASSERT_FALSE(r.isError);
 
     // simpleModel->modelsCoefficients[timeBucket][mass][coeff]
-    ASSERT_EQ(simpleModel->modelsCoefficients[0][0][0], 1);
-    ASSERT_EQ(simpleModel->modelsCoefficients[0][0][1], 2);
-    ASSERT_EQ(simpleModel->modelsCoefficients[0][0][2], 3);
-    ASSERT_EQ(simpleModel->modelsCoefficients[0][0][3], 4);
-    ASSERT_EQ(simpleModel->modelsCoefficients[0][1][0], 5);
-    ASSERT_EQ(simpleModel->modelsCoefficients[0][1][1], 6);
-    ASSERT_EQ(simpleModel->modelsCoefficients[0][1][2], 7);
-    ASSERT_EQ(simpleModel->modelsCoefficients[0][1][3], 8);
+    ASSERT_EQ(simpleModel->modelsCoefficients[0][0], 1);
+    ASSERT_EQ(simpleModel->modelsCoefficients[0][1], 2);
+    ASSERT_EQ(simpleModel->modelsCoefficients[0][2], 3);
+    ASSERT_EQ(simpleModel->modelsCoefficients[0][3], 4);
+    ASSERT_EQ(simpleModel->modelsCoefficients[1][0], 5);
+    ASSERT_EQ(simpleModel->modelsCoefficients[1][1], 6);
+    ASSERT_EQ(simpleModel->modelsCoefficients[1][2], 7);
+    ASSERT_EQ(simpleModel->modelsCoefficients[1][3], 8);
 
     params = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     r = twoBucketsModel->SetParameters(&params);
     ASSERT_FALSE(r.isError);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][0][0], 1);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][0][1], 2);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][0][2], 3);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][0][3], 4);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][1][0], 5);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][1][1], 6);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][1][2], 7);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][1][3], 8);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][0][0], 9);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][0][1], 10);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][0][2], 11);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][0][3], 12);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][1][0], 13);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][1][1], 14);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][1][2], 15);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][1][3], 16);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][0], 1);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][1], 2);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][2], 3);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][3], 4);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][0], 5);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][1], 6);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][2], 7);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][3], 8);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[2][0], 9);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[2][1], 10);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[2][2], 11);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[2][3], 12);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[3][0], 13);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[3][1], 14);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[3][2], 15);
+    ASSERT_EQ(twoBucketsModel->modelsCoefficients[3][3], 16);
 
     // Test error cases
     params = {1, 2, 3, 4, 5, 6, 7};
@@ -387,9 +424,10 @@ TEST_F(PimodelTest, getAccelsFromDiffEqTest) {
         1 / m *
         (-kMin * (9 * t + 10 * k + 11 * c + 12 * 1) +
          kMin * (13 * t + 14 * k + 15 * c + 16 * 1) - cMin * 1 + cMin * 5);
-    coefs =
-        std::vector<std::vector<double>>{std::vector<double>{9, 10, 11, 12},
-                                         std::vector<double>{13, 14, 15, 16}};
+    coefs = std::vector<std::vector<double>>{
+        std::vector<double>{1, 2, 3, 4}, std::vector<double>{5, 6, 7, 8},
+        std::vector<double>{9, 10, 11, 12},
+        std::vector<double>{13, 14, 15, 16}};
     ASSERT_DOUBLE_EQ(A(0, 0)(coefs).val, expectedEval);
     ASSERT_DOUBLE_EQ(A(1, 0)(coefs).val, -expectedEval);
 }
@@ -523,7 +561,7 @@ TEST_F(PimodelTest, InitialConditionsResiduesTest) {
     ASSERT_EQ(simpleModel->initialDispResidues[residue].k.size(), 1);     \
     ASSERT_EQ(simpleModel->initialDispResidues[residue].k[0], 1.0);       \
     ASSERT_EQ(simpleModel->initialDispResidues[residue].polys[0],         \
-              this->simpleModel->models[0](mass, 0));                     \
+              this->simpleModel->models(mass, 0));                        \
     ASSERT_EQ(simpleModel->initialDispResidues[residue].plus, -initialX); \
     tkc = simpleModel->initialDispResidues[residue].polys[0].GetX();      \
     ASSERT_EQ(tkc.size(), 3);                                             \
@@ -548,7 +586,7 @@ TEST_F(PimodelTest, InitialConditionsResiduesTest) {
     ASSERT_EQ(simpleModel->initialVelResidues[residue].polys.size(), 1);    \
     ASSERT_EQ(simpleModel->initialVelResidues[residue].k.size(), 1);        \
     ASSERT_EQ(simpleModel->initialVelResidues[residue].k[0], 1.0);          \
-    model = this->simpleModel->models[0](mass, 0);                          \
+    model = this->simpleModel->models(mass, 0);                             \
     model.Dxi(0);                                                           \
     ASSERT_EQ(simpleModel->initialVelResidues[residue].polys[0], model);    \
     ASSERT_EQ(simpleModel->initialVelResidues[residue].plus, -initialXDot); \
@@ -587,7 +625,7 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
                                                                          \
     /* x0DotDot */                                                       \
     ASSERT_EQ(simpleModel->physicsResidues[residue].k[0], 1.0);          \
-    x0DotDot = this->simpleModel->models[0](0, 0);                       \
+    x0DotDot = this->simpleModel->models(0, 0);                          \
     x0DotDot.Dxi(0);                                                     \
     x0DotDot.Dxi(0);                                                     \
     ASSERT_EQ(simpleModel->physicsResidues[residue].polys[0], x0DotDot); \
@@ -614,30 +652,30 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
                                                                                \
     /* x1DotDot */                                                             \
     ASSERT_EQ(simpleModel->physicsResidues[residue].k[0], 1.0);                \
-    x1DotDot = this->simpleModel->models[0](1, 0);                             \
+    x1DotDot = this->simpleModel->models(1, 0);                                \
     x1DotDot.Dxi(0);                                                           \
     x1DotDot.Dxi(0);                                                           \
     ASSERT_EQ(simpleModel->physicsResidues[residue].polys[0], x1DotDot);       \
                                                                                \
     /* -1/m*(k*x0) */                                                          \
     ASSERT_EQ(simpleModel->physicsResidues[residue].k[1], -1 / m * (kValue));  \
-    x0 = this->simpleModel->models[0](0, 0);                                   \
+    x0 = this->simpleModel->models(0, 0);                                      \
     ASSERT_EQ(simpleModel->physicsResidues[residue].polys[1], x0);             \
                                                                                \
     /* -1/m*(-k*x1) */                                                         \
     ASSERT_EQ(simpleModel->physicsResidues[residue].k[2], -1 / m * (-kValue)); \
-    x1 = this->simpleModel->models[0](1, 0);                                   \
+    x1 = this->simpleModel->models(1, 0);                                      \
     ASSERT_EQ(simpleModel->physicsResidues[residue].polys[2], x1);             \
                                                                                \
     /* -1/m*(c*x0Dot) */                                                       \
     ASSERT_EQ(simpleModel->physicsResidues[residue].k[3], -1 / m * (cValue));  \
-    x0Dot = this->simpleModel->models[0](0, 0);                                \
+    x0Dot = this->simpleModel->models(0, 0);                                   \
     x0Dot.Dxi(0);                                                              \
     ASSERT_EQ(simpleModel->physicsResidues[residue].polys[3], x0Dot);          \
                                                                                \
     /* -1/m*(-c*x1Dot) */                                                      \
     ASSERT_EQ(simpleModel->physicsResidues[residue].k[4], -1 / m * (-cValue)); \
-    x1Dot = this->simpleModel->models[0](1, 0);                                \
+    x1Dot = this->simpleModel->models(1, 0);                                   \
     x1Dot.Dxi(0);                                                              \
     ASSERT_EQ(simpleModel->physicsResidues[residue].polys[4], x1Dot);          \
                                                                                \
@@ -1040,9 +1078,9 @@ TEST(PimodelTrainingTest, TrainTest) {
     pd.AddInitialDisp(1, initialDisp);
 
     int timeBuckets = 3;
-    int timeDiscretization = 3;
+    int timeDiscretization = 1;
     int kcDiscretization = 1;
-    int order = 2;
+    int order = 1;
     double learningRate = 0.0001;
     int maxSteps = 10;
     bool log = true;
