@@ -14,11 +14,12 @@
 
 namespace bst = boost::numeric::ublas;
 
-Pimodel::Pimodel(ProblemDescription* p, double finalT, int timeDiscretization,
-                 int kcDiscretization, int order) {
+Pimodel::Pimodel(ProblemDescription* p, double initialT, double finalT,
+                 int timeDiscretization, int kcDiscretization, int order) {
     assert(p->IsOk());
     assert(timeDiscretization >= 1);
     assert(kcDiscretization >= 1);
+    assert(initialT <= finalT);
     this->p = p;
     this->nMasses = p->masses.size();
     int nSprings = p->springs.size();
@@ -38,7 +39,8 @@ Pimodel::Pimodel(ProblemDescription* p, double finalT, int timeDiscretization,
             std::vector<double>(poly.nMonomials());
     }
 
-    this->finalT = finalT;
+    this->t0 = initialT;
+    this->t1 = finalT;
     this->timeDiscretization = timeDiscretization;
     this->kcDiscretization = kcDiscretization;
 
@@ -64,7 +66,7 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
         r.isError = true;
         return r;
     }
-    if (tkc->at(0) < 0 || tkc->at(0) > this->finalT) {
+    if (tkc->at(0) < this->t0 || tkc->at(0) > this->t1) {
         r.errMsg = "Invalid t";
         r.isError = true;
         return r;
@@ -240,8 +242,8 @@ void Pimodel::AddPhysicsResiduesTkc(std::vector<double>* tkc, int tkcIndex) {
     double max;
     int discretization;
     if (tkcIndex == 0) {
-        min = 0;
-        max = this->finalT;
+        min = this->t0;
+        max = this->t1;
         discretization = this->timeDiscretization;
     } else {
         if (tkcIndex - 1 < int(this->p->springs.size())) {
@@ -261,7 +263,7 @@ void Pimodel::AddPhysicsResiduesTkc(std::vector<double>* tkc, int tkcIndex) {
 void Pimodel::AddResiduesTkc() {
     std::vector<double> tkc = std::vector<double>(this->inputSize());
 
-    tkc[0] = 0;  // t = 0
+    tkc[0] = this->t0;
     this->AddInitialConditionsResiduesTkc(&tkc, 1);
 
     this->AddPhysicsResiduesTkc(&tkc, 0);

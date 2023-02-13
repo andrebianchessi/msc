@@ -9,6 +9,7 @@
 #include "utils.h"
 
 const double m = 3.0;
+const double tMin = 0.0;
 const double tMax = 0.5;
 const double kMin = 1.0;
 const double kMax = 2.0;
@@ -64,8 +65,8 @@ class PimodelTest : public testing::Test {
         auto e0 = this->pd.BuildFromDNA(dna);
         ASSERT_FALSE(e0.isError);
 
-        this->simpleModel = new Pimodel(&this->pd, tMax, 1, 1, 1);
-        this->secondOrderModel = new Pimodel(&this->pd, tMax, 2, 2, 2);
+        this->simpleModel = new Pimodel(&this->pd, tMin, tMax, 1, 1, 1);
+        this->secondOrderModel = new Pimodel(&this->pd, tMin, tMax, 2, 2, 2);
 
         x = 19354;
         y = 1235;
@@ -91,7 +92,7 @@ TEST_F(PimodelTest, ConstructorTest) {
 }
 
 TEST_F(PimodelTest, OperatorTest) {
-    Pimodel model = Pimodel(&this->pd, 1.0, 10, 10, 2);
+    Pimodel model = Pimodel(&this->pd, 0.1, 1.0, 10, 10, 2);
 
     // Test the model's prediction for values of time, spring and damper
     std::vector<double> tkc = {1.0, 2.0, 3.0};
@@ -121,6 +122,10 @@ TEST_F(PimodelTest, OperatorTest) {
 
     // invalid t
     tkc = {1.1, kMin, cMin};
+    eval = model(&tkc);
+    ASSERT_TRUE(eval.isError);
+
+    tkc = {0.0, kMin, cMin};
     eval = model(&tkc);
     ASSERT_TRUE(eval.isError);
 }
@@ -276,7 +281,7 @@ TEST_F(PimodelTest, getInitialXTest) {
     pd.AddInitialDisp(2, 0.3);
     pd.AddInitialVel(2, 0.4);
 
-    auto model = Pimodel(&pd, tMax, 1, 1, 1);
+    auto model = Pimodel(&pd, tMin, tMax, 1, 1, 1);
 
     std::vector<double> X = model.getInitialX();
     ASSERT_EQ(X.size(), 6);
@@ -295,25 +300,25 @@ TEST_F(PimodelTest, InitialConditionsResiduesTkcTest) {
 
     // kMin, cMin
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[0].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[0][0], 0);
+    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[0][0], tMin);
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[0][1], kMin);
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[0][2], cMin);
 
     // kMin, cMax
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[1].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[1][0], 0);
+    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[1][0], tMin);
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[1][1], kMin);
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[1][2], cMax);
 
     // kMax, cMin
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[2].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[2][0], 0);
+    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[2][0], tMin);
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[2][1], kMax);
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[2][2], cMin);
 
     // kMax, cMax
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[3].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[3][0], 0);
+    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[3][0], tMin);
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[3][1], kMax);
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[3][2], cMax);
 }
@@ -325,25 +330,25 @@ TEST_F(PimodelTest, PhysicsResiduesTkcTest) {
 
     // t0, kMin, cMin
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[0].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[0][0], 0);
+    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[0][0], tMin);
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[0][1], kMin);
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[0][2], cMin);
 
     // t0, kMin, cMax
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[1].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[1][0], 0);
+    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[1][0], tMin);
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[1][1], kMin);
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[1][2], cMax);
 
     // t0, kMax, cMin
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[2].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[2][0], 0);
+    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[2][0], tMin);
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[2][1], kMax);
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[2][2], cMin);
 
     // t0, kMax, cMax
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[3].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[3][0], 0);
+    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[3][0], tMin);
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[3][1], kMax);
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[3][2], cMax);
 
@@ -399,14 +404,14 @@ TEST_F(PimodelTest, InitialConditionsResiduesTest) {
     ASSERT_DOUBLE_EQ(tkc[1], expectedK);                                  \
     ASSERT_DOUBLE_EQ(tkc[2], expectedC);
 
-    TEST_DISP_RESIDUES(0, 0, initialX0, 0, kMin, cMin);
-    TEST_DISP_RESIDUES(1, 0, initialX0, 0, kMin, cMax);
-    TEST_DISP_RESIDUES(2, 0, initialX0, 0, kMax, cMin);
-    TEST_DISP_RESIDUES(3, 0, initialX0, 0, kMax, cMax);
-    TEST_DISP_RESIDUES(4, 1, initialX1, 0, kMin, cMin);
-    TEST_DISP_RESIDUES(5, 1, initialX1, 0, kMin, cMax);
-    TEST_DISP_RESIDUES(6, 1, initialX1, 0, kMax, cMin);
-    TEST_DISP_RESIDUES(7, 1, initialX1, 0, kMax, cMax);
+    TEST_DISP_RESIDUES(0, 0, initialX0, tMin, kMin, cMin);
+    TEST_DISP_RESIDUES(1, 0, initialX0, tMin, kMin, cMax);
+    TEST_DISP_RESIDUES(2, 0, initialX0, tMin, kMax, cMin);
+    TEST_DISP_RESIDUES(3, 0, initialX0, tMin, kMax, cMax);
+    TEST_DISP_RESIDUES(4, 1, initialX1, tMin, kMin, cMin);
+    TEST_DISP_RESIDUES(5, 1, initialX1, tMin, kMin, cMax);
+    TEST_DISP_RESIDUES(6, 1, initialX1, tMin, kMax, cMin);
+    TEST_DISP_RESIDUES(7, 1, initialX1, tMin, kMax, cMax);
 
     double initialX0Dot = 0;
     double initialX1Dot = 0;
@@ -426,14 +431,14 @@ TEST_F(PimodelTest, InitialConditionsResiduesTest) {
     ASSERT_DOUBLE_EQ(tkc[1], expectedK);                                    \
     ASSERT_DOUBLE_EQ(tkc[2], expectedC);
 
-    TEST_VEL_RESIDUES(0, 0, initialX0Dot, 0, kMin, cMin);
-    TEST_VEL_RESIDUES(1, 0, initialX0Dot, 0, kMin, cMax);
-    TEST_VEL_RESIDUES(2, 0, initialX0Dot, 0, kMax, cMin);
-    TEST_VEL_RESIDUES(3, 0, initialX0Dot, 0, kMax, cMax);
-    TEST_VEL_RESIDUES(4, 1, initialX1Dot, 0, kMin, cMin);
-    TEST_VEL_RESIDUES(5, 1, initialX1Dot, 0, kMin, cMax);
-    TEST_VEL_RESIDUES(6, 1, initialX1Dot, 0, kMax, cMin);
-    TEST_VEL_RESIDUES(7, 1, initialX1Dot, 0, kMax, cMax);
+    TEST_VEL_RESIDUES(0, 0, initialX0Dot, tMin, kMin, cMin);
+    TEST_VEL_RESIDUES(1, 0, initialX0Dot, tMin, kMin, cMax);
+    TEST_VEL_RESIDUES(2, 0, initialX0Dot, tMin, kMax, cMin);
+    TEST_VEL_RESIDUES(3, 0, initialX0Dot, tMin, kMax, cMax);
+    TEST_VEL_RESIDUES(4, 1, initialX1Dot, tMin, kMin, cMin);
+    TEST_VEL_RESIDUES(5, 1, initialX1Dot, tMin, kMin, cMax);
+    TEST_VEL_RESIDUES(6, 1, initialX1Dot, tMin, kMax, cMin);
+    TEST_VEL_RESIDUES(7, 1, initialX1Dot, tMin, kMax, cMax);
 }
 
 TEST_F(PimodelTest, PhysicsResiduesTest) {
@@ -466,10 +471,10 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
     ASSERT_DOUBLE_EQ(tkc[1], kValue);                                    \
     ASSERT_DOUBLE_EQ(tkc[2], cValue);
 
-    TEST_MASS_0_PHYSICS_RESIDUE(0, kMin, cMin, 0);
-    TEST_MASS_0_PHYSICS_RESIDUE(1, kMin, cMax, 0);
-    TEST_MASS_0_PHYSICS_RESIDUE(2, kMax, cMin, 0);
-    TEST_MASS_0_PHYSICS_RESIDUE(3, kMax, cMax, 0);
+    TEST_MASS_0_PHYSICS_RESIDUE(0, kMin, cMin, tMin);
+    TEST_MASS_0_PHYSICS_RESIDUE(1, kMin, cMax, tMin);
+    TEST_MASS_0_PHYSICS_RESIDUE(2, kMax, cMin, tMin);
+    TEST_MASS_0_PHYSICS_RESIDUE(3, kMax, cMax, tMin);
     TEST_MASS_0_PHYSICS_RESIDUE(4, kMin, cMin, tMax);
     TEST_MASS_0_PHYSICS_RESIDUE(5, kMin, cMax, tMax);
     TEST_MASS_0_PHYSICS_RESIDUE(6, kMax, cMin, tMax);
@@ -535,10 +540,10 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
     ASSERT_DOUBLE_EQ(tkc[1], kValue);                                          \
     ASSERT_DOUBLE_EQ(tkc[2], cValue);
 
-    TEST_MASS_1_PHYSICS_RESIDUE(8, kMin, cMin, 0);
-    TEST_MASS_1_PHYSICS_RESIDUE(9, kMin, cMax, 0);
-    TEST_MASS_1_PHYSICS_RESIDUE(10, kMax, cMin, 0);
-    TEST_MASS_1_PHYSICS_RESIDUE(11, kMax, cMax, 0);
+    TEST_MASS_1_PHYSICS_RESIDUE(8, kMin, cMin, tMin);
+    TEST_MASS_1_PHYSICS_RESIDUE(9, kMin, cMax, tMin);
+    TEST_MASS_1_PHYSICS_RESIDUE(10, kMax, cMin, tMin);
+    TEST_MASS_1_PHYSICS_RESIDUE(11, kMax, cMax, tMin);
     TEST_MASS_1_PHYSICS_RESIDUE(12, kMin, cMin, tMax);
     TEST_MASS_1_PHYSICS_RESIDUE(13, kMin, cMax, tMax);
     TEST_MASS_1_PHYSICS_RESIDUE(14, kMax, cMin, tMax);
@@ -576,7 +581,7 @@ TEST_F(PimodelTest, LossTest) {
     double initialX1 = initialDisplacement;
     double initialXDot0 = 0;
     double initialXDot1 = 0;
-    double t = 0;
+    double t = tMin;
     // Initial conditions loss:
     for (double k : std::vector<double>{kMin, (kMin + kMax) / 2, kMax}) {
         for (double c : std::vector<double>{cMin, (cMin + cMax) / 2, cMax}) {
@@ -597,7 +602,7 @@ TEST_F(PimodelTest, LossTest) {
     expectedLoss *= initialConditionsLossWeight;
 
     // Physics loss:
-    for (double t : std::vector<double>{0, tMax / 2, tMax}) {
+    for (double t : std::vector<double>{tMin, (tMax + tMin) / 2, tMax}) {
         for (double k : std::vector<double>{kMin, (kMin + kMax) / 2, kMax}) {
             for (double c :
                  std::vector<double>{cMin, (cMin + cMax) / 2, cMax}) {
@@ -631,7 +636,7 @@ TEST_F(PimodelTest, LossTest) {
 }
 
 TEST_F(PimodelTest, LossGradientTest) {
-    Pimodel model = Pimodel(&this->pd, tMax, 1, 1, 1);
+    Pimodel model = Pimodel(&this->pd, tMin, tMax, 1, 1, 1);
     std::vector<double> params = std::vector<double>(8);
     double a0 = 13.0;
     double a1 = 26.0;
@@ -667,7 +672,7 @@ TEST_F(PimodelTest, LossGradientTest) {
     double initialConditionsLossWeight = nPhysicsLoss / totalLossTerms;
     double physicsLossWeight = nInitialCondLoss / totalLossTerms;
 
-    double t = 0;
+    double t = tMin;
     // Initial conditions loss:
     for (double k : std::vector<double>{kMin, kMax}) {
         for (double c : std::vector<double>{cMin, cMax}) {
@@ -737,7 +742,7 @@ TEST_F(PimodelTest, LossGradientTest) {
     }
 
     // Physics loss:
-    for (double t : std::vector<double>{0, tMax}) {
+    for (double t : std::vector<double>{tMin, tMax}) {
         for (double k : std::vector<double>{kMin, kMax}) {
             for (double c : std::vector<double>{cMin, cMax}) {
                 double modelX0 = a0 * t + a1 * k + a2 * c + a3 * 1;
@@ -916,7 +921,7 @@ TEST(PimodelTrainingTest, TrainTest) {
 
     // Train model
     Pimodel model =
-        Pimodel(&pd, tMax, timeDiscretization, kcDiscretization, order);
+        Pimodel(&pd, tMin, tMax, timeDiscretization, kcDiscretization, order);
 
     double initialLoss = model.Loss();
     model.Train(learningRate, maxSteps, log);

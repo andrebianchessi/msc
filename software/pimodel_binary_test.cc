@@ -6,6 +6,7 @@ int main(int argc, char *argv[]) {
     double kMax = 1.0;
     double cMin = 0.0;
     double cMax = 0.1;
+    double tMin = 0.0;
     double tMax = 1.5;
     double initialDisp = 1.0;
 
@@ -25,7 +26,7 @@ int main(int argc, char *argv[]) {
     bool log = true;
     // Train model
     Pimodel model =
-        Pimodel(&pd, tMax, timeDiscretization, kcDiscretization, order);
+        Pimodel(&pd, tMin, tMax, timeDiscretization, kcDiscretization, order);
     model.Train(learningRate, maxSteps, log);
 
     // Get problem using intermediate value for k and c, and integrate it.

@@ -18,8 +18,8 @@ class Pimodel : public Model {
     // kcDiscretization: How many intervals we'll discretize
     // springs/dampers values in our loss function
     // order: order of the multivariate polynomial used in the models
-    Pimodel(ProblemDescription* p, double finalT, int timeDiscretization,
-            int kcDiscretization, int order);
+    Pimodel(ProblemDescription* p, double initialT, double finalT,
+            int timeDiscretization, int kcDiscretization, int order);
 
     // Returns the position of each mass.
     // The input should be an array with:
@@ -75,8 +75,9 @@ class Pimodel : public Model {
     std::vector<Polys> physicsResidues;
     std::vector<std::vector<double>> physicsResiduesTkc;
 
-    // This model describes the system from t = 0 to t = finalT
-    double finalT;
+    // This model describes the system from t = t0 to t = t1
+    double t0;
+    double t1;
 
     // Parameter that describes in how many intervals we'll discretize time and
     // the springs/dampers values in our loss function
