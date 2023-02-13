@@ -17,16 +17,17 @@ int main(int argc, char *argv[]) {
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int timeDiscretization = 10;
+    int timeBuckets = 10;
+    int timeDiscretization = 2;
     int kcDiscretization = 1;
-    int order = 10;
-    double learningRate = 0.000000000000001;
-    double minLearningRate = learningRate / 32;
+    int order = 2;
+    double learningRate = 0.001;
+    int maxSteps = 100;
     bool log = true;
     // Train model
-    Pimodel model =
-        Pimodel(&pd, tMax, timeDiscretization, kcDiscretization, order);
-    model.Train(learningRate, minLearningRate, log);
+    Pimodel model = Pimodel(&pd, tMax, timeBuckets, timeDiscretization,
+                            kcDiscretization, order);
+    model.Train(learningRate, maxSteps, log);
 
     // Get problem using intermediate value for k and c, and integrate it.
     // Then, compare the model's prediction with the problem's result.
