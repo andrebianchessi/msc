@@ -17,7 +17,6 @@ int main(int argc, char *argv[]) {
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int timeBuckets = 5;
     int timeDiscretization = 10;
     int kcDiscretization = 1;
     int order = 2;
@@ -25,8 +24,8 @@ int main(int argc, char *argv[]) {
     int maxSteps = 100;
     bool log = true;
     // Train model
-    Pimodel model = Pimodel(&pd, tMax, timeBuckets, timeDiscretization,
-                            kcDiscretization, order);
+    Pimodel model =
+        Pimodel(&pd, tMax, timeDiscretization, kcDiscretization, order);
     model.Train(learningRate, maxSteps, log);
 
     // Get problem using intermediate value for k and c, and integrate it.

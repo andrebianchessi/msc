@@ -18,8 +18,8 @@ class Pimodel : public Model {
     // kcDiscretization: How many intervals we'll discretize
     // springs/dampers values in our loss function
     // order: order of the multivariate polynomial used in the models
-    Pimodel(ProblemDescription* p, double finalT, int nTimeBuckets,
-            int timeDiscretization, int kcDiscretization, int order);
+    Pimodel(ProblemDescription* p, double finalT, int timeDiscretization,
+            int kcDiscretization, int order);
 
     // Returns the position of each mass.
     // The input should be an array with:
@@ -53,34 +53,14 @@ class Pimodel : public Model {
     ProblemDescription* p;
 
     int nMasses;
-    int nTimeBuckets;
-
-    // Start and end times of all time buckets.
-    // Ex: for 2 time buckets -> [0, tFinal/2, tFinal]
-    std::vector<double> timeBuckets;
-    // Returns index at timeBuckets
-    // For the example above:
-    // timeBucket(0) -> 0
-    // timeBucket(tFinal/4) -> 0
-    // timeBucket(tFinal/2) -> 1
-    int timeBucket(double t);
-    int timeBucket(std::vector<double>* tkc);
 
     // Vector of column matrices that contain the polynomials that represent the
     // displacement of each mass for each time bucket. Ex, for a system of two
     // masses: models[0] = Polynomial that represents the displacement (x) of
     // mass 0, as a function of time and the values of the springs and the
-    // masses for the first time bucket. models[1] represents the same, but for
-    // mass 1. models[2] represents the displacement for mass 0, at the second
-    // time bucket
+    // masses.
     boost::numeric::ublas::matrix<Poly> models;
     std::vector<std::vector<double>> modelsCoefficients;
-
-    // Index at models and modelsCoefficients for given massId and time
-    static int modelId(int nMasses, int timeBucket, int massId);
-    int modelId(int timeBucket, int massId);
-    int modelId(double t, int massId);
-    int modelId(std::vector<double>* tkc, int massId);
 
     // Residues of initial displacement
     std::vector<Polys> initialDispResidues;

@@ -48,9 +48,6 @@ class PimodelTest : public testing::Test {
     // x1(t,k,c) = t^2 + tk + tc + t + k^2 + kc + k + c^2 + c + 1
     Pimodel* secondOrderModel;
 
-    // Same as simpleModel, but separates time into 2 buckets
-    Pimodel* twoBucketsModel;
-
     void SetUp() {
         // Called before every TEST_F
         // Create problem description of two masses,
@@ -67,10 +64,8 @@ class PimodelTest : public testing::Test {
         auto e0 = this->pd.BuildFromDNA(dna);
         ASSERT_FALSE(e0.isError);
 
-        this->simpleModel = new Pimodel(&this->pd, tMax, 1, 1, 1, 1);
-        this->secondOrderModel = new Pimodel(&this->pd, tMax, 1, 2, 2, 2);
-
-        this->twoBucketsModel = new Pimodel(&this->pd, tMax, 2, 1, 1, 1);
+        this->simpleModel = new Pimodel(&this->pd, tMax, 1, 1, 1);
+        this->secondOrderModel = new Pimodel(&this->pd, tMax, 2, 2, 2);
 
         x = 19354;
         y = 1235;
@@ -82,106 +77,21 @@ class PimodelTest : public testing::Test {
         std::vector<double> params = {1, 2, 3, 4, 5, 6, 7, 8};
         ASSERT_FALSE(this->simpleModel->SetParameters(&params).isError);
 
-        params = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-        ASSERT_FALSE(twoBucketsModel->SetParameters(&params).isError);
-
         params = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
                   11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
         ASSERT_FALSE(secondOrderModel->SetParameters(&params).isError);
     }
 };
 
-TEST_F(PimodelTest, ModelIdTest) {
-    // massId must be < nMasses
-    ASSERT_DEATH({ Pimodel::modelId(0, 0, 0); }, "");
-
-    // 1 mass
-    // time bucket 0
-    ASSERT_EQ(Pimodel::modelId(1, 0, 0), 0);
-    // time bucket 1
-    ASSERT_EQ(Pimodel::modelId(1, 1, 0), 1);
-    // time bucket 2
-    ASSERT_EQ(Pimodel::modelId(1, 2, 0), 2);
-
-    // 2 masses
-    // [m0t0, m1t0, m0t1, m1t1, m0t2, m1t2]
-    ASSERT_EQ(Pimodel::modelId(2, 0, 0), 0);
-    ASSERT_EQ(Pimodel::modelId(2, 0, 1), 1);
-    ASSERT_EQ(Pimodel::modelId(2, 1, 0), 2);
-    ASSERT_EQ(Pimodel::modelId(2, 1, 1), 3);
-    ASSERT_EQ(Pimodel::modelId(2, 2, 0), 4);
-    ASSERT_EQ(Pimodel::modelId(2, 2, 1), 5);
-
-    // 5 masses
-    // [m0t0,m1t0,m2t0,m3t0,m4t0,m5t0
-    //  m0t1,m1t1,m2t1,m3t1,m4t1,m5t1,
-    //  m0t2,m1t2,m2t2,m3t2,m4t2,m5t2]
-    ASSERT_EQ(Pimodel::modelId(6, 0, 0), 0);
-    ASSERT_EQ(Pimodel::modelId(6, 0, 5), 5);
-    ASSERT_EQ(Pimodel::modelId(6, 1, 2), 8);
-    ASSERT_EQ(Pimodel::modelId(6, 2, 3), 15);
-}
-
 TEST_F(PimodelTest, ConstructorTest) {
-    auto t = std::vector<double>{0, tMax};
-    ASSERT_EQ(simpleModel->timeBuckets, t);
-    ASSERT_EQ(secondOrderModel->timeBuckets, t);
-
-    t = std::vector<double>{0, tMax / 2, tMax};
-    ASSERT_EQ(twoBucketsModel->timeBuckets, t);
-
     ASSERT_EQ(simpleModel->models.size1(), 2);
     ASSERT_EQ(simpleModel->models.size2(), 1);
     ASSERT_EQ(simpleModel->models(0, 0).id, 0);
     ASSERT_EQ(simpleModel->models(1, 0).id, 1);
-
-    ASSERT_EQ(twoBucketsModel->models.size1(), 4);
-    ASSERT_EQ(twoBucketsModel->models.size2(), 1);
-    ASSERT_EQ(twoBucketsModel->models(0, 0).id, 0);
-    ASSERT_EQ(twoBucketsModel->models(1, 0).id, 1);
-    ASSERT_EQ(twoBucketsModel->models(2, 0).id, 2);
-    ASSERT_EQ(twoBucketsModel->models(3, 0).id, 3);
-}
-
-TEST_F(PimodelTest, TimeBucketTest) {
-    ASSERT_DEATH({ simpleModel->timeBucket(-0.1); }, "");
-    ASSERT_EQ(simpleModel->timeBucket(0.0), 0);
-    ASSERT_EQ(simpleModel->timeBucket(tMax / 4), 0);
-    ASSERT_EQ(simpleModel->timeBucket(tMax / 2), 0);
-    ASSERT_EQ(simpleModel->timeBucket(0.99 * tMax), 0);
-    ASSERT_EQ(simpleModel->timeBucket(tMax), 0);
-
-    ASSERT_EQ(twoBucketsModel->timeBucket(0.0), 0);
-    ASSERT_EQ(twoBucketsModel->timeBucket(tMax / 8), 0);
-    ASSERT_EQ(twoBucketsModel->timeBucket(tMax / 4), 0);
-    ASSERT_EQ(twoBucketsModel->timeBucket(tMax / 2), 1);
-    ASSERT_EQ(twoBucketsModel->timeBucket(3 * tMax / 4), 1);
-    ASSERT_EQ(twoBucketsModel->timeBucket(0.99 * tMax), 1);
-    ASSERT_EQ(twoBucketsModel->timeBucket(tMax), 1);
-
-    auto pd = ProblemDescription();
-    // tFinal = 100, 10 time buckets
-    // buckets = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-    Pimodel m = Pimodel(&pd, 100, 10, 1, 1, 1);
-    ASSERT_DEATH({ m.timeBucket(-0.1); }, "");
-    ASSERT_EQ(m.timeBucket(0.0), 0);
-    ASSERT_EQ(m.timeBucket(1), 0);
-    ASSERT_EQ(m.timeBucket(10), 1);
-    ASSERT_EQ(m.timeBucket(10.1), 1);
-    ASSERT_EQ(m.timeBucket(15), 1);
-    ASSERT_EQ(m.timeBucket(19.9), 1);
-    ASSERT_EQ(m.timeBucket(20), 2);
-    ASSERT_EQ(m.timeBucket(50), 5);
-    ASSERT_EQ(m.timeBucket(55), 5);
-    ASSERT_EQ(m.timeBucket(89.9), 8);
-    ASSERT_EQ(m.timeBucket(90), 9);
-    ASSERT_EQ(m.timeBucket(99.9), 9);
-    ASSERT_EQ(m.timeBucket(100), 9);
-    ASSERT_DEATH({ m.timeBucket(100.1); }, "");
 }
 
 TEST_F(PimodelTest, OperatorTest) {
-    Pimodel model = Pimodel(&this->pd, 1.0, 2, 10, 10, 2);
+    Pimodel model = Pimodel(&this->pd, 1.0, 10, 10, 2);
 
     // Test the model's prediction for values of time, spring and damper
     std::vector<double> tkc = {1.0, 2.0, 3.0};
@@ -221,9 +131,6 @@ TEST_F(PimodelTest, nParametersTest) {
 
     // See PimodelTest class
     ASSERT_EQ(secondOrderModel->nParameters(), 20);
-
-    // See PimodelTest class
-    ASSERT_EQ(twoBucketsModel->nParameters(), 16);
 }
 
 TEST_F(PimodelTest, SetParametersTest) {
@@ -240,26 +147,6 @@ TEST_F(PimodelTest, SetParametersTest) {
     ASSERT_EQ(simpleModel->modelsCoefficients[1][1], 6);
     ASSERT_EQ(simpleModel->modelsCoefficients[1][2], 7);
     ASSERT_EQ(simpleModel->modelsCoefficients[1][3], 8);
-
-    params = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    r = twoBucketsModel->SetParameters(&params);
-    ASSERT_FALSE(r.isError);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][0], 1);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][1], 2);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][2], 3);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[0][3], 4);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][0], 5);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][1], 6);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][2], 7);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[1][3], 8);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[2][0], 9);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[2][1], 10);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[2][2], 11);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[2][3], 12);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[3][0], 13);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[3][1], 14);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[3][2], 15);
-    ASSERT_EQ(twoBucketsModel->modelsCoefficients[3][3], 16);
 
     // Test error cases
     params = {1, 2, 3, 4, 5, 6, 7};
@@ -294,25 +181,6 @@ TEST_F(PimodelTest, GetParametersTest) {
     ASSERT_DOUBLE_EQ(params[5], 6.0);
     ASSERT_DOUBLE_EQ(params[6], 7.0);
     ASSERT_DOUBLE_EQ(params[7], 8.0);
-
-    params = std::vector<double>(16);
-    ASSERT_FALSE(twoBucketsModel->GetParameters(&params).isError);
-    ASSERT_DOUBLE_EQ(params[0], 1.0);
-    ASSERT_DOUBLE_EQ(params[1], 2.0);
-    ASSERT_DOUBLE_EQ(params[2], 3.0);
-    ASSERT_DOUBLE_EQ(params[3], 4.0);
-    ASSERT_DOUBLE_EQ(params[4], 5.0);
-    ASSERT_DOUBLE_EQ(params[5], 6.0);
-    ASSERT_DOUBLE_EQ(params[6], 7.0);
-    ASSERT_DOUBLE_EQ(params[7], 8.0);
-    ASSERT_DOUBLE_EQ(params[8], 9.0);
-    ASSERT_DOUBLE_EQ(params[9], 10.0);
-    ASSERT_DOUBLE_EQ(params[10], 11.0);
-    ASSERT_DOUBLE_EQ(params[11], 12.0);
-    ASSERT_DOUBLE_EQ(params[12], 13.0);
-    ASSERT_DOUBLE_EQ(params[13], 14.0);
-    ASSERT_DOUBLE_EQ(params[14], 15.0);
-    ASSERT_DOUBLE_EQ(params[15], 16.0);
 
     // Test error cases
     params = std::vector<double>(7);
@@ -354,28 +222,6 @@ TEST_F(PimodelTest, getXModelTest) {
     ASSERT_EQ(X[1], 5 * t + 6 * k + 7 * c + 8 * 1);
     ASSERT_EQ(X[2], 1);  // dx0/dt = 1
     ASSERT_EQ(X[3], 5);  // dx1/dt = 5
-
-    t = 0;
-    k = kMin;
-    c = cMin;
-    tkc = std::vector<double>{t, k, c};
-    X = twoBucketsModel->getXModel(&tkc);
-    ASSERT_EQ(X.size(), 4);
-    ASSERT_EQ(X[0], 1 * t + 2 * k + 3 * c + 4 * 1);
-    ASSERT_EQ(X[1], 5 * t + 6 * k + 7 * c + 8 * 1);
-    ASSERT_EQ(X[2], 1);  // dx0/dt = 1
-    ASSERT_EQ(X[3], 5);  // dx1/dt = 5
-
-    t = tMax / 2;
-    k = kMin;
-    c = cMin;
-    tkc = std::vector<double>{t, k, c};
-    X = twoBucketsModel->getXModel(&tkc);
-    ASSERT_EQ(X.size(), 4);
-    ASSERT_EQ(X[0], 9 * t + 10 * k + 11 * c + 12 * 1);
-    ASSERT_EQ(X[1], 13 * t + 14 * k + 15 * c + 16 * 1);
-    ASSERT_EQ(X[2], 9);   // dx0/dt = 9
-    ASSERT_EQ(X[3], 13);  // dx1/dt = 13
 }
 
 TEST_F(PimodelTest, getAccelsFromDiffEqTest) {
@@ -414,22 +260,6 @@ TEST_F(PimodelTest, getAccelsFromDiffEqTest) {
         std::vector<double>{1, 2, 3, 4}, std::vector<double>{5, 6, 7, 8}};
     ASSERT_DOUBLE_EQ(A(0, 0)(coefs).val, expectedEval);
     ASSERT_DOUBLE_EQ(A(1, 0)(coefs).val, -expectedEval);
-
-    // Test for two time buckets
-    // For t=tMax, the model from twoBucketsModel is the second one
-    A = twoBucketsModel->getAccelsFromDiffEq(&problem, tkc);
-    ASSERT_EQ(A.size1(), 2);
-    ASSERT_EQ(A.size2(), 1);
-    expectedEval =
-        1 / m *
-        (-kMin * (9 * t + 10 * k + 11 * c + 12 * 1) +
-         kMin * (13 * t + 14 * k + 15 * c + 16 * 1) - cMin * 1 + cMin * 5);
-    coefs = std::vector<std::vector<double>>{
-        std::vector<double>{1, 2, 3, 4}, std::vector<double>{5, 6, 7, 8},
-        std::vector<double>{9, 10, 11, 12},
-        std::vector<double>{13, 14, 15, 16}};
-    ASSERT_DOUBLE_EQ(A(0, 0)(coefs).val, expectedEval);
-    ASSERT_DOUBLE_EQ(A(1, 0)(coefs).val, -expectedEval);
 }
 
 TEST_F(PimodelTest, getInitialXTest) {
@@ -446,7 +276,7 @@ TEST_F(PimodelTest, getInitialXTest) {
     pd.AddInitialDisp(2, 0.3);
     pd.AddInitialVel(2, 0.4);
 
-    auto model = Pimodel(&pd, tMax, 1, 1, 1, 1);
+    auto model = Pimodel(&pd, tMax, 1, 1, 1);
 
     std::vector<double> X = model.getInitialX();
     ASSERT_EQ(X.size(), 6);
@@ -801,7 +631,7 @@ TEST_F(PimodelTest, LossTest) {
 }
 
 TEST_F(PimodelTest, LossGradientTest) {
-    Pimodel model = Pimodel(&this->pd, tMax, 1, 1, 1, 1);
+    Pimodel model = Pimodel(&this->pd, tMax, 1, 1, 1);
     std::vector<double> params = std::vector<double>(8);
     double a0 = 13.0;
     double a1 = 26.0;
@@ -1066,7 +896,7 @@ TEST(PimodelTrainingTest, TrainTest) {
     double kMax = 1.0;
     double cMin = 0.0;
     double cMax = 0.2;
-    double tMax = 2.0;
+    double tMax = 1.0;
     double initialDisp = 1.0;
 
     auto pd = ProblemDescription();
@@ -1077,7 +907,6 @@ TEST(PimodelTrainingTest, TrainTest) {
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int timeBuckets = 3;
     int timeDiscretization = 1;
     int kcDiscretization = 1;
     int order = 1;
@@ -1086,8 +915,8 @@ TEST(PimodelTrainingTest, TrainTest) {
     bool log = true;
 
     // Train model
-    Pimodel model = Pimodel(&pd, tMax, timeBuckets, timeDiscretization,
-                            kcDiscretization, order);
+    Pimodel model =
+        Pimodel(&pd, tMax, timeDiscretization, kcDiscretization, order);
 
     double initialLoss = model.Loss();
     model.Train(learningRate, maxSteps, log);
