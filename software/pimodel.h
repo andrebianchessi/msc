@@ -8,21 +8,18 @@
 
 class Pimodel : public Model {
    public:
-    // Creates multivariate polynomial models of a given order that is physics
-    // informed, i.e. has physics knowledge embedded into its loss function.
-    // Each model corresponds to a function that describes the position of one
-    // of the masses as a function of time, the values of the springs
-    // and the values of the dampers.
     // Parameters:
     // p: Description of this problem
-    // finalT: this model should model the position of the mass from t=0 to
-    // finalT
-    // timeDiscretization: How many intervals we'll discretize time
+    // finalT: this model models the position of the mass for t in [0,finalT]
+    // nModels: the interval [0, finalT] will be divided into nTimeBuckets
+    // time buckets. For every mass, there'll be 1 model for each interval.
+    // timeDiscretization: How many intervals we'll discretize time in
+    // every bucket.
     // kcDiscretization: How many intervals we'll discretize
-    // springs/dampers values in our loss function oder: order of the
-    // multivariate polynomial used in the model
-    Pimodel(ProblemDescription* p, double finalT, int timeDiscretization,
-            int kcDiscretization, int order);
+    // springs/dampers values in our loss function
+    // order: order of the multivariate polynomial used in the models
+    Pimodel(ProblemDescription* p, double finalT, int nTimeBuckets,
+            int timeDiscretization, int kcDiscretization, int order);
 
     // Returns the position of each mass.
     // The input should be an array with:
@@ -35,7 +32,9 @@ class Pimodel : public Model {
     int nParameters() override;
 
    private:
+    friend class PimodelTest;
     FRIEND_TEST(PimodelTest, ConstructorTest);
+    FRIEND_TEST(PimodelTest, TimeBucketTest);
     FRIEND_TEST(PimodelTest, GetParametersTest);
     FRIEND_TEST(PimodelTest, SetParametersTest);
     FRIEND_TEST(PimodelTest, ProblemFromTkcTest);
@@ -48,15 +47,28 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, PhysicsResiduesTest);
     FRIEND_TEST(PimodelTest, LossTest);
     FRIEND_TEST(PimodelTest, LossGradientTest);
+    FRIEND_TEST(PimodelTrainingTest, TrainTest);
 
     ProblemDescription* p;
 
-    // column matrix that contains the polynomials that represent the
-    // displacement of each mass. Ex: models[0] = Polynomial that represents the
-    // displacement (x) of mass 0, as a function of time and the values of the
-    // springs and the masses
-    boost::numeric::ublas::matrix<Poly> models;
-    std::vector<std::vector<double>> modelsCoefficients;
+    // Start and end times of all time buckets.
+    // Ex: for 2 time buckets -> [0, tFinal/2, tFinal]
+    std::vector<double> timeBuckets;
+    // Returns index at timeBuckets
+    // For the example above:
+    // timeBucket(0) -> 0
+    // timeBucket(tFinal/4) -> 0
+    // timeBucket(tFinal/2) -> 1
+    int timeBucket(double t);
+    int timeBucket(std::vector<double>* tkc);
+
+    // vector of column matrices that contain the polynomials that represent the
+    // displacement of each mass for each time bucket. Ex: models[0][0] =
+    // Polynomial that represents the displacement (x) of mass 0, as a function
+    // of time and the values of the springs and the masses for the first time
+    // bucket.
+    std::vector<boost::numeric::ublas::matrix<Poly>> models;
+    std::vector<std::vector<std::vector<double>>> modelsCoefficients;
 
     // Residues of initial displacement
     std::vector<Polys> initialDispResidues;
@@ -97,7 +109,6 @@ class Pimodel : public Model {
 
     void AddInitialConditionsResidues();
     void AddPhysicsResidues();
-    void AddResidues();
 
     std::vector<double> LossGradient() override;
 
