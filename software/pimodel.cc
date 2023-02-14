@@ -14,24 +14,24 @@
 
 namespace bst = boost::numeric::ublas;
 
-Pimodel::Pimodel(ProblemDescription* p, double initialT, double finalT,
+Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
                  int timeDiscretization, int kcDiscretization, int order) {
-    assert(p->IsOk());
+    assert(p.IsOk());
     assert(timeDiscretization >= 1);
     assert(kcDiscretization >= 1);
     assert(initialT <= finalT);
     this->p = p;
-    this->nMasses = p->masses.size();
-    int nSprings = p->springs.size();
-    int nDampers = p->dampers.size();
+    this->nMasses = p.masses.size();
+    int nSprings = p.springs.size();
+    int nDampers = p.dampers.size();
 
-    this->models = bst::matrix<Poly>(p->NumberOfMasses(), 1);
+    this->models = bst::matrix<Poly>(p.NumberOfMasses(), 1);
     this->modelsCoefficients =
-        std::vector<std::vector<double>>(p->NumberOfMasses());
+        std::vector<std::vector<double>>(p.NumberOfMasses());
 
     Poly poly;
     Maybe<Void> r;
-    for (int massId = 0; massId < p->NumberOfMasses(); massId++) {
+    for (int massId = 0; massId < p.NumberOfMasses(); massId++) {
         r = poly.Build(nSprings + nDampers + 1, order, massId);
         assert(!r.isError);
         this->models(massId, 0) = poly;
@@ -56,7 +56,7 @@ Pimodel::Pimodel(ProblemDescription* p, double initialT, double finalT,
 }
 
 int Pimodel::inputSize() {
-    return 1 + this->p->springs.size() + this->p->dampers.size();
+    return 1 + this->p.springs.size() + this->p.dampers.size();
 }
 
 Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
@@ -66,15 +66,15 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
         r.isError = true;
         return r;
     }
-    if (tkc->at(0) < this->t0 || tkc->at(0) > this->t1) {
-        r.errMsg = "Invalid t";
-        r.isError = true;
-        return r;
-    }
+    // if (tkc->at(0) < this->t0 || tkc->at(0) > this->t1) {
+    //     r.errMsg = "Invalid t";
+    //     r.isError = true;
+    //     return r;
+    // }
     std::vector<double> positions =
-        std::vector<double>(this->p->NumberOfMasses());
+        std::vector<double>(this->p.NumberOfMasses());
     Maybe<double> position;
-    for (int massId = 0; massId < int(positions.size()); massId++) {
+    for (int massId = 0; massId < int(positions.size()) / 2; massId++) {
         this->models(massId, 0).SetX(*tkc);
         position = this->models(massId, 0)(this->modelsCoefficients[massId]);
         assert(!position.isError);
@@ -139,14 +139,14 @@ Maybe<Void> Pimodel::GetParameters(std::vector<double>* target) {
 Problem Pimodel::problemFromTkc(std::vector<double>* tkc) {
     std::vector<double> kc = std::vector<double>(tkc->size() - 1);
     std::copy(tkc->begin() + 1, tkc->end(), kc.begin());
-    Maybe<Problem> problem = this->p->BuildFromVector(kc);
+    Maybe<Problem> problem = this->p.BuildFromVector(kc);
     assert(!problem.isError);
     return problem.val;
 }
 
 std::vector<double> Pimodel::getXModel(std::vector<double>* tkc) {
     // X: State vector. Displacements followed by velocities.
-    auto X = std::vector<double>(this->p->NumberOfMasses() * 2);
+    auto X = std::vector<double>(this->p.NumberOfMasses() * 2);
 
     Maybe<Void> err;
     Maybe<double> eval;
@@ -166,7 +166,7 @@ std::vector<double> Pimodel::getXModel(std::vector<double>* tkc) {
         assert(!err.isError);
         eval = dp_dt(this->modelsCoefficients[massId]);
         assert(!eval.isError);
-        X[Problem::GetMassVelIndex(this->p->NumberOfMasses(), massId)] =
+        X[Problem::GetMassVelIndex(this->p.NumberOfMasses(), massId)] =
             eval.val;
     }
     return X;
@@ -193,17 +193,17 @@ bst::matrix<Polys> Pimodel::getAccelsFromDiffEq(Problem* problem,
 }
 
 std::vector<double> Pimodel::getInitialX() {
-    int nMasses = this->p->masses.size();
+    int nMasses = this->p.masses.size();
     auto initialX = std::vector<double>(nMasses * 2);
-    for (auto v : this->p->initialVels) {
+    for (auto v : this->p.initialVels) {
         assert(v.massId >= 0 && v.massId < nMasses);
         initialX[Problem::GetMassVelIndex(nMasses, v.massId)] = v.val;
     }
-    for (auto d : this->p->initialDisps) {
+    for (auto d : this->p.initialDisps) {
         assert(d.massId >= 0 && d.massId < nMasses);
         initialX[Problem::GetMassDispIndex(nMasses, d.massId)] = d.val;
     }
-    for (auto massId : this->p->fixedMasses) {
+    for (auto massId : this->p.fixedMasses) {
         assert(massId >= 0 && massId < nMasses);
         initialX[Problem::GetMassDispIndex(nMasses, massId)] = 0;
         initialX[Problem::GetMassVelIndex(nMasses, massId)] = 0;
@@ -220,12 +220,12 @@ void Pimodel::AddInitialConditionsResiduesTkc(std::vector<double>* tkc,
 
     double min;
     double max;
-    if (tkcIndex - 1 < int(this->p->springs.size())) {
-        min = this->p->springs[tkcIndex - 1].kMin;
-        max = this->p->springs[tkcIndex - 1].kMax;
+    if (tkcIndex - 1 < int(this->p.springs.size())) {
+        min = this->p.springs[tkcIndex - 1].kMin;
+        max = this->p.springs[tkcIndex - 1].kMax;
     } else {
-        min = this->p->dampers[tkcIndex - 1 - this->p->springs.size()].cMin;
-        max = this->p->dampers[tkcIndex - 1 - this->p->springs.size()].cMax;
+        min = this->p.dampers[tkcIndex - 1 - this->p.springs.size()].cMin;
+        max = this->p.dampers[tkcIndex - 1 - this->p.springs.size()].cMax;
     }
     for (int i = 0; i <= this->kcDiscretization; i++) {
         tkc->at(tkcIndex) = min + (max - min) / this->kcDiscretization * i;
@@ -246,12 +246,12 @@ void Pimodel::AddPhysicsResiduesTkc(std::vector<double>* tkc, int tkcIndex) {
         max = this->t1;
         discretization = this->timeDiscretization;
     } else {
-        if (tkcIndex - 1 < int(this->p->springs.size())) {
-            min = this->p->springs[tkcIndex - 1].kMin;
-            max = this->p->springs[tkcIndex - 1].kMax;
+        if (tkcIndex - 1 < int(this->p.springs.size())) {
+            min = this->p.springs[tkcIndex - 1].kMin;
+            max = this->p.springs[tkcIndex - 1].kMax;
         } else {
-            min = this->p->dampers[tkcIndex - 1 - this->p->springs.size()].cMin;
-            max = this->p->dampers[tkcIndex - 1 - this->p->springs.size()].cMax;
+            min = this->p.dampers[tkcIndex - 1 - this->p.springs.size()].cMin;
+            max = this->p.dampers[tkcIndex - 1 - this->p.springs.size()].cMax;
         }
         discretization = this->kcDiscretization;
     }
@@ -404,3 +404,82 @@ std::vector<double> Pimodel::LossGradient() {
 
     return grad;
 }
+
+// Pimodels::Pimodels(ProblemDescription* p, double finalT, int timeBuckets,
+//                    int timeDiscretization, int kcDiscretization, int order) {
+//     this->timeBuckets = std::vector<double>(timeBuckets + 1);
+//     double timePerTimeBucket = (finalT - 0) / timeBuckets;
+//     for (int b = 0; b < timeBuckets; b++) {
+//         this->timeBuckets[b] = b * timePerTimeBucket;
+//     }
+//     this->timeBuckets[timeBuckets] = finalT;
+
+//     double t0 = 0;
+//     this->pimodels = std::vector<Pimodel>(timeBuckets);
+//     for (int b = 0; b < timeBuckets; b++) {
+//         this->pimodels[b] =
+//             Pimodel(p, t0, t0 + timePerTimeBucket, timeDiscretization,
+//                     kcDiscretization, order);
+//         t0 += timePerTimeBucket;
+//     }
+// }
+
+// Maybe<double> Pimodels::Train(double learningRate, int maxSteps, bool log) {
+//     Maybe<double> r;
+//     r = this->pimodels[0].Train(learningRate, maxSteps, log);
+
+//     ProblemDescription* p = this->pimodels[0].p;
+//     std::vector<double> tkc =
+//         std::vector<double>(1 + p->NumberOfSpringsAndDampers());
+//     int tkcI = 1;
+//     for (int s = 0; s < p->springs.size(); s++) {
+//         tkc[tkcI] = (p->springs[s].kMin + p->springs[s].kMax) / 2;
+//         tkcI++;
+//     }
+//     for (int d = 0; d < p->dampers.size(); d++) {
+//         tkc[tkcI] = (p->dampers[d].cMin + p->dampers[d].cMax) / 2;
+//         tkcI++;
+//     }
+
+//     double t;
+//     int nMasses = this->pimodels[0].nMasses;
+//     Pimodel* previousPiModel;
+//     double modelDisp;
+//     double modelVel;
+//     Maybe<std::vector<double>> X;
+//     for (int b = 1; b < this->pimodels.size() - 1; b++) {
+//         t = this->timeBuckets[b];
+//         tkc[0] = t;
+//         this->pimodels[b].p->initialDisps.clear();
+//         this->pimodels[b].p->initialVels.clear();
+//         previousPiModel = &(this->pimodels[b - 1]);
+//         X = (*previousPiModel)(&tkc);
+//         assert(!X.isError);
+//         for (int m = 0; m < nMasses; m++) {
+//             this->pimodels[b].p->AddInitialDisp(m, X.val[m]);
+//         }
+//         this->pimodels[b].Train(learningRate, maxSteps, log);
+//     }
+//     return r;
+// };
+
+// int Pimodels::getTimeBucket(double t) const {
+//     if (t == 0) {
+//         return 0;
+//     }
+//     if (t == this->timeBuckets[this->timeBuckets.size() - 1]) {
+//         return this->timeBuckets.size() - 2;
+//     }
+//     assert(t >= 0);
+//     assert(t <= this->timeBuckets[this->timeBuckets.size() - 1]);
+//     // Last position in which t could be inserted without changing the order
+//     auto bound =
+//         std::upper_bound(this->timeBuckets.begin(), this->timeBuckets.end(),
+//         t);
+//     return (bound - this->timeBuckets.begin()) - 1;
+// }
+
+// Pimodel* Pimodels::GetPimodel(double t) {
+//     int b = this->getTimeBucket(t);
+//     return &(this->pimodels[b]);
+// }

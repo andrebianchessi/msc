@@ -65,8 +65,8 @@ class PimodelTest : public testing::Test {
         auto e0 = this->pd.BuildFromDNA(dna);
         ASSERT_FALSE(e0.isError);
 
-        this->simpleModel = new Pimodel(&this->pd, tMin, tMax, 1, 1, 1);
-        this->secondOrderModel = new Pimodel(&this->pd, tMin, tMax, 2, 2, 2);
+        this->simpleModel = new Pimodel(this->pd, tMin, tMax, 1, 1, 1);
+        this->secondOrderModel = new Pimodel(this->pd, tMin, tMax, 2, 2, 2);
 
         x = 19354;
         y = 1235;
@@ -92,7 +92,7 @@ TEST_F(PimodelTest, ConstructorTest) {
 }
 
 TEST_F(PimodelTest, OperatorTest) {
-    Pimodel model = Pimodel(&this->pd, 0.1, 1.0, 10, 10, 2);
+    Pimodel model = Pimodel(this->pd, 0.1, 1.0, 10, 10, 2);
 
     // Test the model's prediction for values of time, spring and damper
     std::vector<double> tkc = {1.0, 2.0, 3.0};
@@ -117,15 +117,6 @@ TEST_F(PimodelTest, OperatorTest) {
 
     // tkc too small
     tkc = {1.1, 1.0};
-    eval = model(&tkc);
-    ASSERT_TRUE(eval.isError);
-
-    // invalid t
-    tkc = {1.1, kMin, cMin};
-    eval = model(&tkc);
-    ASSERT_TRUE(eval.isError);
-
-    tkc = {0.0, kMin, cMin};
     eval = model(&tkc);
     ASSERT_TRUE(eval.isError);
 }
@@ -281,7 +272,7 @@ TEST_F(PimodelTest, getInitialXTest) {
     pd.AddInitialDisp(2, 0.3);
     pd.AddInitialVel(2, 0.4);
 
-    auto model = Pimodel(&pd, tMin, tMax, 1, 1, 1);
+    auto model = Pimodel(pd, tMin, tMax, 1, 1, 1);
 
     std::vector<double> X = model.getInitialX();
     ASSERT_EQ(X.size(), 6);
@@ -636,7 +627,7 @@ TEST_F(PimodelTest, LossTest) {
 }
 
 TEST_F(PimodelTest, LossGradientTest) {
-    Pimodel model = Pimodel(&this->pd, tMin, tMax, 1, 1, 1);
+    Pimodel model = Pimodel(this->pd, tMin, tMax, 1, 1, 1);
     std::vector<double> params = std::vector<double>(8);
     double a0 = 13.0;
     double a1 = 26.0;
@@ -921,7 +912,7 @@ TEST(PimodelTrainingTest, TrainTest) {
 
     // Train model
     Pimodel model =
-        Pimodel(&pd, tMin, tMax, timeDiscretization, kcDiscretization, order);
+        Pimodel(pd, tMin, tMax, timeDiscretization, kcDiscretization, order);
 
     double initialLoss = model.Loss();
     model.Train(learningRate, maxSteps, log);

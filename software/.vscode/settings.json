@@ -97,6 +97,7 @@
         "discretization",
         "discretize",
         "Disps",
+        "Pimodels",
         "Unnormalize",
         "Vels"
     ]

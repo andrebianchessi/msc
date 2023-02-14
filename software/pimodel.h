@@ -8,6 +8,7 @@
 
 class Pimodel : public Model {
    public:
+    Pimodel() = default;
     // Parameters:
     // p: Description of this problem
     // finalT: this model models the position of the mass for t in [0,finalT]
@@ -18,7 +19,7 @@ class Pimodel : public Model {
     // kcDiscretization: How many intervals we'll discretize
     // springs/dampers values in our loss function
     // order: order of the multivariate polynomial used in the models
-    Pimodel(ProblemDescription* p, double initialT, double finalT,
+    Pimodel(ProblemDescription p, double initialT, double finalT,
             int timeDiscretization, int kcDiscretization, int order);
 
     // Returns the position of each mass.
@@ -33,6 +34,7 @@ class Pimodel : public Model {
 
    private:
     friend class PimodelTest;
+    friend class Pimodels;
     FRIEND_TEST(PimodelTest, ModelIdTest);
     FRIEND_TEST(PimodelTest, ConstructorTest);
     FRIEND_TEST(PimodelTest, TimeBucketTest);
@@ -50,7 +52,7 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, LossGradientTest);
     FRIEND_TEST(PimodelTrainingTest, TrainTest);
 
-    ProblemDescription* p;
+    ProblemDescription p;
 
     int nMasses;
 
@@ -125,4 +127,19 @@ class Pimodel : public Model {
     // by using the differential equation from the discrete element method
     boost::numeric::ublas::matrix<Polys> getAccelsFromDiffEq(
         Problem* problem, std::vector<double>& tkc);
+};
+
+class Pimodels {
+   public:
+    Pimodels(ProblemDescription* p, double finalT, int timeBuckets,
+             int timeDiscretization, int kcDiscretization, int order);
+
+    Maybe<double> Train(double learningRate, int maxSteps, bool log);
+
+    Pimodel* GetPimodel(double t);
+
+   private:
+    int getTimeBucket(double t) const;
+    std::vector<double> timeBuckets;
+    std::vector<Pimodel> pimodels;
 };
