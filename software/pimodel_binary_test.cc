@@ -18,12 +18,12 @@ int main(int argc, char *argv[]) {
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int timeBuckets = 10;
-    int timeDiscretization = 2;
+    int timeBuckets = 3;
+    int timeDiscretization = 3;
     int kcDiscretization = 1;
     int order = 2;
     double learningRate = 1;
-    int maxSteps = 100;
+    int maxSteps = 200;
     bool log = true;
     // Train models
     Pimodels models = Pimodels(pd, tMax, timeBuckets, timeDiscretization,
@@ -51,8 +51,9 @@ int main(int argc, char *argv[]) {
         std::cout << p.XHistory[i][1] << ",";
         std::cout << "" << std::endl;
     }
-    for (int i = 0; i <= 20; i += 1) {
-        tkc[0] = i * tMax / 20;
+    int tSampling = 30;
+    for (int i = 0; i <= tSampling; i += 1) {
+        tkc[0] = i * tMax / tSampling;
         X = models(&tkc);
 
         std::cout << tkc[0] << ",,";
