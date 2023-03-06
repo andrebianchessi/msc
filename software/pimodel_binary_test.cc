@@ -18,8 +18,8 @@ int main(int argc, char *argv[]) {
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int timeBuckets = 3;
-    int timeDiscretization = 3;
+    int timeBuckets = 2;
+    int timeDiscretization = 5;
     int kcDiscretization = 1;
     int order = 2;
     double learningRate = 1;
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
         std::cout << p.XHistory[i][1] << ",";
         std::cout << "" << std::endl;
     }
-    int tSampling = 30;
+    int tSampling = 20;
     for (int i = 0; i <= tSampling; i += 1) {
         tkc[0] = i * tMax / tSampling;
         X = models(&tkc);
