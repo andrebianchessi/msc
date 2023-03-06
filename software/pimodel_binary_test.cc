@@ -18,16 +18,17 @@ int main(int argc, char *argv[]) {
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int timeDiscretization = 10;
+    int timeBuckets = 10;
+    int timeDiscretization = 2;
     int kcDiscretization = 1;
     int order = 2;
     double learningRate = 1;
     int maxSteps = 100;
     bool log = true;
-    // Train model
-    Pimodel model =
-        Pimodel(&pd, tMin, tMax, timeDiscretization, kcDiscretization, order);
-    model.Train(learningRate, maxSteps, log);
+    // Train models
+    Pimodels models = Pimodels(pd, tMax, timeBuckets, timeDiscretization,
+                               kcDiscretization, order);
+    models.Train(learningRate, maxSteps, log);
 
     // Get problem using intermediate value for k and c, and integrate it.
     // Then, compare the model's prediction with the problem's result.
@@ -43,8 +44,6 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < int(p.t.size());
          i += std::max(1, int(p.t.size()) / 20)) {
         tkc[0] = p.t[i];
-        X = model(&tkc);
-
         std::cout << p.t[i] << ",";
         std::cout << p.XHistory[i][0] << ",";
         std::cout << ""
@@ -52,9 +51,9 @@ int main(int argc, char *argv[]) {
         std::cout << p.XHistory[i][1] << ",";
         std::cout << "" << std::endl;
     }
-    for (int i = 0; i < 20; i += 1) {
+    for (int i = 0; i <= 20; i += 1) {
         tkc[0] = i * tMax / 20;
-        X = model(&tkc);
+        X = models(&tkc);
 
         std::cout << tkc[0] << ",,";
         std::cout << X.val[0] << ",,";

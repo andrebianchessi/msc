@@ -365,12 +365,12 @@ cc_test(
   ]
 )
 
-# cc_binary(
-#   name = "pimodel_binary_test",
-#   srcs = [
-#     "pimodel_binary_test.cc"
-#   ],
-#   deps = [
-#     ":pimodel"
-#   ]
-# )
+cc_binary(
+  name = "pimodel_binary_test",
+  srcs = [
+    "pimodel_binary_test.cc"
+  ],
+  deps = [
+    ":pimodel"
+  ]
+)
