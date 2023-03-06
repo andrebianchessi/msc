@@ -37,6 +37,7 @@ class Pimodel : public Model {
     friend class Pimodels;
     FRIEND_TEST(PimodelTest, ModelIdTest);
     FRIEND_TEST(PimodelTest, ConstructorTest);
+    FRIEND_TEST(PimodelTest, OperatorTest);
     FRIEND_TEST(PimodelTest, TimeBucketTest);
     FRIEND_TEST(PimodelTest, GetParametersTest);
     FRIEND_TEST(PimodelTest, SetParametersTest);

@@ -92,22 +92,27 @@ TEST_F(PimodelTest, ConstructorTest) {
 }
 
 TEST_F(PimodelTest, OperatorTest) {
-    Pimodel model = Pimodel(this->pd, 0.1, 1.0, 10, 10, 2);
+    Pimodel& model = (*this->simpleModel);
 
-    // Test the model's prediction for values of time, spring and damper
-    std::vector<double> tkc = {1.0, 2.0, 3.0};
+    // x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
+    // x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
+    std::vector<double> a =
+        std::vector<double>{Random(), Random(), Random(), Random()};
+    std::vector<double> b =
+        std::vector<double>{Random(), Random(), Random(), Random()};
+    std::vector<double> parameters =
+        std::vector<double>{a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]};
+    model.SetParameters(&parameters);
+
+    double t = 1 + Random();
+    double k = 10 + Random();
+    double c = 20 + Random();
+    auto tkc = std::vector<double>{t, k, c};
     auto eval = model(&tkc);
     ASSERT_FALSE(eval.isError);
-
-    // There are two masses; the returned vector should contain
-    // the position of both of them
     ASSERT_EQ(eval.val.size(), 2);
-
-    // Given that the polynomials all start with parameters = 0,
-    // the initial prediction (before training) should be position = 0
-    // for all masses
-    ASSERT_DOUBLE_EQ(eval.val[0], 0);
-    ASSERT_DOUBLE_EQ(eval.val[1], 0);
+    ASSERT_DOUBLE_EQ(eval.val[0], a[0] * t + a[1] * k + a[2] * c + a[3]);
+    ASSERT_DOUBLE_EQ(eval.val[1], b[0] * t + b[1] * k + b[2] * c + b[3]);
 
     // Test error cases
     // tkc too large

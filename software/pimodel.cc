@@ -74,7 +74,7 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
     std::vector<double> positions =
         std::vector<double>(this->p.NumberOfMasses());
     Maybe<double> position;
-    for (int massId = 0; massId < int(positions.size()) / 2; massId++) {
+    for (int massId = 0; massId < int(positions.size()); massId++) {
         this->models(massId, 0).SetX(*tkc);
         position = this->models(massId, 0)(this->modelsCoefficients[massId]);
         assert(!position.isError);
