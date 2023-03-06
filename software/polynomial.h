@@ -116,6 +116,7 @@ class Poly {
     FRIEND_TEST(PimodelTest, getAccelsFromDiffEqTest);
     FRIEND_TEST(PolyTest, DaPolysTest);
     FRIEND_TEST(PimodelTest, InitialConditionsResiduesTest);
+    FRIEND_TEST(PimodelTest, OperatorTest);
 
     // Auxiliary function used in Build method.
     void buildDfs(std::vector<int>& exponents, int exponentsSum,

@@ -405,81 +405,123 @@ std::vector<double> Pimodel::LossGradient() {
     return grad;
 }
 
-// Pimodels::Pimodels(ProblemDescription* p, double finalT, int timeBuckets,
-//                    int timeDiscretization, int kcDiscretization, int order) {
-//     this->timeBuckets = std::vector<double>(timeBuckets + 1);
-//     double timePerTimeBucket = (finalT - 0) / timeBuckets;
-//     for (int b = 0; b < timeBuckets; b++) {
-//         this->timeBuckets[b] = b * timePerTimeBucket;
-//     }
-//     this->timeBuckets[timeBuckets] = finalT;
+Pimodels::Pimodels(ProblemDescription p, double finalT, int nModels,
+                   int timeDiscretization, int kcDiscretization, int order) {
+    assert(finalT > 0);
+    assert(nModels >= 1);
+    assert(timeDiscretization >= 1);
+    assert(kcDiscretization >= 1);
+    assert(order >= 0);
 
-//     double t0 = 0;
-//     this->pimodels = std::vector<Pimodel>(timeBuckets);
-//     for (int b = 0; b < timeBuckets; b++) {
-//         this->pimodels[b] =
-//             Pimodel(p, t0, t0 + timePerTimeBucket, timeDiscretization,
-//                     kcDiscretization, order);
-//         t0 += timePerTimeBucket;
-//     }
-// }
+    this->timeBuckets = std::vector<double>(nModels + 1);
+    double timePerTimeBucket = (finalT - 0) / nModels;
+    for (int b = 0; b < nModels; b++) {
+        this->timeBuckets[b] = b * timePerTimeBucket;
+    }
+    this->timeBuckets[nModels] = finalT;
 
-// Maybe<double> Pimodels::Train(double learningRate, int maxSteps, bool log) {
-//     Maybe<double> r;
-//     r = this->pimodels[0].Train(learningRate, maxSteps, log);
+    double t0 = 0;
+    this->pimodels = std::vector<Pimodel>(nModels);
+    for (int b = 0; b < nModels; b++) {
+        this->pimodels[b] =
+            Pimodel(p, t0, t0 + timePerTimeBucket, timeDiscretization,
+                    kcDiscretization, order);
+        t0 += timePerTimeBucket;
+    }
+}
 
-//     ProblemDescription* p = this->pimodels[0].p;
-//     std::vector<double> tkc =
-//         std::vector<double>(1 + p->NumberOfSpringsAndDampers());
-//     int tkcI = 1;
-//     for (int s = 0; s < p->springs.size(); s++) {
-//         tkc[tkcI] = (p->springs[s].kMin + p->springs[s].kMax) / 2;
-//         tkcI++;
-//     }
-//     for (int d = 0; d < p->dampers.size(); d++) {
-//         tkc[tkcI] = (p->dampers[d].cMin + p->dampers[d].cMax) / 2;
-//         tkcI++;
-//     }
+std::vector<double> Pimodels::continuityTkc() const {
+    const ProblemDescription& p = this->pimodels[0].p;
+    std::vector<double> tkc =
+        std::vector<double>(1 + p.NumberOfSpringsAndDampers());
 
-//     double t;
-//     int nMasses = this->pimodels[0].nMasses;
-//     Pimodel* previousPiModel;
-//     double modelDisp;
-//     double modelVel;
-//     Maybe<std::vector<double>> X;
-//     for (int b = 1; b < this->pimodels.size() - 1; b++) {
-//         t = this->timeBuckets[b];
-//         tkc[0] = t;
-//         this->pimodels[b].p->initialDisps.clear();
-//         this->pimodels[b].p->initialVels.clear();
-//         previousPiModel = &(this->pimodels[b - 1]);
-//         X = (*previousPiModel)(&tkc);
-//         assert(!X.isError);
-//         for (int m = 0; m < nMasses; m++) {
-//             this->pimodels[b].p->AddInitialDisp(m, X.val[m]);
-//         }
-//         this->pimodels[b].Train(learningRate, maxSteps, log);
-//     }
-//     return r;
-// };
+    tkc[0] = 0;  // t = 0
 
-// int Pimodels::getTimeBucket(double t) const {
-//     if (t == 0) {
-//         return 0;
-//     }
-//     if (t == this->timeBuckets[this->timeBuckets.size() - 1]) {
-//         return this->timeBuckets.size() - 2;
-//     }
-//     assert(t >= 0);
-//     assert(t <= this->timeBuckets[this->timeBuckets.size() - 1]);
-//     // Last position in which t could be inserted without changing the order
-//     auto bound =
-//         std::upper_bound(this->timeBuckets.begin(), this->timeBuckets.end(),
-//         t);
-//     return (bound - this->timeBuckets.begin()) - 1;
-// }
+    int tkcI = 1;
+    for (int s = 0; s < p.springs.size(); s++) {
+        tkc[tkcI] = (p.springs[s].kMin + p.springs[s].kMax) / 2;
+        tkcI++;
+    }
+    for (int d = 0; d < p.dampers.size(); d++) {
+        tkc[tkcI] = (p.dampers[d].cMin + p.dampers[d].cMax) / 2;
+        tkcI++;
+    }
+    return tkc;
+}
 
-// Pimodel* Pimodels::GetPimodel(double t) {
-//     int b = this->getTimeBucket(t);
-//     return &(this->pimodels[b]);
-// }
+void Pimodels::setContinuity(int timeBucket, std::vector<double>& tkc) {
+    assert(timeBucket >= 1 && timeBucket < this->pimodels.size());
+    int& nMasses = this->pimodels[0].nMasses;
+
+    Pimodel& thisPiModel = this->pimodels[timeBucket];
+    Pimodel& previousPiModel = this->pimodels[timeBucket - 1];
+
+    // Set t at tkc
+    tkc[0] = this->timeBuckets[timeBucket];
+
+    // Clear initial conditions
+    thisPiModel.p.initialDisps.clear();
+    thisPiModel.p.initialVels.clear();
+
+    // Build list with the model for each mass at previous time bucket
+    std::vector<Poly> previousModels = std::vector<Poly>(nMasses);
+    for (int massId = 0; massId < nMasses; massId++) {
+        previousModels[massId] = previousPiModel.models(massId, 0);
+        previousModels[massId].SetX(tkc);
+    }
+
+    // Calculate the previous values and set continuity
+    Maybe<double> previousValue;
+
+    // C0 continuity
+    for (int massId = 0; massId < nMasses; massId++) {
+        previousValue =
+            previousModels[massId](previousPiModel.modelsCoefficients[massId]);
+        assert(!previousValue.isError);
+        thisPiModel.p.AddInitialDisp(massId, previousValue.val);
+    }
+
+    // C1 continuity
+    // Differentiate the model and then calculate velocity
+    for (int massId = 0; massId < nMasses; massId++) {
+        assert(!previousModels[massId].Dxi(0).isError);
+        previousValue =
+            previousModels[massId](previousPiModel.modelsCoefficients[massId]);
+        assert(!previousValue.isError);
+        thisPiModel.p.AddInitialVel(massId, previousValue.val);
+    }
+}
+
+Maybe<double> Pimodels::Train(double learningRate, int maxSteps, bool log) {
+    Maybe<double> r;
+    r = this->pimodels[0].Train(learningRate, maxSteps, log);
+
+    std::vector<double> tkc = this->continuityTkc();
+
+    for (int b = 1; b < this->pimodels.size(); b++) {
+        this->setContinuity(b, tkc);
+        this->pimodels[b].Train(learningRate, maxSteps, log);
+    }
+    return r;
+};
+
+int Pimodels::getTimeBucket(double t) const {
+    if (t == 0) {
+        return 0;
+    }
+    if (t == this->timeBuckets[this->timeBuckets.size() - 1]) {
+        return this->timeBuckets.size() - 2;
+    }
+    assert(t >= 0);
+    assert(t <= this->timeBuckets[this->timeBuckets.size() - 1]);
+    // Last position in which t could be inserted without changing the order
+    auto bound =
+        std::upper_bound(this->timeBuckets.begin(), this->timeBuckets.end(), t);
+    return (bound - this->timeBuckets.begin()) - 1;
+}
+
+Maybe<std::vector<double>> Pimodels::operator()(std::vector<double>* tkc) {
+    assert(tkc->size() > 0);
+    int b = this->getTimeBucket(tkc->at(0));
+    return this->pimodels[b](tkc);
+}

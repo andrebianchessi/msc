@@ -52,6 +52,9 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, LossTest);
     FRIEND_TEST(PimodelTest, LossGradientTest);
     FRIEND_TEST(PimodelTrainingTest, TrainTest);
+    FRIEND_TEST(PimodelsTest, ConstructorTest);
+    FRIEND_TEST(PimodelsTest, setContinuityTest);
+    FRIEND_TEST(PimodelsTest, OperatorTest);
 
     ProblemDescription p;
 
@@ -132,15 +135,37 @@ class Pimodel : public Model {
 
 class Pimodels {
    public:
-    Pimodels(ProblemDescription* p, double finalT, int timeBuckets,
+    Pimodels() = default;
+    Pimodels(ProblemDescription p, double finalT, int nModels,
              int timeDiscretization, int kcDiscretization, int order);
 
     Maybe<double> Train(double learningRate, int maxSteps, bool log);
 
-    Pimodel* GetPimodel(double t);
+    Maybe<std::vector<double>> operator()(std::vector<double>* tkc);
 
    private:
     int getTimeBucket(double t) const;
     std::vector<double> timeBuckets;
     std::vector<Pimodel> pimodels;
+
+    // We train the models successively in time: first the model that is valid
+    // for the first time interval, then the model valid for the second time
+    // interval and etc.
+    // We impose continuity between the models at the transition times. However,
+    // the models are not only a function of time, but also of the values of the
+    // springs and dampers. The question is: what values do we user for the
+    // springs and dampers when imposing continuity? This function returns the
+    // tkc vector (time followed by spring values followed by damper values)
+    // which we use to impose continuity. The k's and c's are set to the average
+    // value they can have (based on the problem description). t is set to zero,
+    // and must be updated for each point in which we want to impose continuity.
+    std::vector<double> continuityTkc() const;
+
+    void setContinuity(int timeBucket, std::vector<double>& tkc);
+
+    FRIEND_TEST(PimodelsTest, ConstructorTest);
+    FRIEND_TEST(PimodelsTest, GetTimeBucketTest);
+    FRIEND_TEST(PimodelsTest, getContinuityTkcTest);
+    FRIEND_TEST(PimodelsTest, setContinuityTest);
+    FRIEND_TEST(PimodelsTest, OperatorTest);
 };

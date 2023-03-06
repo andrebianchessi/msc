@@ -76,7 +76,7 @@ class ProblemDescription {
     Maybe<Problem> BuildFromVector(std::vector<double> springsAndDampers);
 
     // Returns number of springs + number of dampers
-    int NumberOfSpringsAndDampers();
+    int NumberOfSpringsAndDampers() const;
 
     int NumberOfMasses();
 

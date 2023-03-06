@@ -30,7 +30,7 @@ void ProblemDescription::SetFixedMass(int massId) {
     this->fixedMasses.push_back(massId);
 };
 
-int ProblemDescription::NumberOfSpringsAndDampers() {
+int ProblemDescription::NumberOfSpringsAndDampers() const {
     return this->springs.size() + this->dampers.size();
 };
 

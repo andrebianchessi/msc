@@ -947,3 +947,379 @@ TEST(PimodelTrainingTest, TrainTest) {
         std::cout << X.val[1] << std::endl;
     }
 }
+
+class PimodelsTest : public testing::Test {
+   public:
+    ProblemDescription pd;
+
+    void SetUp() {
+        // Called before every TEST_F
+        // Create problem description of two masses,
+        // connected with a spring and damper. No fixed or initial
+        // conditions are set
+        this->pd = ProblemDescription();
+        this->pd.AddMass(m, 0.0, 0.0);
+        this->pd.AddMass(m, 1.0, 0.0);
+        this->pd.AddSpring(0, 1, kMin, kMax);
+        this->pd.AddDamper(0, 1, cMin, cMax);
+    }
+};
+
+TEST_F(PimodelsTest, ConstructorTest) {
+    double t = 100;
+    // Only one model
+    Pimodels pimodels = Pimodels(this->pd, t, 1, 2, 2, 2);
+    ASSERT_EQ(pimodels.timeBuckets.size(), 2);
+    ASSERT_EQ(pimodels.timeBuckets[0], 0.0);
+    ASSERT_EQ(pimodels.timeBuckets[1], t);
+    ASSERT_EQ(pimodels.pimodels.size(), 1);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[0].t0, 0.0);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[0].t1, t);
+
+    // Two models
+    pimodels = Pimodels(this->pd, t, 2, 1, 1, 1);
+    ASSERT_EQ(pimodels.timeBuckets.size(), 3);
+    ASSERT_EQ(pimodels.timeBuckets[0], 0.0);
+    ASSERT_DOUBLE_EQ(pimodels.timeBuckets[1], t / 2);
+    ASSERT_DOUBLE_EQ(pimodels.timeBuckets[2], t);
+    ASSERT_EQ(pimodels.pimodels.size(), 2);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[0].t0, 0.0);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[0].t1, t / 2);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].t0, t / 2);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].t1, t);
+
+    // Three models
+    pimodels = Pimodels(this->pd, t, 3, 1, 1, 1);
+    ASSERT_EQ(pimodels.timeBuckets.size(), 4);
+    ASSERT_EQ(pimodels.timeBuckets[0], 0.0);
+    ASSERT_DOUBLE_EQ(pimodels.timeBuckets[1], t / 3);
+    ASSERT_DOUBLE_EQ(pimodels.timeBuckets[2], 2 * t / 3);
+    ASSERT_DOUBLE_EQ(pimodels.timeBuckets[3], t);
+
+    ASSERT_EQ(pimodels.pimodels.size(), 3);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[0].t0, 0.0);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[0].t1, t / 3);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].t0, t / 3);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].t1, 2 * t / 3);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].t0, 2 * t / 3);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].t1, t);
+
+    // Errors
+    ASSERT_DEATH({ Pimodels(this->pd, -1.0, 1, 1, 1, 1); }, "");
+    ASSERT_DEATH({ Pimodels(this->pd, 1.0, -1, 1, 1, 1); }, "");
+    ASSERT_DEATH({ Pimodels(this->pd, 1.0, 0, 1, 1, 1); }, "");
+    ASSERT_DEATH({ Pimodels(this->pd, 1.0, 1, -1, 1, 1); }, "");
+    ASSERT_DEATH({ Pimodels(this->pd, 1.0, 1, 0, 1, 1); }, "");
+    ASSERT_DEATH({ Pimodels(this->pd, 1.0, 1, 1, -1, 1); }, "");
+    ASSERT_DEATH({ Pimodels(this->pd, 1.0, 1, 1, 0, 1); }, "");
+    ASSERT_DEATH({ Pimodels(this->pd, 1.0, 1, 1, 1, -1); }, "");
+}
+
+TEST_F(PimodelsTest, GetTimeBucketTest) {
+    double t = 100;
+
+    // Only one model
+    Pimodels pimodels = Pimodels(this->pd, t, 1, 2, 2, 2);
+    ASSERT_EQ(pimodels.getTimeBucket(0.0), 0);
+    ASSERT_EQ(pimodels.getTimeBucket(t / 2), 0);
+    ASSERT_EQ(pimodels.getTimeBucket(t), 0);
+
+    // Two models
+    // time_buckets = [0, t/2, t]
+    // b0 = [0,t/2)
+    // b1 = [t/2,t]
+    pimodels = Pimodels(this->pd, t, 2, 2, 2, 2);
+    ASSERT_EQ(pimodels.getTimeBucket(0.0), 0);
+    ASSERT_EQ(pimodels.getTimeBucket(t / 4), 0);
+    ASSERT_EQ(pimodels.getTimeBucket(t / 2 * 0.99), 0);
+    ASSERT_EQ(pimodels.getTimeBucket(t / 2), 1);
+    ASSERT_EQ(pimodels.getTimeBucket((t / 2 + t) / 2), 1);
+    ASSERT_EQ(pimodels.getTimeBucket(t), 1);
+
+    // Three models
+    // time_buckets = [0, t/3, 2t/3, t]
+    // b0 = [0,t/3)
+    // b1 = [t/3,2t/3)
+    // b2 = [2t/3, t]
+    pimodels = Pimodels(this->pd, t, 3, 2, 2, 2);
+    double t0 = 0;
+    double t1 = t / 3;
+    double t2 = 2 * t / 3;
+    double t3 = t;
+
+    ASSERT_EQ(pimodels.getTimeBucket(t0), 0);
+    ASSERT_EQ(pimodels.getTimeBucket((t0 + t1) / 2), 0);
+    ASSERT_EQ(pimodels.getTimeBucket(t1 * 0.99), 0);
+
+    ASSERT_EQ(pimodels.getTimeBucket(t1), 1);
+    ASSERT_EQ(pimodels.getTimeBucket((t1 + t2) / 2), 1);
+    ASSERT_EQ(pimodels.getTimeBucket(t2 * 0.99), 1);
+
+    ASSERT_EQ(pimodels.getTimeBucket(t2), 2);
+    ASSERT_EQ(pimodels.getTimeBucket((t2 + t3) / 2), 2);
+    ASSERT_EQ(pimodels.getTimeBucket(t3 * 0.99), 2);
+    ASSERT_EQ(pimodels.getTimeBucket(t3), 2);
+
+    // Errors
+    ASSERT_DEATH({ pimodels.getTimeBucket(-0.1); }, "");
+    ASSERT_DEATH({ pimodels.getTimeBucket(t * 1.1); }, "");
+}
+
+TEST_F(PimodelsTest, getContinuityTkcTest) {
+    double k0Min = Random(1, 100);
+    double k0Max = k0Min * (1 + Random());
+    double k1Min = Random(1, 100);
+    double k1Max = k1Min * (1 + Random());
+    double k2Min = Random(1, 100);
+    double k2Max = k2Min * (1 + Random());
+    double c0Min = Random(1, 100);
+    double c0Max = c0Min * (1 + Random());
+    double c1Min = Random(1, 100);
+    double c1Max = c1Min * (1 + Random());
+    double c2Min = Random(1, 100);
+    double c2Max = c2Min * (1 + Random());
+
+    auto pd = ProblemDescription();
+    pd.AddMass(Random(), 0.0, 0.0);
+    pd.AddMass(Random(), 1.0, 0.0);
+    pd.AddMass(Random(), 2.0, 0.0);
+    pd.AddSpring(0, 1, k0Min, k0Max);
+    pd.AddDamper(0, 1, c0Min, c0Max);
+    pd.AddSpring(1, 2, k1Min, k1Max);
+    pd.AddDamper(1, 2, c1Min, c1Max);
+    pd.AddSpring(0, 2, k2Min, k2Max);
+    pd.AddDamper(0, 2, c2Min, c2Max);
+
+    auto models = Pimodels(pd, 1.0, 2, 2, 2, 2);
+    auto tkc = models.continuityTkc();
+
+    ASSERT_EQ(tkc.size(), 7);
+    ASSERT_DOUBLE_EQ(tkc[0], 0);
+    ASSERT_DOUBLE_EQ(tkc[1], (k0Min + k0Max) / 2);
+    ASSERT_DOUBLE_EQ(tkc[2], (k1Min + k1Max) / 2);
+    ASSERT_DOUBLE_EQ(tkc[3], (k2Min + k2Max) / 2);
+    ASSERT_DOUBLE_EQ(tkc[4], (c0Min + c0Max) / 2);
+    ASSERT_DOUBLE_EQ(tkc[5], (c1Min + c1Max) / 2);
+    ASSERT_DOUBLE_EQ(tkc[6], (c2Min + c2Max) / 2);
+}
+
+TEST_F(PimodelsTest, setContinuityTest) {
+    double tMax = 100 + Random();
+    double kVal = Random();
+    double cVal = Random();
+    std::vector<double> tkc = std::vector<double>{Random(), kVal, cVal};
+    auto a = std::vector<double>{Random(), Random(), Random(), Random()};
+    auto b = std::vector<double>{Random(), Random(), Random(), Random()};
+    auto ab =
+        std::vector<double>{a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]};
+    auto c = std::vector<double>{Random(), Random(), Random(), Random()};
+    auto d = std::vector<double>{Random(), Random(), Random(), Random()};
+    auto cd =
+        std::vector<double>{c[0], c[1], c[2], c[3], d[0], d[1], d[2], d[3]};
+    auto e = std::vector<double>{Random(), Random(), Random(), Random()};
+    auto f = std::vector<double>{Random(), Random(), Random(), Random()};
+    auto ef =
+        std::vector<double>{e[0], e[1], e[2], e[3], f[0], f[1], f[2], f[3]};
+
+    // Single Pimodel
+    Pimodels pimodels = Pimodels(this->pd, tMax, 1, 1, 1, 1);
+    ASSERT_DEATH({ pimodels.setContinuity(0, tkc); }, "");
+
+    // Two Pimodels
+    // t in [0, tMax/2):
+    //  x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
+    //  x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
+    // t in [tMax/2, tMax]:
+    //  x0(t,k,c) = c0*t + c1*k + c2*c + c3*1
+    //  x1(t,k,c) = d0*t + d1*k + d2*c + d3*1
+    pimodels = Pimodels(this->pd, tMax, 2, 1, 1, 1);
+    ASSERT_FALSE(pimodels.pimodels[0].SetParameters(&ab).isError);
+    ASSERT_FALSE(pimodels.pimodels[1].SetParameters(&cd).isError);
+    ASSERT_DEATH({ pimodels.setContinuity(0, tkc); }, "");
+    pimodels.setContinuity(1, tkc);
+    // No initial conditions are added to the first pimodel
+    ASSERT_EQ(pimodels.pimodels[0].p.initialDisps.size(), 0);
+    ASSERT_EQ(pimodels.pimodels[0].p.initialVels.size(), 0);
+    // One initial condition (disp and vel) is added for each mass
+    // for the second pimodel
+    ASSERT_EQ(pimodels.pimodels[1].p.initialDisps.size(), 2);
+    ASSERT_EQ(pimodels.pimodels[1].p.initialVels.size(), 2);
+
+    // C0 continuity
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[0].massId, 0);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[0].val,
+                     a[0] * tMax / 2 + a[1] * kVal + a[2] * cVal + a[3]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[1].massId, 1);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[1].val,
+                     b[0] * tMax / 2 + b[1] * kVal + b[2] * cVal + b[3]);
+
+    // C1 continuity
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[0].massId, 0);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[0].val, a[0]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[1].massId, 1);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[1].val, b[0]);
+
+    // Three Pimodels
+    // t in [0, tMax/3):
+    //  x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
+    //  x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
+    // t in [tMax/3, 2*tMax/3):
+    //  x0(t,k,c) = c0*t + c1*k + c2*c + c3*1
+    //  x1(t,k,c) = d0*t + d1*k + d2*c + d3*1
+    // t in [2*tMax/3, tMax]:
+    //  x0(t,k,c) = e0*t + e1*k + e2*e + e3*1
+    //  x1(t,k,c) = f0*t + f1*k + f2*c + f3*1
+    pimodels = Pimodels(this->pd, tMax, 3, 1, 1, 1);
+    ASSERT_FALSE(pimodels.pimodels[0].SetParameters(&ab).isError);
+    ASSERT_FALSE(pimodels.pimodels[1].SetParameters(&cd).isError);
+    ASSERT_FALSE(pimodels.pimodels[2].SetParameters(&ef).isError);
+    pimodels.setContinuity(1, tkc);
+    pimodels.setContinuity(2, tkc);
+    ASSERT_DEATH({ pimodels.setContinuity(3, tkc); }, "");
+
+    ASSERT_EQ(pimodels.pimodels[0].p.initialDisps.size(), 0);
+    ASSERT_EQ(pimodels.pimodels[0].p.initialVels.size(), 0);
+    ASSERT_EQ(pimodels.pimodels[1].p.initialDisps.size(), 2);
+    ASSERT_EQ(pimodels.pimodels[1].p.initialVels.size(), 2);
+    ASSERT_EQ(pimodels.pimodels[2].p.initialDisps.size(), 2);
+    ASSERT_EQ(pimodels.pimodels[2].p.initialVels.size(), 2);
+
+    // Pimodel 1
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[0].massId, 0);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[0].val,
+                     a[0] * tMax / 3 + a[1] * kVal + a[2] * cVal + a[3]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[1].massId, 1);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[1].val,
+                     b[0] * tMax / 3 + b[1] * kVal + b[2] * cVal + b[3]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[0].massId, 0);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[0].val, a[0]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[1].massId, 1);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[1].val, b[0]);
+
+    // Pimodel 2
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialDisps[0].massId, 0);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialDisps[0].val,
+                     c[0] * 2 * tMax / 3 + c[1] * kVal + c[2] * cVal + c[3]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialDisps[1].massId, 1);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialDisps[1].val,
+                     d[0] * 2 * tMax / 3 + d[1] * kVal + d[2] * cVal + d[3]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialVels[0].massId, 0);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialVels[0].val, c[0]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialVels[1].massId, 1);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialVels[1].val, d[0]);
+}
+
+TEST_F(PimodelsTest, OperatorTest) {
+    double tMax = 100 + Random();
+    double kVal = Random();
+    double cVal = Random();
+    std::vector<double> tkc = std::vector<double>{Random(), kVal, cVal};
+    auto a = std::vector<double>{Random(), Random(), Random(), Random()};
+    auto b = std::vector<double>{Random(), Random(), Random(), Random()};
+    auto ab =
+        std::vector<double>{a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]};
+    auto c = std::vector<double>{Random(), Random(), Random(), Random()};
+    auto d = std::vector<double>{Random(), Random(), Random(), Random()};
+    auto cd =
+        std::vector<double>{c[0], c[1], c[2], c[3], d[0], d[1], d[2], d[3]};
+    auto e = std::vector<double>{Random(), Random(), Random(), Random()};
+    auto f = std::vector<double>{Random(), Random(), Random(), Random()};
+    auto ef =
+        std::vector<double>{e[0], e[1], e[2], e[3], f[0], f[1], f[2], f[3]};
+
+    // Three Pimodels
+    // t in [0, tMax/3):
+    //  x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
+    //  x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
+    // t in [tMax/3, 2*tMax/3):
+    //  x0(t,k,c) = c0*t + c1*k + c2*c + c3*1
+    //  x1(t,k,c) = d0*t + d1*k + d2*c + d3*1
+    // t in [2*tMax/3, tMax]:
+    //  x0(t,k,c) = e0*t + e1*k + e2*e + e3*1
+    //  x1(t,k,c) = f0*t + f1*k + f2*c + f3*1
+    Pimodels pimodels = Pimodels(this->pd, tMax, 3, 1, 1, 1);
+    ASSERT_FALSE(pimodels.pimodels[0].SetParameters(&ab).isError);
+    ASSERT_FALSE(pimodels.pimodels[1].SetParameters(&cd).isError);
+    ASSERT_FALSE(pimodels.pimodels[2].SetParameters(&ef).isError);
+
+    double t;
+
+    // Pimodel 0
+    t = 0;
+    tkc[0] = t;
+    auto eval = pimodels(&tkc);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val[0], a[0] * t + a[1] * kVal + a[2] * cVal + a[3]);
+    ASSERT_DOUBLE_EQ(eval.val[1], b[0] * t + b[1] * kVal + b[2] * cVal + b[3]);
+
+    // Pimodel 1
+    t = tMax / 3;
+    tkc[0] = t;
+    eval = pimodels(&tkc);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val[0], c[0] * t + c[1] * kVal + c[2] * cVal + c[3]);
+    ASSERT_DOUBLE_EQ(eval.val[1], d[0] * t + d[1] * kVal + d[2] * cVal + d[3]);
+
+    // Pimodel 2
+    t = 2 * tMax / 3;
+    tkc[0] = t;
+    eval = pimodels(&tkc);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_DOUBLE_EQ(eval.val[0], e[0] * t + e[1] * kVal + e[2] * cVal + e[3]);
+    ASSERT_DOUBLE_EQ(eval.val[1], f[0] * t + f[1] * kVal + f[2] * cVal + f[3]);
+}
+
+TEST(PimodelsTrainingTest, TrainTest) {
+    double mass = 1;
+    double kMin = 0.8;
+    double kMax = 1.0;
+    double cMin = 0.0;
+    double cMax = 0.2;
+    double tMax = 2.0;
+    double initialDisp = 1.0;
+
+    auto pd = ProblemDescription();
+    pd.AddMass(mass, 0.0, 0.0);
+    pd.AddMass(mass, 1.0, 0.0);
+    pd.AddSpring(0, 1, kMin, kMax);
+    pd.AddDamper(0, 1, cMin, cMax);
+    pd.SetFixedMass(0);
+    pd.AddInitialDisp(1, initialDisp);
+
+    int nModels = 2;
+    int timeDiscretization = 2;
+    int kcDiscretization = 1;
+    int order = 2;
+    double learningRate = 0.0001;
+    int maxSteps = 10;
+    bool log = true;
+
+    // Train all models
+    Pimodels models = Pimodels(pd, tMax, nModels, timeDiscretization,
+                               kcDiscretization, order);
+    models.Train(learningRate, maxSteps, log);
+
+    // Get problem using intermediate value for k and c, and integrate it.
+    // Then, compare the model's prediction with the problem's result.
+    double k = (kMin + kMax) / 2;
+    double c = (cMin + cMax) / 2;
+    Maybe<Problem> mP = pd.BuildFromVector(std::vector<double>{k, c});
+    ASSERT_FALSE(mP.isError);
+    Problem p = mP.val;
+    p.Integrate(tMax);
+
+    std::vector<double> tkc = std::vector<double>{0.0, k, c};
+    Maybe<std::vector<double>> X;
+    std::cout << "t,x0,modelX0,x1,modelX1" << std::endl;
+    for (int i = 0; i < int(p.t.size()); i += 1) {
+        tkc[0] = p.t[i];
+        X = models(&tkc);
+        ASSERT_FALSE(X.isError);
+
+        std::cout << p.t[i] << ",";
+        std::cout << p.XHistory[i][0] << ",";
+        std::cout << X.val[0] << ",";
+        std::cout << p.XHistory[i][1] << ",";
+        std::cout << X.val[1] << std::endl;
+    }
+}
