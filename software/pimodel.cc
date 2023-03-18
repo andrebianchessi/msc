@@ -22,32 +22,33 @@ Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
     assert(initialT <= finalT);
     this->p = p;
     this->nMasses = p.masses.size();
-    int nSprings = p.springs.size();
-    int nDampers = p.dampers.size();
-
+    this->order = order;
+    this->t0 = initialT;
+    this->t1 = finalT;
+    this->timeDiscretization = timeDiscretization;
+    this->kcDiscretization = kcDiscretization;
     this->models = bst::matrix<Poly>(p.NumberOfMasses(), 1);
     this->modelsCoefficients =
         std::vector<std::vector<double>>(p.NumberOfMasses());
 
+    int nSprings = p.springs.size();
+    int nDampers = p.dampers.size();
     Poly poly;
     Maybe<Void> r;
     for (int massId = 0; massId < p.NumberOfMasses(); massId++) {
-        r = poly.Build(nSprings + nDampers + 1, order, massId);
+        r = poly.Build(nSprings + nDampers + 1, this->order, massId);
         assert(!r.isError);
         this->models(massId, 0) = poly;
         this->modelsCoefficients[massId] =
             std::vector<double>(poly.nMonomials());
     }
 
-    this->t0 = initialT;
-    this->t1 = finalT;
-    this->timeDiscretization = timeDiscretization;
-    this->kcDiscretization = kcDiscretization;
-
     this->initialDisplacementLossBias = 1.0;
     this->initialVelocityLossBias = 1.0;
     this->physicsLossBias = 1.0;
+}
 
+void Pimodel::AddResidues() {
     this->initialConditionsResiduesTkc = std::vector<std::vector<double>>();
     this->physicsResiduesTkc = std::vector<std::vector<double>>();
     this->AddResiduesTkc();
@@ -345,16 +346,14 @@ double Pimodel::Loss() {
     for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
         maybe = this->initialDispResidues[i](this->modelsCoefficients);
         assert(!maybe.isError);
-        rv += pow(this->initialDisplacementLossBias * initialConditionsWeight *
-                      maybe.val,
-                  2);
+        rv += this->initialDisplacementLossBias * initialConditionsWeight *
+              pow(maybe.val, 2);
     }
     for (int i = 0; i < int(this->initialVelResidues.size()); i++) {
         maybe = this->initialVelResidues[i](this->modelsCoefficients);
         assert(!maybe.isError);
-        rv += pow(
-            this->initialVelocityLossBias * initialConditionsWeight * maybe.val,
-            2);
+        rv += this->initialVelocityLossBias * initialConditionsWeight *
+              pow(maybe.val, 2);
     }
 
     for (int i = 0; i < int(this->physicsResidues.size()); i++) {
@@ -502,6 +501,7 @@ void Pimodels::setContinuity(int timeBucket, std::vector<double>& tkc) {
 Maybe<double> Pimodels::Train(double learningRate, int maxSteps, bool log) {
     double learningRate0 = learningRate;
     Maybe<double> r;
+    this->pimodels[0].AddResidues();
     r = this->pimodels[0].Train(learningRate, maxSteps, log);
 
     std::vector<double> tkc = this->continuityTkc();
@@ -509,6 +509,7 @@ Maybe<double> Pimodels::Train(double learningRate, int maxSteps, bool log) {
     for (int b = 1; b < this->pimodels.size(); b++) {
         learningRate = learningRate0;
         this->setContinuity(b, tkc);
+        this->pimodels[b].AddResidues();
         this->pimodels[b].Train(learningRate, maxSteps, log);
     }
     return r;

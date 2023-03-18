@@ -66,7 +66,10 @@ class PimodelTest : public testing::Test {
         ASSERT_FALSE(e0.isError);
 
         this->simpleModel = new Pimodel(this->pd, tMin, tMax, 1, 1, 1);
+        this->simpleModel->AddResidues();
+
         this->secondOrderModel = new Pimodel(this->pd, tMin, tMax, 2, 2, 2);
+        this->secondOrderModel->AddResidues();
 
         x = 19354;
         y = 1235;
@@ -633,6 +636,7 @@ TEST_F(PimodelTest, LossTest) {
 
 TEST_F(PimodelTest, LossGradientTest) {
     Pimodel model = Pimodel(this->pd, tMin, tMax, 1, 1, 1);
+    model.AddResidues();
     std::vector<double> params = std::vector<double>(8);
     double a0 = 13.0;
     double a1 = 26.0;
@@ -918,6 +922,7 @@ TEST(PimodelTrainingTest, TrainTest) {
     // Train model
     Pimodel model =
         Pimodel(pd, tMin, tMax, timeDiscretization, kcDiscretization, order);
+    model.AddResidues();
 
     double initialLoss = model.Loss();
     model.Train(learningRate, maxSteps, log);

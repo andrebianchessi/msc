@@ -22,6 +22,10 @@ class Pimodel : public Model {
     Pimodel(ProblemDescription p, double initialT, double finalT,
             int timeDiscretization, int kcDiscretization, int order);
 
+    // Must be called before Train()
+    // Builds all the residues based on problem description.
+    void AddResidues();
+
     // Returns the position of each mass.
     // The input should be an array with:
     // The time
@@ -89,6 +93,9 @@ class Pimodel : public Model {
     // the springs/dampers values in our loss function
     int timeDiscretization;
     int kcDiscretization;
+
+    // Order of the polynomial models
+    int order;
 
     // Returns the size of the input of this model.
     // This will always be the number of springs of the problem
