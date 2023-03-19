@@ -33,12 +33,15 @@ class Pimodel : public Model {
     // The values of the dampers
     // U = [t, k1, k2, ... , kn, c1, c2, ... , cn]
     Maybe<std::vector<double>> operator()(std::vector<double>* tkc);
+    // Similar to operator(), but returns the velocity of each mass
+    Maybe<std::vector<double>> GetVelocities(std::vector<double>* tkc);
 
     int nParameters() override;
 
    private:
     friend class PimodelTest;
     friend class Pimodels;
+    friend class PimodelTrainTest;
     FRIEND_TEST(PimodelTest, ModelIdTest);
     FRIEND_TEST(PimodelTest, ConstructorTest);
     FRIEND_TEST(PimodelTest, OperatorTest);
@@ -55,7 +58,6 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, PhysicsResiduesTest);
     FRIEND_TEST(PimodelTest, LossTest);
     FRIEND_TEST(PimodelTest, LossGradientTest);
-    FRIEND_TEST(PimodelTrainingTest, TrainTest);
     FRIEND_TEST(PimodelsTest, ConstructorTest);
     FRIEND_TEST(PimodelsTest, setContinuityTest);
     FRIEND_TEST(PimodelsTest, OperatorTest);
@@ -71,6 +73,10 @@ class Pimodel : public Model {
     // masses.
     boost::numeric::ublas::matrix<Poly> models;
     std::vector<std::vector<double>> modelsCoefficients;
+    // Derivatives of each model with respect to time
+    std::vector<Poly> modelsD;
+        // Second derivatives of each model with respect to time
+    std::vector<Poly> modelsDD;
 
     // Residues of initial displacement
     std::vector<Polys> initialDispResidues;

@@ -28,6 +28,8 @@ Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
     this->timeDiscretization = timeDiscretization;
     this->kcDiscretization = kcDiscretization;
     this->models = bst::matrix<Poly>(p.NumberOfMasses(), 1);
+    this->modelsD = std::vector<Poly>(p.NumberOfMasses(), 1);
+    this->modelsDD = std::vector<Poly>(p.NumberOfMasses(), 1);
     this->modelsCoefficients =
         std::vector<std::vector<double>>(p.NumberOfMasses());
 
@@ -41,6 +43,10 @@ Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
         this->models(massId, 0) = poly;
         this->modelsCoefficients[massId] =
             std::vector<double>(poly.nMonomials());
+        this->modelsD[massId] = poly;
+        assert(!this->modelsD[massId].Dxi(0).isError);
+        this->modelsDD[massId] = this->modelsD[massId];
+        assert(!this->modelsDD[massId].Dxi(0).isError);
     }
 
     this->initialDisplacementLossBias = 1.0;
@@ -71,11 +77,6 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
         r.isError = true;
         return r;
     }
-    // if (tkc->at(0) < this->t0 || tkc->at(0) > this->t1) {
-    //     r.errMsg = "Invalid t";
-    //     r.isError = true;
-    //     return r;
-    // }
     std::vector<double> positions =
         std::vector<double>(this->p.NumberOfMasses());
     Maybe<double> position;
@@ -86,6 +87,25 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
         positions[massId] = position.val;
     }
     r.val = positions;
+    return r;
+}
+
+Maybe<std::vector<double>> Pimodel::GetVelocities(std::vector<double>* tkc) {
+    Maybe<std::vector<double>> r;
+    if (int(tkc->size()) != this->inputSize()) {
+        r.errMsg = "Invalid X length";
+        r.isError = true;
+        return r;
+    }
+    std::vector<double> vels = std::vector<double>(this->p.NumberOfMasses());
+    Maybe<double> vel;
+    for (int massId = 0; massId < int(vels.size()); massId++) {
+        this->modelsD[massId].SetX(*tkc);
+        vel = this->modelsD[massId](this->modelsCoefficients[massId]);
+        assert(!vel.isError);
+        vels[massId] = vel.val;
+    }
+    r.val = vels;
     return r;
 }
 
@@ -161,15 +181,10 @@ std::vector<double> Pimodel::getXModel(std::vector<double>* tkc) {
         eval = this->models(massId, 0)(this->modelsCoefficients[massId]);
         assert(!eval.isError);
         X[massId] = eval.val;
-    }
-    Poly dp_dt;
-    for (int massId = 0; massId < this->nMasses; massId++) {
-        this->models(massId, 0).SetX(*tkc);
+
         // Fill velocities
-        dp_dt = this->models(massId, 0);
-        err = dp_dt.Dxi(0);
-        assert(!err.isError);
-        eval = dp_dt(this->modelsCoefficients[massId]);
+        this->modelsD[massId].SetX(*tkc);
+        eval = this->modelsD[massId](this->modelsCoefficients[massId]);
         assert(!eval.isError);
         X[Problem::GetMassVelIndex(this->p.NumberOfMasses(), massId)] =
             eval.val;
@@ -186,8 +201,7 @@ bst::matrix<Polys> Pimodel::getAccelsFromDiffEq(Problem* problem,
         Disps(massId, 0) = this->models(massId, 0);
         Disps(massId, 0).SetX(tkc);
 
-        Vels(massId, 0) = this->models(massId, 0);
-        assert(!Vels(massId, 0).Dxi(0).isError);
+        Vels(massId, 0) = this->modelsD[massId];
         Vels(massId, 0).SetX(tkc);
     }
 
@@ -285,16 +299,11 @@ void Pimodel::AddInitialConditionsResidues() {
             this->initialDispResidues.push_back(
                 model +
                 (-1) * initialX[Problem::GetMassDispIndex(nMasses, massId)]);
-        }
-    }
-    Poly modelDot;
-    for (int massId = 0; massId < this->nMasses; massId++) {
-        for (auto tkc : this->initialConditionsResiduesTkc) {
-            modelDot = this->models(massId, 0);
-            assert(!modelDot.Dxi(0).isError);
-            modelDot.SetX(tkc);
+
+            model = this->modelsD[massId];
+            model.SetX(tkc);
             this->initialVelResidues.push_back(
-                modelDot +
+                model +
                 (-1) * initialX[Problem::GetMassVelIndex(nMasses, massId)]);
         }
     }
@@ -305,9 +314,7 @@ void Pimodel::AddPhysicsResidues() {
     bst::matrix<Polys> AccelsFromDiffEq;
     for (int m = 0; m < nMasses; m++) {
         for (auto tkc : this->physicsResiduesTkc) {
-            modelXDotDot = this->models(m, 0);
-            assert(!modelXDotDot.Dxi(0).isError);
-            assert(!modelXDotDot.Dxi(0).isError);
+            modelXDotDot = this->modelsDD[m];
             modelXDotDot.SetX(tkc);
 
             Problem problem = this->problemFromTkc(&tkc);
@@ -469,32 +476,19 @@ void Pimodels::setContinuity(int timeBucket, std::vector<double>& tkc) {
     thisPiModel.p.initialDisps.clear();
     thisPiModel.p.initialVels.clear();
 
-    // Build list with the model for each mass at previous time bucket
-    std::vector<Poly> previousModels = std::vector<Poly>(nMasses);
-    for (int massId = 0; massId < nMasses; massId++) {
-        previousModels[massId] = previousPiModel.models(massId, 0);
-        previousModels[massId].SetX(tkc);
-    }
-
-    // Calculate the previous values and set continuity
-    Maybe<double> previousValue;
+    // Calculate displacements and velocities of previous model
+    auto disps = previousPiModel(&tkc);
+    assert(!disps.isError);
+    auto vels = previousPiModel.GetVelocities(&tkc);
+    assert(!vels.isError);
 
     // C0 continuity
     for (int massId = 0; massId < nMasses; massId++) {
-        previousValue =
-            previousModels[massId](previousPiModel.modelsCoefficients[massId]);
-        assert(!previousValue.isError);
-        thisPiModel.p.AddInitialDisp(massId, previousValue.val);
+        thisPiModel.p.AddInitialDisp(massId, disps.val[massId]);
     }
-
     // C1 continuity
-    // Differentiate the model and then calculate velocity
     for (int massId = 0; massId < nMasses; massId++) {
-        assert(!previousModels[massId].Dxi(0).isError);
-        previousValue =
-            previousModels[massId](previousPiModel.modelsCoefficients[massId]);
-        assert(!previousValue.isError);
-        thisPiModel.p.AddInitialVel(massId, previousValue.val);
+        thisPiModel.p.AddInitialVel(massId, vels.val[massId]);
     }
 }
 

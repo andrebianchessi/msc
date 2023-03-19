@@ -92,19 +92,34 @@ TEST_F(PimodelTest, ConstructorTest) {
     ASSERT_EQ(simpleModel->models.size2(), 1);
     ASSERT_EQ(simpleModel->models(0, 0).id, 0);
     ASSERT_EQ(simpleModel->models(1, 0).id, 1);
+
+    ASSERT_EQ(simpleModel->modelsD.size(), 2);
+    ASSERT_EQ(simpleModel->modelsD[0].id, 0);
+    ASSERT_EQ(simpleModel->modelsD[1].id, 1);
+
+    ASSERT_EQ(simpleModel->modelsDD.size(), 2);
+    ASSERT_EQ(simpleModel->modelsDD[0].id, 0);
+    ASSERT_EQ(simpleModel->modelsDD[1].id, 1);
 }
 
 TEST_F(PimodelTest, OperatorTest) {
-    Pimodel& model = (*this->simpleModel);
+    Pimodel& model = (*this->secondOrderModel);
 
-    // x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
-    // x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
+    // x0(t,k,c) = a0*t^2 + a1*tk + a2*tc + a3*t + a4*k^2 + a5*kc + a6*k +
+    //             a7*c^2 + a8*c + a9*1
+    // dx0Dt(t,k,c) = 2*a0*t + a1*k + a2*c + a3
+    // x1(t,k,c) = b0*t^2 + b1*tk + b2*tc + b3*t + b4*k^2 +
+    //             b5*kc + b6*k + b7*c^2 + b8*c + b9*1
+    // dx1Dt(t,k,c) = 2*b0*t + b1*k + b2*c + b3
     std::vector<double> a =
-        std::vector<double>{Random(), Random(), Random(), Random()};
+        std::vector<double>{Random(), Random(), Random(), Random(), Random(),
+                            Random(), Random(), Random(), Random(), Random()};
     std::vector<double> b =
-        std::vector<double>{Random(), Random(), Random(), Random()};
-    std::vector<double> parameters =
-        std::vector<double>{a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]};
+        std::vector<double>{Random(), Random(), Random(), Random(), Random(),
+                            Random(), Random(), Random(), Random(), Random()};
+    std::vector<double> parameters = std::vector<double>{
+        a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9],
+        b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9]};
     model.SetParameters(&parameters);
 
     double t = 1 + Random();
@@ -114,8 +129,19 @@ TEST_F(PimodelTest, OperatorTest) {
     auto eval = model(&tkc);
     ASSERT_FALSE(eval.isError);
     ASSERT_EQ(eval.val.size(), 2);
-    ASSERT_DOUBLE_EQ(eval.val[0], a[0] * t + a[1] * k + a[2] * c + a[3]);
-    ASSERT_DOUBLE_EQ(eval.val[1], b[0] * t + b[1] * k + b[2] * c + b[3]);
+    ASSERT_DOUBLE_EQ(eval.val[0], a[0] * t * t + a[1] * t * k + a[2] * t * c +
+                                      a[3] * t + a[4] * k * k + a[5] * k * c +
+                                      a[6] * k + a[7] * c * c + a[8] * c +
+                                      a[9] * 1);
+    ASSERT_DOUBLE_EQ(eval.val[1], b[0] * t * t + b[1] * t * k + b[2] * t * c +
+                                      b[3] * t + b[4] * k * k + b[5] * k * c +
+                                      b[6] * k + b[7] * c * c + b[8] * c +
+                                      b[9] * 1);
+    eval = model.GetVelocities(&tkc);
+    ASSERT_FALSE(eval.isError);
+    ASSERT_EQ(eval.val.size(), 2);
+    ASSERT_DOUBLE_EQ(eval.val[0], 2 * a[0] * t + a[1] * k + a[2] * c + a[3]);
+    ASSERT_DOUBLE_EQ(eval.val[1], 2 * b[0] * t + b[1] * k + b[2] * c + b[3]);
 
     // Test error cases
     // tkc too large
@@ -895,62 +921,101 @@ TEST_F(PimodelTest, LossGradientTest) {
     EXPECT_DOUBLE_EQ(grad[7], expectedGrad[7]);
 }
 
-TEST(PimodelTrainingTest, TrainTest) {
-    double mass = 1;
-    double kMin = 0.8;
-    double kMax = 1.0;
-    double cMin = 0.0;
-    double cMax = 0.2;
-    double tMax = 1.0;
-    double initialDisp = 1.0;
+class PimodelTrainTest : public testing::Test {
+   public:
+    double mass;
+    double kMin;
+    double kMax;
+    double cMin;
+    double cMax;
+    double tMin;
+    double tMax;
+    double initialDisp;
+    ProblemDescription pd;
 
-    auto pd = ProblemDescription();
-    pd.AddMass(mass, 0.0, 0.0);
-    pd.AddMass(mass, 1.0, 0.0);
-    pd.AddSpring(0, 1, kMin, kMax);
-    pd.AddDamper(0, 1, cMin, cMax);
-    pd.SetFixedMass(0);
-    pd.AddInitialDisp(1, initialDisp);
+    Pimodel model;
 
-    int timeDiscretization = 1;
-    int kcDiscretization = 1;
-    int order = 1;
-    double learningRate = 0.0001;
-    int maxSteps = 10;
-    bool log = true;
+    int timeDiscretization;
+    int kcDiscretization;
+    int order;
+    double learningRate;
+    int maxSteps;
+    bool log;
 
-    // Train model
-    Pimodel model =
-        Pimodel(pd, tMin, tMax, timeDiscretization, kcDiscretization, order);
-    model.AddResidues();
-
-    double initialLoss = model.Loss();
-    model.Train(learningRate, maxSteps, log);
-    ASSERT_TRUE(model.Loss() < initialLoss);
-
-    // Get problem using intermediate value for k and c, and integrate it.
-    // Then, compare the model's prediction with the problem's result.
-    double k = (kMin + kMax) / 2;
-    double c = (cMin + cMax) / 2;
-    Maybe<Problem> mP = pd.BuildFromVector(std::vector<double>{k, c});
-    ASSERT_FALSE(mP.isError);
-    Problem p = mP.val;
-    p.Integrate(tMax);
-
-    std::vector<double> tkc = std::vector<double>{0.0, k, c};
-    Maybe<std::vector<double>> X;
-    std::cout << "t,x0,modelX0,x1,modelX1" << std::endl;
-    for (int i = 0; i < int(p.t.size()); i += 1) {
-        tkc[0] = p.t[i];
-        X = model(&tkc);
-        ASSERT_FALSE(X.isError);
-
-        std::cout << p.t[i] << ",";
-        std::cout << p.XHistory[i][0] << ",";
-        std::cout << X.val[0] << ",";
-        std::cout << p.XHistory[i][1] << ",";
-        std::cout << X.val[1] << std::endl;
+    void SetUp() {
+        this->mass = 1;
+        this->kMin = 0.8;
+        this->kMax = 1.0;
+        this->cMin = 0.0;
+        this->cMax = 0.2;
+        this->tMin = 0.0;
+        this->tMax = 1.0;
+        this->initialDisp = 1.0;
+        this->timeDiscretization = 2;
+        this->kcDiscretization = 1;
+        this->order = 3;
+        this->learningRate = 0.01;
+        this->maxSteps = 500;
+        this->log = true;
+        this->pd.AddMass(mass, 0.0, 0.0);
+        this->pd.AddMass(mass, 1.0, 0.0);
+        this->pd.AddSpring(0, 1, kMin, kMax);
+        this->pd.AddDamper(0, 1, cMin, cMax);
+        this->pd.SetFixedMass(0);
+        this->pd.AddInitialDisp(1, initialDisp);
     }
+
+    void Train() {
+        this->model =
+            Pimodel(this->pd, this->tMin, this->tMax, this->timeDiscretization,
+                    this->kcDiscretization, this->order);
+        this->model.AddResidues();
+
+        double initialLoss = this->model.Loss();
+        this->model.Train(this->learningRate, this->maxSteps, this->log);
+        ASSERT_TRUE(this->model.Loss() < initialLoss);
+    }
+
+    void Plot() {
+        // Get problem using intermediate value for k and c, and integrate it.
+        // Then, compare the model's prediction with the problem's result.
+        double k = (this->kMin + this->kMax) / 2;
+        double c = (this->cMin + this->cMax) / 2;
+        Maybe<Problem> mP = pd.BuildFromVector(std::vector<double>{k, c});
+        ASSERT_FALSE(mP.isError);
+        Problem p = mP.val;
+        p.Integrate(this->tMax);
+
+        std::vector<double> tkc = std::vector<double>{0.0, k, c};
+        Maybe<std::vector<double>> X;
+        Maybe<std::vector<double>> XDot;
+        std::cout << "t,x0,x0Dot,modelX0,modelX0Dot,x1,x1Dot,modelX1,modelX1Dot"
+                  << std::endl;
+
+        // Plot the analytical values and the model predictions
+        for (int i = 0; i < int(p.t.size()); i += 1) {
+            tkc[0] = p.t[i];
+            X = model(&tkc);
+            ASSERT_FALSE(X.isError);
+            XDot = model.GetVelocities(&tkc);
+            ASSERT_FALSE(XDot.isError);
+
+            std::cout << p.t[i] << ",";             // t,
+            std::cout << p.XHistory[i][0] << ",";   // x0,
+            std::cout << p.XHistory[i][2] << ",";   // x0Dot,
+            std::cout << X.val[0] << ",";           // modelX0,
+            std::cout << XDot.val[0] << ",";        // modelX0Dot,
+            std::cout << p.XHistory[i][1] << ",";   // x1,
+            std::cout << p.XHistory[i][3] << ",";   // x1Dot,
+            std::cout << X.val[1] << ",";           // modelX1,
+            std::cout << XDot.val[1] << std::endl;  // modelX1Dot
+        }
+    }
+};
+
+TEST_F(PimodelTrainTest, SimpleTrainTest) {
+    this->Train();
+    this->Plot();
 }
 
 class PimodelsTest : public testing::Test {
