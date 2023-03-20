@@ -70,25 +70,25 @@ int Pimodel::inputSize() {
     return 1 + this->p.springs.size() + this->p.dampers.size();
 }
 
-std::vector<double> Pimodel::normalizeTkc(std::vector<double>* tkc) {
-    assert(int(tkc->size()) == this->inputSize());
+std::vector<double> Pimodel::normalizeTkc(std::vector<double>* TKC) {
+    assert(int(TKC->size()) == this->inputSize());
 
     Maybe<double> err;
-    std::vector<double> tkcNormalized = std::vector<double>(tkc->size());
-    err = NormalizeToDouble(tkc->at(0), this->t0, this->t1);
+    std::vector<double> tkcNormalized = std::vector<double>(TKC->size());
+    err = NormalizeToDouble(TKC->at(0), this->t0, this->t1);
     assert(!err.isError);
     tkcNormalized[0] = err.val;
 
     int i = 1;
-    for (int k = 0; k < this->p.springs.size(); k++) {
-        err = NormalizeToDouble(tkc->at(i), this->p.springs[k].kMin,
+    for (int k = 0; k < int(this->p.springs.size()); k++) {
+        err = NormalizeToDouble(TKC->at(i), this->p.springs[k].kMin,
                                 this->p.springs[k].kMax);
         assert(!err.isError);
         tkcNormalized[i] = err.val;
         i++;
     }
-    for (int c = 0; c < this->p.dampers.size(); c++) {
-        err = NormalizeToDouble(tkc->at(i), this->p.dampers[c].cMin,
+    for (int c = 0; c < int(this->p.dampers.size()); c++) {
+        err = NormalizeToDouble(TKC->at(i), this->p.dampers[c].cMin,
                                 this->p.dampers[c].cMax);
         assert(!err.isError);
         tkcNormalized[i] = err.val;
@@ -98,9 +98,9 @@ std::vector<double> Pimodel::normalizeTkc(std::vector<double>* tkc) {
     return tkcNormalized;
 }
 
-Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
+Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* TKC) {
     Maybe<std::vector<double>> r;
-    if (int(tkc->size()) != this->inputSize()) {
+    if (int(TKC->size()) != this->inputSize()) {
         r.errMsg = "Invalid X length";
         r.isError = true;
         return r;
@@ -110,7 +110,7 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
         std::vector<double>(this->p.NumberOfMasses());
     Maybe<double> position;
     for (int massId = 0; massId < int(positions.size()); massId++) {
-        this->models(massId, 0).SetX(this->normalizeTkc(tkc));
+        this->models(massId, 0).SetX(this->normalizeTkc(TKC));
         position = this->models(massId, 0)(this->modelsCoefficients[massId]);
         assert(!position.isError);
         positions[massId] = position.val;
@@ -119,9 +119,9 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
     return r;
 }
 
-Maybe<std::vector<double>> Pimodel::GetVelocities(std::vector<double>* tkc) {
+Maybe<std::vector<double>> Pimodel::GetVelocities(std::vector<double>* TKC) {
     Maybe<std::vector<double>> r;
-    if (int(tkc->size()) != this->inputSize()) {
+    if (int(TKC->size()) != this->inputSize()) {
         r.errMsg = "Invalid X length";
         r.isError = true;
         return r;
@@ -129,7 +129,7 @@ Maybe<std::vector<double>> Pimodel::GetVelocities(std::vector<double>* tkc) {
     std::vector<double> vels = std::vector<double>(this->p.NumberOfMasses());
     Maybe<double> vel;
     for (int massId = 0; massId < int(vels.size()); massId++) {
-        this->modelsD[massId].SetX(this->normalizeTkc(tkc));
+        this->modelsD[massId].SetX(this->normalizeTkc(TKC));
         vel = this->modelsD[massId](this->modelsCoefficients[massId]);
         assert(!vel.isError);
         vels[massId] = vel.val;
@@ -485,11 +485,11 @@ std::vector<double> Pimodels::continuityTkc() const {
     tkc[0] = 0;  // t = 0
 
     int tkcI = 1;
-    for (int s = 0; s < p.springs.size(); s++) {
+    for (int s = 0; s < int(p.springs.size()); s++) {
         tkc[tkcI] = (p.springs[s].kMin + p.springs[s].kMax) / 2;
         tkcI++;
     }
-    for (int d = 0; d < p.dampers.size(); d++) {
+    for (int d = 0; d < int(p.dampers.size()); d++) {
         tkc[tkcI] = (p.dampers[d].cMin + p.dampers[d].cMax) / 2;
         tkcI++;
     }
@@ -497,7 +497,7 @@ std::vector<double> Pimodels::continuityTkc() const {
 }
 
 void Pimodels::setContinuity(int timeBucket, std::vector<double>& tkc) {
-    assert(timeBucket >= 1 && timeBucket < this->pimodels.size());
+    assert(timeBucket >= 1 && timeBucket < int(this->pimodels.size()));
     int& nMasses = this->pimodels[0].nMasses;
 
     Pimodel& thisPiModel = this->pimodels[timeBucket];
@@ -534,7 +534,7 @@ Maybe<double> Pimodels::Train(double learningRate, int maxSteps, bool log) {
 
     std::vector<double> tkc = this->continuityTkc();
 
-    for (int b = 1; b < this->pimodels.size(); b++) {
+    for (int b = 1; b < int(this->pimodels.size()); b++) {
         learningRate = learningRate0;
         this->setContinuity(b, tkc);
         this->pimodels[b].AddResidues();
@@ -558,8 +558,8 @@ int Pimodels::getTimeBucket(double t) const {
     return (bound - this->timeBuckets.begin()) - 1;
 }
 
-Maybe<std::vector<double>> Pimodels::operator()(std::vector<double>* tkc) {
-    assert(tkc->size() > 0);
-    int b = this->getTimeBucket(tkc->at(0));
-    return this->pimodels[b](tkc);
+Maybe<std::vector<double>> Pimodels::operator()(std::vector<double>* TKC) {
+    assert(TKC->size() > 0);
+    int b = this->getTimeBucket(TKC->at(0));
+    return this->pimodels[b](TKC);
 }

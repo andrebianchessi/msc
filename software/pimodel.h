@@ -33,9 +33,9 @@ class Pimodel : public Model {
     // The values of the springs
     // The values of the dampers
     // U = [t, k1, k2, ... , kn, c1, c2, ... , cn]
-    Maybe<std::vector<double>> operator()(std::vector<double>* tkc);
+    Maybe<std::vector<double>> operator()(std::vector<double>* TKC);
     // Similar to operator(), but returns the velocity of each mass
-    Maybe<std::vector<double>> GetVelocities(std::vector<double>* tkc);
+    Maybe<std::vector<double>> GetVelocities(std::vector<double>* TKC);
 
     int nParameters() override;
 
@@ -67,7 +67,7 @@ class Pimodel : public Model {
 
     int nMasses;
 
-    std::vector<double> normalizeTkc(std::vector<double>* tkc);
+    std::vector<double> normalizeTkc(std::vector<double>* TKC);
 
     // Vector of column matrices that contain the polynomials that represent the
     // displacement of each mass for each time bucket. Ex, for a system of two
@@ -163,7 +163,7 @@ class Pimodels {
 
     Maybe<double> Train(double learningRate, int maxSteps, bool log);
 
-    Maybe<std::vector<double>> operator()(std::vector<double>* tkc);
+    Maybe<std::vector<double>> operator()(std::vector<double>* TKC);
 
    private:
     int getTimeBucket(double t) const;
@@ -183,7 +183,7 @@ class Pimodels {
     // and must be updated for each point in which we want to impose continuity.
     std::vector<double> continuityTkc() const;
 
-    void setContinuity(int timeBucket, std::vector<double>& tkc);
+    void setContinuity(int timeBucket, std::vector<double>& TKC);
 
     FRIEND_TEST(PimodelsTest, ConstructorTest);
     FRIEND_TEST(PimodelsTest, GetTimeBucketTest);
