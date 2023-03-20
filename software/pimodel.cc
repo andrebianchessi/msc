@@ -244,12 +244,24 @@ std::vector<double> Pimodel::getInitialX() {
     int nMasses = this->p.masses.size();
     auto initialX = std::vector<double>(nMasses * 2);
     for (auto v : this->p.initialVels) {
-        assert(v.massId >= 0 && v.massId < nMasses);
-        initialX[Problem::GetMassVelIndex(nMasses, v.massId)] = v.val;
+        assert((v.massId >= 0 && v.massId < nMasses) || v.massId == -1);
+        if (v.massId != -1) {
+            initialX[Problem::GetMassVelIndex(nMasses, v.massId)] = v.val;
+        } else {
+            for (int i = 0; i < this->nMasses; i++) {
+                initialX[Problem::GetMassVelIndex(nMasses, i)] = v.val;
+            }
+        }
     }
     for (auto d : this->p.initialDisps) {
-        assert(d.massId >= 0 && d.massId < nMasses);
-        initialX[Problem::GetMassDispIndex(nMasses, d.massId)] = d.val;
+        assert((d.massId >= 0 && d.massId < nMasses) || d.massId == -1);
+        if (d.massId != -1) {
+            initialX[Problem::GetMassDispIndex(nMasses, d.massId)] = d.val;
+        } else {
+            for (int i = 0; i < this->nMasses; i++) {
+                initialX[Problem::GetMassDispIndex(nMasses, i)] = d.val;
+            }
+        }
     }
     for (auto massId : this->p.fixedMasses) {
         assert(massId >= 0 && massId < nMasses);
