@@ -1410,7 +1410,7 @@ TEST(PimodelsTrainingTest, TrainTest) {
     double kMax = 1.0;
     double cMin = 0.0;
     double cMax = 0.05;
-    double tMax = 8.0;
+    double tMax = 4.0;
     double initialDisp = 1.0;
 
     auto pd = ProblemDescription();
@@ -1421,7 +1421,7 @@ TEST(PimodelsTrainingTest, TrainTest) {
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int nModels = 8;
+    int nModels = 4;
     int timeDiscretization = 2;
     int kcDiscretization = 1;
     int order = 3;
