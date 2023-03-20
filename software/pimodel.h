@@ -1,6 +1,7 @@
 #pragma once
 #include <gtest/gtest.h>
 
+#include "bounded.h"
 #include "maybe.h"
 #include "model.h"
 #include "polynomial.h"
@@ -66,6 +67,8 @@ class Pimodel : public Model {
 
     int nMasses;
 
+    std::vector<double> normalizeTkc(std::vector<double>* tkc);
+
     // Vector of column matrices that contain the polynomials that represent the
     // displacement of each mass for each time bucket. Ex, for a system of two
     // masses: models[0] = Polynomial that represents the displacement (x) of
@@ -75,7 +78,7 @@ class Pimodel : public Model {
     std::vector<std::vector<double>> modelsCoefficients;
     // Derivatives of each model with respect to time
     std::vector<Poly> modelsD;
-        // Second derivatives of each model with respect to time
+    // Second derivatives of each model with respect to time
     std::vector<Poly> modelsDD;
 
     // Residues of initial displacement
@@ -85,11 +88,11 @@ class Pimodel : public Model {
     // Values of time, spring coefficients and damper coefficients in which
     // the initial displacement and velocity residues must be calculated to make
     // up the loss function
-    std::vector<std::vector<double>> initialConditionsResiduesTkc;
+    std::vector<std::vector<Bounded>> initialConditionsResiduesTkc;
 
     // Physical residue
     std::vector<Polys> physicsResidues;
-    std::vector<std::vector<double>> physicsResiduesTkc;
+    std::vector<std::vector<Bounded>> physicsResiduesTkc;
 
     // This model describes the system from t = t0 to t = t1
     double t0;
@@ -118,9 +121,9 @@ class Pimodel : public Model {
     double initialVelocityLossBias;
     double physicsLossBias;
 
-    void AddInitialConditionsResiduesTkc(std::vector<double>* tkc,
+    void AddInitialConditionsResiduesTkc(std::vector<Bounded>* tkc,
                                          int tkcIndex);
-    void AddPhysicsResiduesTkc(std::vector<double>* tkc, int tkcIndex);
+    void AddPhysicsResiduesTkc(std::vector<Bounded>* tkc, int tkcIndex);
     void AddResiduesTkc();
 
     void AddInitialConditionsResidues();
@@ -137,19 +140,19 @@ class Pimodel : public Model {
     // Auxiliary functions:
 
     // Create problem for given tkc (time, springs and dampers)
-    Problem problemFromTkc(std::vector<double>* tkc);
+    Problem problemFromTkc(std::vector<Bounded>* tkc);
 
     // Return the state vector with the initial conditions set
     std::vector<double> getInitialX();
 
     // Calculate the state vector for given tkc (time, springs and dampers)
     // using the polynomials
-    std::vector<double> getXModel(std::vector<double>* tkc);
+    std::vector<double> getXModel(std::vector<Bounded>* tkc);
 
     // Gets the polynomials that represent the acceleration of each mass
     // by using the differential equation from the discrete element method
     boost::numeric::ublas::matrix<Polys> getAccelsFromDiffEq(
-        Problem* problem, std::vector<double>& tkc);
+        Problem* problem, std::vector<Bounded>& tkc);
 };
 
 class Pimodels {

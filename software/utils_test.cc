@@ -27,6 +27,13 @@ TEST(UtilsTest, RandomTest) {
     }
 }
 
+TEST(UtilsTest, RandomBTest) {
+    for (int i = 0; i < 20; i++) {
+        Bounded r = RandomB();
+        ASSERT_TRUE(r.Get() >= 0 && r.Get() <= 1);
+    }
+}
+
 TEST(UtilsTest, NormalizeTest) {
     EXPECT_TRUE(Normalize(0.0, 1.0, 2.0).isError);
     EXPECT_TRUE(Normalize(2.1, 1.0, 2.0).isError);
@@ -46,6 +53,27 @@ TEST(UtilsTest, NormalizeTest) {
     e = Normalize(0.0, -1.0, 2.0);
     EXPECT_FALSE(e.isError);
     EXPECT_DOUBLE_EQ(e.val.Get(), 1 / 3.0);
+}
+
+TEST(UtilsTest, NormalizeToDoubleTest) {
+    EXPECT_TRUE(NormalizeToDouble(0.0, 1.0, 2.0).isError);
+    EXPECT_TRUE(NormalizeToDouble(2.1, 1.0, 2.0).isError);
+
+    auto e = NormalizeToDouble(0.0, -1.0, 1.0);
+    EXPECT_FALSE(e.isError);
+    EXPECT_DOUBLE_EQ(e.val, 0.5);
+
+    e = NormalizeToDouble(1.0, 1.0, 11.0);
+    EXPECT_FALSE(e.isError);
+    EXPECT_DOUBLE_EQ(e.val, 0.0);
+
+    e = NormalizeToDouble(11.0, 1.0, 11.0);
+    EXPECT_FALSE(e.isError);
+    EXPECT_DOUBLE_EQ(e.val, 1.0);
+
+    e = NormalizeToDouble(0.0, -1.0, 2.0);
+    EXPECT_FALSE(e.isError);
+    EXPECT_DOUBLE_EQ(e.val, 1 / 3.0);
 }
 
 TEST(UtilsTest, UnnormalizeTest) {

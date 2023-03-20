@@ -342,6 +342,7 @@ cc_library(
     "pimodel.h",
   ],
   deps = [
+    ":bounded",
     ":maybe",
     ":model",
     ":polynomial",

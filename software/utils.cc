@@ -13,6 +13,11 @@
 double Random() {
     return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
 }
+Bounded RandomB() {
+    Bounded b;
+    b.Set(Random());
+    return b;
+}
 
 // Returns a random number in interval [x0, x1]
 double Random(double x0, double x1) {
@@ -52,6 +57,22 @@ Maybe<Bounded> Normalize(double val, double min, double max) {
         return r;
     }
     r.val.Set((val - min) / (max - min));
+    return r;
+}
+
+Maybe<double> NormalizeToDouble(double val, double min, double max) {
+    Maybe<double> r;
+    if (val < min) {
+        r.isError = true;
+        r.errMsg = "val must be >=min";
+        return r;
+    }
+    if (val > max) {
+        r.isError = true;
+        r.errMsg = "val must be <=max";
+        return r;
+    }
+    r.val = (val - min) / (max - min);
     return r;
 }
 

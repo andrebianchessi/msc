@@ -17,6 +17,7 @@ class Bounded {
     static Maybe<Bounded> CreateBounded(double x);
 
     double Get();
+    static std::vector<double> Get(std::vector<Bounded>& v);
     Maybe<Void> Set(double val);
 
    private:

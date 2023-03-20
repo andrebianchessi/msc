@@ -16,6 +16,14 @@ Maybe<Bounded> Bounded::CreateBounded(double x) {
 
 double Bounded::Get() { return this->val; }
 
+std::vector<double> Bounded::Get(std::vector<Bounded>& v) {
+    std::vector<double> d = std::vector<double>(v.size());
+    for (int i = 0; i < d.size(); i++) {
+        d[i] = v[i].Get();
+    }
+    return d;
+}
+
 Maybe<Void> Bounded::Set(double val) {
     Maybe<Void> r;
     if (!(Bounded::min <= val && val <= Bounded::max)) {

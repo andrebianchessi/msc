@@ -14,6 +14,7 @@
 
 // Returns a random number in interval [0.0, 1.0]
 double Random();
+Bounded RandomB();
 
 // Returns a random number in interval [x0, x1]
 double Random(double x0, double x1);
@@ -40,6 +41,7 @@ void print(T t, Args... args) {
 
 // Returns value in interval [0,1] by normalizing between min and max
 Maybe<Bounded> Normalize(double val, double min, double max);
+Maybe<double> NormalizeToDouble(double val, double min, double max);
 
 // "Unnormalizes" value to unbounded interval
 double Unnormalize(Bounded b, double min, double max);

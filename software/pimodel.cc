@@ -55,8 +55,8 @@ Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
 }
 
 void Pimodel::AddResidues() {
-    this->initialConditionsResiduesTkc = std::vector<std::vector<double>>();
-    this->physicsResiduesTkc = std::vector<std::vector<double>>();
+    this->initialConditionsResiduesTkc = std::vector<std::vector<Bounded>>();
+    this->physicsResiduesTkc = std::vector<std::vector<Bounded>>();
     this->AddResiduesTkc();
 
     this->initialDispResidues = std::vector<Polys>();
@@ -70,6 +70,34 @@ int Pimodel::inputSize() {
     return 1 + this->p.springs.size() + this->p.dampers.size();
 }
 
+std::vector<double> Pimodel::normalizeTkc(std::vector<double>* tkc) {
+    assert(int(tkc->size()) == this->inputSize());
+
+    Maybe<double> err;
+    std::vector<double> tkcNormalized = std::vector<double>(tkc->size());
+    err = NormalizeToDouble(tkc->at(0), this->t0, this->t1);
+    assert(!err.isError);
+    tkcNormalized[0] = err.val;
+
+    int i = 1;
+    for (int k = 0; k < this->p.springs.size(); k++) {
+        err = NormalizeToDouble(tkc->at(i), this->p.springs[k].kMin,
+                                this->p.springs[k].kMax);
+        assert(!err.isError);
+        tkcNormalized[i] = err.val;
+        i++;
+    }
+    for (int c = 0; c < this->p.dampers.size(); c++) {
+        err = NormalizeToDouble(tkc->at(i), this->p.dampers[c].cMin,
+                                this->p.dampers[c].cMax);
+        assert(!err.isError);
+        tkcNormalized[i] = err.val;
+        i++;
+    }
+
+    return tkcNormalized;
+}
+
 Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
     Maybe<std::vector<double>> r;
     if (int(tkc->size()) != this->inputSize()) {
@@ -77,11 +105,12 @@ Maybe<std::vector<double>> Pimodel::operator()(std::vector<double>* tkc) {
         r.isError = true;
         return r;
     }
+
     std::vector<double> positions =
         std::vector<double>(this->p.NumberOfMasses());
     Maybe<double> position;
     for (int massId = 0; massId < int(positions.size()); massId++) {
-        this->models(massId, 0).SetX(*tkc);
+        this->models(massId, 0).SetX(this->normalizeTkc(tkc));
         position = this->models(massId, 0)(this->modelsCoefficients[massId]);
         assert(!position.isError);
         positions[massId] = position.val;
@@ -100,7 +129,7 @@ Maybe<std::vector<double>> Pimodel::GetVelocities(std::vector<double>* tkc) {
     std::vector<double> vels = std::vector<double>(this->p.NumberOfMasses());
     Maybe<double> vel;
     for (int massId = 0; massId < int(vels.size()); massId++) {
-        this->modelsD[massId].SetX(*tkc);
+        this->modelsD[massId].SetX(this->normalizeTkc(tkc));
         vel = this->modelsD[massId](this->modelsCoefficients[massId]);
         assert(!vel.isError);
         vels[massId] = vel.val;
@@ -161,15 +190,15 @@ Maybe<Void> Pimodel::GetParameters(std::vector<double>* target) {
     return r;
 }
 
-Problem Pimodel::problemFromTkc(std::vector<double>* tkc) {
-    std::vector<double> kc = std::vector<double>(tkc->size() - 1);
+Problem Pimodel::problemFromTkc(std::vector<Bounded>* tkc) {
+    std::vector<Bounded> kc = std::vector<Bounded>(tkc->size() - 1);
     std::copy(tkc->begin() + 1, tkc->end(), kc.begin());
-    Maybe<Problem> problem = this->p.BuildFromVector(kc);
+    Maybe<Problem> problem = this->p.BuildFromDNA(kc);
     assert(!problem.isError);
     return problem.val;
 }
 
-std::vector<double> Pimodel::getXModel(std::vector<double>* tkc) {
+std::vector<double> Pimodel::getXModel(std::vector<Bounded>* tkc) {
     // X: State vector. Displacements followed by velocities.
     auto X = std::vector<double>(this->p.NumberOfMasses() * 2);
 
@@ -177,13 +206,13 @@ std::vector<double> Pimodel::getXModel(std::vector<double>* tkc) {
     Maybe<double> eval;
     for (int massId = 0; massId < this->nMasses; massId++) {
         // Fill displacements
-        this->models(massId, 0).SetX(*tkc);
+        this->models(massId, 0).SetX(Bounded::Get(*tkc));
         eval = this->models(massId, 0)(this->modelsCoefficients[massId]);
         assert(!eval.isError);
         X[massId] = eval.val;
 
         // Fill velocities
-        this->modelsD[massId].SetX(*tkc);
+        this->modelsD[massId].SetX(Bounded::Get(*tkc));
         eval = this->modelsD[massId](this->modelsCoefficients[massId]);
         assert(!eval.isError);
         X[Problem::GetMassVelIndex(this->p.NumberOfMasses(), massId)] =
@@ -193,16 +222,16 @@ std::vector<double> Pimodel::getXModel(std::vector<double>* tkc) {
 }
 
 bst::matrix<Polys> Pimodel::getAccelsFromDiffEq(Problem* problem,
-                                                std::vector<double>& tkc) {
+                                                std::vector<Bounded>& tkc) {
     // List of displacements and velocities
     bst::matrix<Poly> Disps = bst::matrix<Poly>(nMasses, 1);
     bst::matrix<Poly> Vels = bst::matrix<Poly>(nMasses, 1);
     for (int massId = 0; massId < nMasses; massId++) {
         Disps(massId, 0) = this->models(massId, 0);
-        Disps(massId, 0).SetX(tkc);
+        Disps(massId, 0).SetX(Bounded::Get(tkc));
 
         Vels(massId, 0) = this->modelsD[massId];
-        Vels(massId, 0).SetX(tkc);
+        Vels(massId, 0).SetX(Bounded::Get(tkc));
     }
 
     matrix<Polys> kx = prod(problem->K, Disps);
@@ -230,7 +259,7 @@ std::vector<double> Pimodel::getInitialX() {
     return initialX;
 }
 
-void Pimodel::AddInitialConditionsResiduesTkc(std::vector<double>* tkc,
+void Pimodel::AddInitialConditionsResiduesTkc(std::vector<Bounded>* tkc,
                                               int tkcIndex) {
     if (tkcIndex == int(tkc->size())) {
         this->initialConditionsResiduesTkc.push_back(*tkc);
@@ -247,11 +276,14 @@ void Pimodel::AddInitialConditionsResiduesTkc(std::vector<double>* tkc,
         max = this->p.dampers[tkcIndex - 1 - this->p.springs.size()].cMax;
     }
     for (int i = 0; i <= this->kcDiscretization; i++) {
-        tkc->at(tkcIndex) = min + (max - min) / this->kcDiscretization * i;
+        auto b =
+            Normalize(min + (max - min) / this->kcDiscretization * i, min, max);
+        assert(!b.isError);
+        tkc->at(tkcIndex) = b.val;
         this->AddInitialConditionsResiduesTkc(tkc, tkcIndex + 1);
     }
 }
-void Pimodel::AddPhysicsResiduesTkc(std::vector<double>* tkc, int tkcIndex) {
+void Pimodel::AddPhysicsResiduesTkc(std::vector<Bounded>* tkc, int tkcIndex) {
     if (tkcIndex == int(tkc->size())) {
         this->physicsResiduesTkc.push_back(*tkc);
         return;
@@ -275,14 +307,16 @@ void Pimodel::AddPhysicsResiduesTkc(std::vector<double>* tkc, int tkcIndex) {
         discretization = this->kcDiscretization;
     }
     for (int i = 0; i <= discretization; i++) {
-        tkc->at(tkcIndex) = min + (max - min) / discretization * i;
+        auto b = Normalize(min + (max - min) / discretization * i, min, max);
+        assert(!b.isError);
+        tkc->at(tkcIndex) = b.val;
         this->AddPhysicsResiduesTkc(tkc, tkcIndex + 1);
     }
 }
 void Pimodel::AddResiduesTkc() {
-    std::vector<double> tkc = std::vector<double>(this->inputSize());
+    std::vector<Bounded> tkc = std::vector<Bounded>(this->inputSize());
 
-    tkc[0] = this->t0;
+    tkc[0].Set(0.0);
     this->AddInitialConditionsResiduesTkc(&tkc, 1);
 
     this->AddPhysicsResiduesTkc(&tkc, 0);
@@ -295,13 +329,13 @@ void Pimodel::AddInitialConditionsResidues() {
     for (int massId = 0; massId < this->nMasses; massId++) {
         for (auto tkc : this->initialConditionsResiduesTkc) {
             model = this->models(massId, 0);
-            model.SetX(tkc);
+            model.SetX(Bounded::Get(tkc));
             this->initialDispResidues.push_back(
                 model +
                 (-1) * initialX[Problem::GetMassDispIndex(nMasses, massId)]);
 
             model = this->modelsD[massId];
-            model.SetX(tkc);
+            model.SetX(Bounded::Get(tkc));
             this->initialVelResidues.push_back(
                 model +
                 (-1) * initialX[Problem::GetMassVelIndex(nMasses, massId)]);
@@ -315,7 +349,7 @@ void Pimodel::AddPhysicsResidues() {
     for (int m = 0; m < nMasses; m++) {
         for (auto tkc : this->physicsResiduesTkc) {
             modelXDotDot = this->modelsDD[m];
-            modelXDotDot.SetX(tkc);
+            modelXDotDot.SetX(Bounded::Get(tkc));
 
             Problem problem = this->problemFromTkc(&tkc);
             if (problem.massIsFixed(m)) {
