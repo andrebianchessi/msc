@@ -9,6 +9,8 @@
 #include "bounded.h"
 #include "maybe.h"
 
+const double PRECISION = 1e-5;
+
 // Returns a random number in interval [0.0, 1.0]
 double Random() {
     return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
@@ -46,12 +48,12 @@ double RelativeAbsError(double x, double y) {
 // Returns value in interval [0,1] by normalizing between min and max
 Maybe<Bounded> Normalize(double val, double min, double max) {
     Maybe<Bounded> r;
-    if (val < min) {
+    if (val + PRECISION < min) {
         r.isError = true;
         r.errMsg = "val must be >=min";
         return r;
     }
-    if (val > max) {
+    if (val - PRECISION > max) {
         r.isError = true;
         r.errMsg = "val must be <=max";
         return r;
@@ -62,12 +64,12 @@ Maybe<Bounded> Normalize(double val, double min, double max) {
 
 Maybe<double> NormalizeToDouble(double val, double min, double max) {
     Maybe<double> r;
-    if (val < min) {
+    if (val + PRECISION < min) {
         r.isError = true;
         r.errMsg = "val must be >=min";
         return r;
     }
-    if (val > max) {
+    if (val - PRECISION > max) {
         r.isError = true;
         r.errMsg = "val must be <=max";
         return r;

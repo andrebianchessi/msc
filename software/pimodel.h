@@ -164,6 +164,7 @@ class Pimodels {
     Maybe<double> Train(double learningRate, int maxSteps, bool log);
 
     Maybe<std::vector<double>> operator()(std::vector<double>* TKC);
+    Maybe<std::vector<double>> GetVelocities(std::vector<double>* TKC);
 
    private:
     int getTimeBucket(double t) const;

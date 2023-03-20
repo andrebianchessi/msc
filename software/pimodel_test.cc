@@ -1409,8 +1409,8 @@ TEST(PimodelsTrainingTest, TrainTest) {
     double kMin = 0.8;
     double kMax = 1.0;
     double cMin = 0.0;
-    double cMax = 0.2;
-    double tMax = 4.0;
+    double cMax = 0.05;
+    double tMax = 8.0;
     double initialDisp = 1.0;
 
     auto pd = ProblemDescription();
@@ -1421,13 +1421,13 @@ TEST(PimodelsTrainingTest, TrainTest) {
     pd.SetFixedMass(0);
     pd.AddInitialDisp(1, initialDisp);
 
-    int nModels = 4;
+    int nModels = 8;
     int timeDiscretization = 2;
     int kcDiscretization = 1;
     int order = 3;
     double learningRate = 0.01;
     int maxSteps = 500;
-    bool log = true;
+    bool log = false;
 
     // Train all models
     Pimodels models = Pimodels(pd, tMax, nModels, timeDiscretization,
@@ -1445,16 +1445,26 @@ TEST(PimodelsTrainingTest, TrainTest) {
 
     std::vector<double> tkc = std::vector<double>{0.0, k, c};
     Maybe<std::vector<double>> X;
-    std::cout << "t,x0,modelX0,x1,modelX1" << std::endl;
+    Maybe<std::vector<double>> XDot;
+    std::cout << "t,x0,x0Dot,modelX0,modelX0Dot,x1,x1Dot,modelX1,modelX1Dot"
+              << std::endl;
+
+    // Plot the analytical values and the model predictions
     for (int i = 0; i < int(p.t.size()); i += 1) {
         tkc[0] = p.t[i];
         X = models(&tkc);
         ASSERT_FALSE(X.isError);
+        XDot = models.GetVelocities(&tkc);
+        ASSERT_FALSE(XDot.isError);
 
-        std::cout << p.t[i] << ",";
-        std::cout << p.XHistory[i][0] << ",";
-        std::cout << X.val[0] << ",";
-        std::cout << p.XHistory[i][1] << ",";
-        std::cout << X.val[1] << std::endl;
+        std::cout << p.t[i] << ",";             // t,
+        std::cout << p.XHistory[i][0] << ",";   // x0,
+        std::cout << p.XHistory[i][2] << ",";   // x0Dot,
+        std::cout << X.val[0] << ",";           // modelX0,
+        std::cout << XDot.val[0] << ",";        // modelX0Dot,
+        std::cout << p.XHistory[i][1] << ",";   // x1,
+        std::cout << p.XHistory[i][3] << ",";   // x1Dot,
+        std::cout << X.val[1] << ",";           // modelX1,
+        std::cout << XDot.val[1] << std::endl;  // modelX1Dot
     }
 }

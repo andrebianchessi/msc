@@ -563,3 +563,9 @@ Maybe<std::vector<double>> Pimodels::operator()(std::vector<double>* TKC) {
     int b = this->getTimeBucket(TKC->at(0));
     return this->pimodels[b](TKC);
 }
+
+Maybe<std::vector<double>> Pimodels::GetVelocities(std::vector<double>* TKC) {
+    assert(TKC->size() > 0);
+    int b = this->getTimeBucket(TKC->at(0));
+    return this->pimodels[b].GetVelocities(TKC);
+}
