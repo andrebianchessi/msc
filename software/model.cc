@@ -10,10 +10,8 @@
 const double MIN_STEP_IMPROVEMENT =
     0.0;  // min relative improvement to early stop
 
-StatusAndValue Model::GradientDescentStep(double step) {
+StatusAndValue Model::GradientDescentStep(double currentLoss, double step) {
     StatusAndValue status;
-
-    double loss_0 = this->Loss();
 
     std::vector<double> parameters_0 = std::vector<double>(this->nParameters());
     std::vector<double> parameters_1 = std::vector<double>(this->nParameters());
@@ -27,18 +25,19 @@ StatusAndValue Model::GradientDescentStep(double step) {
     }
 
     this->SetParameters(&parameters_1);
-    double loss_1 = this->Loss();
+    double newLoss = this->Loss();
 
     // If the loss function decreased more than MIN_STEP_IMPROVEMENT, return
     // true. Else, reset the parameters and return false
-    if (loss_1 < loss_0 && loss_0 - loss_1 > MIN_STEP_IMPROVEMENT * loss_0) {
+    if (newLoss < currentLoss &&
+        currentLoss - newLoss > MIN_STEP_IMPROVEMENT * currentLoss) {
         status.success = true;
-        status.value = loss_1;
+        status.value = newLoss;
         return status;
     }
     this->SetParameters(&parameters_0);
     status.success = false;
-    status.value = loss_0;
+    status.value = currentLoss;
     return status;
 }
 
@@ -52,8 +51,9 @@ Maybe<double> Model::Train(double learningRate, double minLearningRate,
     }
     StatusAndValue stepStatus;
     auto precision = std::cout.precision();
+    double loss = this->Loss();
     while (learningRate >= minLearningRate && learningRate != 0) {
-        stepStatus = this->GradientDescentStep(learningRate);
+        stepStatus = this->GradientDescentStep(loss, learningRate);
         if (log) {
             std::cout.precision(3);
             std::cout << "Learning Rate: " << learningRate;
@@ -65,6 +65,8 @@ Maybe<double> Model::Train(double learningRate, double minLearningRate,
         }
         if (!stepStatus.success) {
             learningRate = learningRate / 2;
+        } else {
+            loss = stepStatus.value;
         }
     }
     std::cout.precision(precision);
@@ -81,9 +83,10 @@ Maybe<double> Model::Train(double learningRate, int maxSteps, bool log) {
     }
     int step = 0;
     StatusAndValue stepStatus;
+    double loss = this->Loss();
     auto precision = std::cout.precision();
     while (step < maxSteps && learningRate != 0) {
-        stepStatus = this->GradientDescentStep(learningRate);
+        stepStatus = this->GradientDescentStep(loss, learningRate);
         if (log) {
             std::cout.precision(3);
             std::cout << "Learning Rate: " << learningRate;
@@ -95,6 +98,8 @@ Maybe<double> Model::Train(double learningRate, int maxSteps, bool log) {
         }
         if (!stepStatus.success) {
             learningRate = learningRate / 2;
+        } else {
+            loss = stepStatus.value;
         }
         step++;
     }

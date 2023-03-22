@@ -46,5 +46,5 @@ class Model {
     // previously were, and returns false and the loss function value before the
     // step. The step parameter is what multiplies the gradient: Parameters_new
     // = Parameters_old - step*grad
-    StatusAndValue GradientDescentStep(double step);
+    StatusAndValue GradientDescentStep(double currentLoss, double step);
 };
