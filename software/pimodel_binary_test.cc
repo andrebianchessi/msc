@@ -1,63 +1,74 @@
 #include "pimodel.h"
 
 int main(int argc, char *argv[]) {
-    double mass = 1;
-    double kMin = 0.8;
-    double kMax = 1.0;
-    double cMin = 0.0;
-    double cMax = 0.1;
-    double tMin = 0.0;
-    double tMax = 1.5;
-    double initialDisp = 1.0;
+    ProblemDescription pd = ProblemDescription();
+    pd.AddMass(1.0, 0.0, 0.0);  // m0
+    pd.AddMass(300, 1.0, 1.0);  // m1
+    pd.AddMass(120, 1.0, 0.0);  // m2
+    pd.AddMass(150, 1.0, 3.0);  // m3
+    pd.AddMass(700, 2.0, 0.0);  // m4
+    pd.AddMass(80, 3.0, 0.0);   // m5
 
-    auto pd = ProblemDescription();
-    pd.AddMass(mass, 0.0, 0.0);
-    pd.AddMass(mass, 1.0, 0.0);
-    pd.AddSpring(0, 1, kMin, kMax);
-    pd.AddDamper(0, 1, cMin, cMax);
+    double min = 100.0;
+    double max = 100000;
+    pd.AddSpring(0, 1, min, max);  // k01
+    pd.AddSpring(1, 2, min, max);  // k12
+    pd.AddSpring(1, 3, min, max);  // k13
+    pd.AddSpring(1, 4, min, max);  // k14
+    pd.AddDamper(1, 4, min, max);  // c14
+    pd.AddSpring(0, 2, min, max);  // k02
+    pd.AddDamper(0, 2, min, max);  // c02
+    pd.AddSpring(2, 4, min, max);  // k24
+    pd.AddDamper(2, 4, min, max);  // c24
+    pd.AddSpring(0, 3, min, max);  // k03
+    pd.AddDamper(0, 3, min, max);  // c03
+    pd.AddSpring(3, 4, min, max);  // k34
+    pd.AddDamper(3, 4, min, max);  // c34
+    pd.AddSpring(4, 5, min, max);  // k45
+    pd.AddDamper(4, 5, min, max);  // c45
     pd.SetFixedMass(0);
-    pd.AddInitialDisp(1, initialDisp);
+    pd.AddInitialVel(200.0);  // initial speed
+    assert(pd.IsOk());
 
-    int timeBuckets = 2;
-    int timeDiscretization = 5;
-    int kcDiscretization = 1;
+    // Learning parameters
+    double finalT = 0.0001;
+    int nModels = 1;
+    int timeDiscretization = 3;
+    int kcDiscretization = 0;
     int order = 2;
-    double learningRate = 1;
-    int maxSteps = 200;
+    double learningRate = 0.01;
+    int maxSteps = 500;
     bool log = true;
-    // Train models
-    Pimodels models = Pimodels(pd, tMax, timeBuckets, timeDiscretization,
+
+    // Train all models
+    Pimodels models = Pimodels(pd, finalT, nModels, timeDiscretization,
                                kcDiscretization, order);
-    models.Train(learningRate, maxSteps, log);
+    assert(!models.Train(learningRate, maxSteps, log).isError);
 
     // Get problem using intermediate value for k and c, and integrate it.
-    // Then, compare the model's prediction with the problem's result.
-    double k = (kMin + kMax) / 2;
-    double c = (cMin + cMax) / 2;
-    Maybe<Problem> mP = pd.BuildFromVector(std::vector<double>{k, c});
+    double mean = (min + max) / 2;
+    Maybe<Problem> mP = pd.BuildFromVector(
+        std::vector<double>{mean, mean, mean, mean, mean, mean, mean, mean,
+                            mean, mean, mean, mean, mean, mean, mean});
+    assert(!mP.isError);
     Problem p = mP.val;
-    p.Integrate(tMax);
+    assert(!p.Integrate(finalT).isError);
 
-    std::vector<double> tkc = std::vector<double>{0.0, k, c};
+    std::vector<double> tkc =
+        std::vector<double>{0.0,  mean, mean, mean, mean, mean, mean, mean,
+                            mean, mean, mean, mean, mean, mean, mean, mean};
     Maybe<std::vector<double>> X;
-    std::cout << "t,x0,modelX0,x1,modelX1" << std::endl;
-    for (int i = 0; i < int(p.t.size());
-         i += std::max(1, int(p.t.size()) / 20)) {
+    Maybe<std::vector<double>> XDot;
+    std::cout << "t,x5,x5Dot,modelX5,modelX5Dot" << std::endl;
+    for (int i = 0; i < int(p.t.size()); i += 1) {
         tkc[0] = p.t[i];
-        std::cout << p.t[i] << ",";
-        std::cout << p.XHistory[i][0] << ",";
-        std::cout << ""
-                  << ",";
-        std::cout << p.XHistory[i][1] << ",";
-        std::cout << "" << std::endl;
-    }
-    int tSampling = 20;
-    for (int i = 0; i <= tSampling; i += 1) {
-        tkc[0] = i * tMax / tSampling;
         X = models(&tkc);
+        XDot = models.GetVelocities(&tkc);
 
-        std::cout << tkc[0] << ",,";
-        std::cout << X.val[0] << ",,";
-        std::cout << X.val[1] << std::endl;
+        std::cout << p.t[i] << ",";                                // t,
+        std::cout << p.XHistory[i][p.GetMassDispIndex(5)] << ",";  // x5,
+        std::cout << p.XHistory[i][p.GetMassVelIndex(5)] << ",";   // x5Dot,
+        std::cout << X.val[5] << ",";                              // modelX5,
+        std::cout << XDot.val[5] << std::endl;                     // modelX5Dot
     }
 }
