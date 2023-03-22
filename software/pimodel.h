@@ -117,12 +117,6 @@ class Pimodel : public Model {
 
     Maybe<Void> SetParameters(std::vector<double>* parameters) override;
 
-    // Biases that increase the weight of each loss
-    // Default to 1
-    double initialDisplacementLossBias;
-    double initialVelocityLossBias;
-    double physicsLossBias;
-
     void AddInitialConditionsResiduesTkc(std::vector<Bounded>* tkc,
                                          int tkcIndex);
     void AddPhysicsResiduesTkc(std::vector<Bounded>* tkc, int tkcIndex);
