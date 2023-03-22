@@ -96,6 +96,14 @@ class Pimodel : public Model {
     std::vector<Polys> physicsResidues;
     std::vector<std::vector<Bounded>> physicsResiduesTkc;
 
+    // Caches of residues evaluations such as
+    // initialDispResidues[i](modelsCoefficients)
+    bool hasResiduesCache;
+    std::vector<double> initialDispResiduesCache;
+    std::vector<double> initialVelResiduesCache;
+    std::vector<double> physicsResiduesCache;
+    void setResiduesCache();
+
     // This model describes the system from t = t0 to t = t1
     double t0;
     double t1;
