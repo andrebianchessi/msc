@@ -104,6 +104,16 @@ class Pimodel : public Model {
     std::vector<double> physicsResiduesCache;
     void setResiduesCache();
 
+    // Caches of gradients of each residue
+    // i.e. what we get from initialDispResidues[i].Da()
+    bool hasResiduesDaCache;
+    std::vector<std::map<std::tuple<int, int>, double>>
+        initialDispResiduesDaCache;
+    std::vector<std::map<std::tuple<int, int>, double>>
+        initialVelResiduesDaCache;
+    std::vector<std::map<std::tuple<int, int>, double>> physicsResiduesDaCache;
+    void setResiduesDaCache();
+
     // This model describes the system from t = t0 to t = t1
     double t0;
     double t1;

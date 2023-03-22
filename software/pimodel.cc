@@ -50,6 +50,7 @@ Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
     }
 
     this->hasResiduesCache = false;
+    this->hasResiduesDaCache = false;
 }
 
 void Pimodel::AddResidues() {
@@ -69,6 +70,16 @@ void Pimodel::AddResidues() {
         std::vector<double>(this->initialVelResidues.size());
     this->physicsResiduesCache =
         std::vector<double>(this->physicsResidues.size());
+
+    this->initialDispResiduesDaCache =
+        std::vector<std::map<std::tuple<int, int>, double>>(
+            this->initialDispResidues.size());
+    this->initialVelResiduesDaCache =
+        std::vector<std::map<std::tuple<int, int>, double>>(
+            this->initialVelResidues.size());
+    this->physicsResiduesDaCache =
+        std::vector<std::map<std::tuple<int, int>, double>>(
+            this->physicsResidues.size());
 }
 
 int Pimodel::inputSize() {
@@ -439,42 +450,68 @@ double Pimodel::Loss() {
     return rv;
 }
 
+void Pimodel::setResiduesDaCache() {
+    this->hasResiduesDaCache = true;
+    Maybe<double> maybe;
+
+    for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
+        this->initialDispResiduesDaCache[i] = this->initialDispResidues[i].Da();
+    }
+    for (int i = 0; i < int(this->initialVelResidues.size()); i++) {
+        this->initialVelResiduesDaCache[i] = this->initialVelResidues[i].Da();
+    }
+
+    for (int i = 0; i < int(this->physicsResidues.size()); i++) {
+        this->physicsResiduesDaCache[i] = this->physicsResidues[i].Da();
+    }
+}
+
 std::vector<double> Pimodel::LossGradient() {
     std::vector<double> grad = std::vector<double>(this->nParameters());
 
     if (!this->hasResiduesCache) {
         this->setResiduesCache();
     }
-
-    Polys residueD = Polys();  // "derivatives" of the residues
+    if (!this->hasResiduesDaCache) {
+        this->setResiduesDaCache();
+    }
 
     double initialConditionsWeight = this->InitialConditionsWeight();
     double physicsWeight = this->PhysicsWeight();
 
-    for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
-        residueD += initialConditionsWeight *
-                    this->initialDispResiduesCache[i] *
-                    this->initialDispResidues[i];
-    }
-
-    for (int i = 0; i < int(this->initialVelResidues.size()); i++) {
-        residueD += initialConditionsWeight * this->initialVelResiduesCache[i] *
-                    this->initialVelResidues[i];
-    }
-
-    for (int i = 0; i < int(this->physicsResidues.size()); i++) {
-        residueD += physicsWeight * this->physicsResiduesCache[i] *
-                    this->physicsResidues[i];
-    }
-
-    std::map<std::tuple<int, int>, double> gradMap = residueD.Da();
     std::tuple<int, int> gradMapKey;
     int gradI = 0;
     for (int massId = 0; massId < int(this->models.size1()); massId++) {
         for (int mon = 0; mon < this->models(massId, 0).nMonomials(); mon++) {
             gradMapKey = {massId, mon};
-            if (gradMap.find(gradMapKey) != gradMap.end()) {
-                grad[gradI] += gradMap[gradMapKey];
+
+            for (int i = 0; i < int(this->initialDispResidues.size()); i++) {
+                std::map<std::tuple<int, int>, double>& gradMap =
+                    this->initialDispResiduesDaCache[i];
+                if (gradMap.find(gradMapKey) != gradMap.end()) {
+                    grad[gradI] += initialConditionsWeight *
+                                   gradMap[gradMapKey] *
+                                   this->initialDispResiduesCache[i];
+                }
+            }
+
+            for (int i = 0; i < int(this->initialVelResidues.size()); i++) {
+                std::map<std::tuple<int, int>, double>& gradMap =
+                    this->initialVelResiduesDaCache[i];
+                if (gradMap.find(gradMapKey) != gradMap.end()) {
+                    grad[gradI] += initialConditionsWeight *
+                                   gradMap[gradMapKey] *
+                                   this->initialVelResiduesCache[i];
+                }
+            }
+
+            for (int i = 0; i < int(this->physicsResidues.size()); i++) {
+                std::map<std::tuple<int, int>, double>& gradMap =
+                    this->physicsResiduesDaCache[i];
+                if (gradMap.find(gradMapKey) != gradMap.end()) {
+                    grad[gradI] += physicsWeight * gradMap[gradMapKey] *
+                                   this->physicsResiduesCache[i];
+                }
             }
             gradI += 1;
         }
