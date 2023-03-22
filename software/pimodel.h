@@ -54,7 +54,9 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, getAccelsFromDiffEqTest);
     FRIEND_TEST(PimodelTest, getInitialXTest);
     FRIEND_TEST(PimodelTest, InitialConditionsResiduesTkcTest);
+    FRIEND_TEST(PimodelTest, InitialConditionsResiduesTkcZeroDiscTest);
     FRIEND_TEST(PimodelTest, PhysicsResiduesTkcTest);
+    FRIEND_TEST(PimodelTest, PhysicsResiduesTkcZeroDiscTest);
     FRIEND_TEST(PimodelTest, InitialConditionsResiduesTest);
     FRIEND_TEST(PimodelTest, PhysicsResiduesTest);
     FRIEND_TEST(PimodelTest, LossTest);

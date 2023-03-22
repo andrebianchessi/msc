@@ -17,8 +17,8 @@ namespace bst = boost::numeric::ublas;
 Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
                  int timeDiscretization, int kcDiscretization, int order) {
     assert(p.IsOk());
-    assert(timeDiscretization >= 1);
-    assert(kcDiscretization >= 1);
+    assert(timeDiscretization >= 0);
+    assert(kcDiscretization >= 0);
     assert(initialT <= finalT);
     this->p = p;
     this->nMasses = p.masses.size();
@@ -278,20 +278,19 @@ void Pimodel::AddInitialConditionsResiduesTkc(std::vector<Bounded>* tkc,
         return;
     }
 
-    double min;
-    double max;
-    if (tkcIndex - 1 < int(this->p.springs.size())) {
-        min = this->p.springs[tkcIndex - 1].kMin;
-        max = this->p.springs[tkcIndex - 1].kMax;
-    } else {
-        min = this->p.dampers[tkcIndex - 1 - this->p.springs.size()].cMin;
-        max = this->p.dampers[tkcIndex - 1 - this->p.springs.size()].cMax;
+    double min = 0.0;
+    double max = 1.0;
+    if (this->kcDiscretization == 0) {
+        tkc->at(tkcIndex) = Bounded();
+        assert(!tkc->at(tkcIndex).Set(0.5).isError);
+        this->AddInitialConditionsResiduesTkc(tkc, tkcIndex + 1);
+        return;
     }
     for (int i = 0; i <= this->kcDiscretization; i++) {
-        auto b =
-            Normalize(min + (max - min) / this->kcDiscretization * i, min, max);
-        assert(!b.isError);
-        tkc->at(tkcIndex) = b.val;
+        tkc->at(tkcIndex) = Bounded();
+        assert(!tkc->at(tkcIndex)
+                    .Set((max - min) / this->kcDiscretization * i)
+                    .isError);
         this->AddInitialConditionsResiduesTkc(tkc, tkcIndex + 1);
     }
 }
@@ -301,27 +300,24 @@ void Pimodel::AddPhysicsResiduesTkc(std::vector<Bounded>* tkc, int tkcIndex) {
         return;
     }
 
-    double min;
-    double max;
+    double min = 0.0;
+    double max = 1.0;
     int discretization;
     if (tkcIndex == 0) {
-        min = this->t0;
-        max = this->t1;
         discretization = this->timeDiscretization;
     } else {
-        if (tkcIndex - 1 < int(this->p.springs.size())) {
-            min = this->p.springs[tkcIndex - 1].kMin;
-            max = this->p.springs[tkcIndex - 1].kMax;
-        } else {
-            min = this->p.dampers[tkcIndex - 1 - this->p.springs.size()].cMin;
-            max = this->p.dampers[tkcIndex - 1 - this->p.springs.size()].cMax;
-        }
         discretization = this->kcDiscretization;
     }
+    if (discretization == 0) {
+        tkc->at(tkcIndex) = Bounded();
+        assert(!tkc->at(tkcIndex).Set(0.5).isError);
+        this->AddPhysicsResiduesTkc(tkc, tkcIndex + 1);
+        return;
+    }
     for (int i = 0; i <= discretization; i++) {
-        auto b = Normalize(min + (max - min) / discretization * i, min, max);
-        assert(!b.isError);
-        tkc->at(tkcIndex) = b.val;
+        tkc->at(tkcIndex) = Bounded();
+        assert(
+            !tkc->at(tkcIndex).Set((max - min) / discretization * i).isError);
         this->AddPhysicsResiduesTkc(tkc, tkcIndex + 1);
     }
 }
@@ -468,8 +464,8 @@ Pimodels::Pimodels(ProblemDescription p, double finalT, int nModels,
                    int timeDiscretization, int kcDiscretization, int order) {
     assert(finalT > 0);
     assert(nModels >= 1);
-    assert(timeDiscretization >= 1);
-    assert(kcDiscretization >= 1);
+    assert(timeDiscretization >= 0);
+    assert(kcDiscretization >= 0);
     assert(order >= 0);
 
     this->timeBuckets = std::vector<double>(nModels + 1);

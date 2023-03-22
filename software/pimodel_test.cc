@@ -326,8 +326,6 @@ TEST_F(PimodelTest, getInitialXTest) {
 }
 
 TEST_F(PimodelTest, InitialConditionsResiduesTkcTest) {
-    // Note: AddResidues is already called at the model constructor
-
     ASSERT_EQ(simpleModel->initialConditionsResiduesTkc.size(), 4);
 
     double tMin = 0, kMin = 0, cMin = 0;
@@ -368,6 +366,26 @@ TEST_F(PimodelTest, InitialConditionsResiduesTkcTest) {
                      kMax);
     ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[3][2].Get(),
                      cMax);
+}
+
+TEST_F(PimodelTest, InitialConditionsResiduesTkcZeroDiscTest) {
+    // Test with kcDiscretization = timeDiscretization = 0;
+
+    auto pd_ = ProblemDescription();
+    pd_.AddMass(Random(), Random(), Random());
+    pd_.AddMass(Random(), Random(), Random());
+    pd_.AddSpring(0, 1, KMin, KMax);
+    pd_.AddDamper(0, 1, CMin, CMax);
+
+    auto model_ = Pimodel(pd_, TMin, TMax, 0, 0, 1);
+    model_.AddResiduesTkc();
+
+    ASSERT_EQ(model_.initialConditionsResiduesTkc.size(), 1);
+
+    ASSERT_DOUBLE_EQ(model_.initialConditionsResiduesTkc[0].size(), 3);
+    ASSERT_DOUBLE_EQ(model_.initialConditionsResiduesTkc[0][0].Get(), 0);
+    ASSERT_DOUBLE_EQ(model_.initialConditionsResiduesTkc[0][1].Get(), 0.5);
+    ASSERT_DOUBLE_EQ(model_.initialConditionsResiduesTkc[0][2].Get(), 0.5);
 }
 
 TEST_F(PimodelTest, PhysicsResiduesTkcTest) {
@@ -425,6 +443,26 @@ TEST_F(PimodelTest, PhysicsResiduesTkcTest) {
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[7][0].Get(), tMax);
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[7][1].Get(), kMax);
     ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[7][2].Get(), cMax);
+}
+
+TEST_F(PimodelTest, PhysicsResiduesTkcZeroDiscTest) {
+    // Test with kcDiscretization = timeDiscretization = 0;
+
+    auto pd_ = ProblemDescription();
+    pd_.AddMass(Random(), Random(), Random());
+    pd_.AddMass(Random(), Random(), Random());
+    pd_.AddSpring(0, 1, KMin, KMax);
+    pd_.AddDamper(0, 1, CMin, CMax);
+
+    auto model_ = Pimodel(pd_, TMin, TMax, 0, 0, 1);
+    model_.AddResiduesTkc();
+
+    ASSERT_EQ(model_.physicsResiduesTkc.size(), 1);
+
+    ASSERT_DOUBLE_EQ(model_.physicsResiduesTkc[0].size(), 3);
+    ASSERT_DOUBLE_EQ(model_.physicsResiduesTkc[0][0].Get(), 0.5);
+    ASSERT_DOUBLE_EQ(model_.physicsResiduesTkc[0][1].Get(), 0.5);
+    ASSERT_DOUBLE_EQ(model_.physicsResiduesTkc[0][2].Get(), 0.5);
 }
 
 TEST_F(PimodelTest, InitialConditionsResiduesTest) {
@@ -1135,9 +1173,7 @@ TEST_F(PimodelsTest, ConstructorTest) {
     ASSERT_DEATH({ Pimodels(this->pd, 1.0, -1, 1, 1, 1); }, "");
     ASSERT_DEATH({ Pimodels(this->pd, 1.0, 0, 1, 1, 1); }, "");
     ASSERT_DEATH({ Pimodels(this->pd, 1.0, 1, -1, 1, 1); }, "");
-    ASSERT_DEATH({ Pimodels(this->pd, 1.0, 1, 0, 1, 1); }, "");
     ASSERT_DEATH({ Pimodels(this->pd, 1.0, 1, 1, -1, 1); }, "");
-    ASSERT_DEATH({ Pimodels(this->pd, 1.0, 1, 1, 0, 1); }, "");
     ASSERT_DEATH({ Pimodels(this->pd, 1.0, 1, 1, 1, -1); }, "");
 }
 
