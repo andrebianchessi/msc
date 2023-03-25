@@ -452,7 +452,7 @@ double Pimodel::Loss() {
         rv += physicsWeight * pow(this->physicsResiduesCache[i], 2);
     }
 
-    return rv;
+    return rv / this->nLossTerms();
 }
 
 void Pimodel::setResiduesDaCache() {

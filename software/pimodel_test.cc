@@ -764,6 +764,9 @@ TEST_F(PimodelTest, LossTest) {
         }
     }
 
+    ASSERT_EQ(secondOrderModel->nLossTerms(), 3 * 3 * 4 + 3 * 3 * 3 * 2);
+    expectedLoss = expectedLoss / secondOrderModel->nLossTerms();
+
     double loss = secondOrderModel->Loss();
 
     ASSERT_DOUBLE_EQ(expectedLoss, loss);
