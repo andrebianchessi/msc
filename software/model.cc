@@ -11,19 +11,20 @@ const double MIN_STEP_IMPROVEMENT =
     0.0;  // min relative improvement to early stop
 
 void Model::GradientDescentStep(int i, double stepSize) {
-    std::vector<double> parameters_0 = std::vector<double>(this->nParameters());
-    std::vector<double> parameters_1 = std::vector<double>(this->nParameters());
-    this->GetParameters(&parameters_0);
+    std::vector<double> oldParameters =
+        std::vector<double>(this->nParameters());
+    this->GetParameters(&oldParameters);
+
+    std::vector<double> newParameters =
+        std::vector<double>(this->nParameters());
 
     std::vector<double> grad = this->ResidueGradient(i);
-    assert(grad.size() == parameters_0.size());
-
-    for (int i = 0; i < int(parameters_0.size()); i++) {
-        parameters_1[i] = parameters_0[i] - grad[i] * stepSize;
+    assert(grad.size() == oldParameters.size());
+    for (int i = 0; i < int(oldParameters.size()); i++) {
+        newParameters[i] = oldParameters[i] - grad[i] * stepSize;
     }
 
-    this->SetParameters(&parameters_1);
-    double newLoss = this->Residue(i);
+    this->SetParameters(&newParameters);
 }
 
 double Model::Loss() {
@@ -46,12 +47,12 @@ Maybe<double> Model::Train(double learningRate, int maxSteps, bool log) {
     double lossBeforeStep = this->Loss();
     double lossAfterStep;
     bool stepOk;
+
     std::vector<double> parametersBeforeStep =
         std::vector<double>(this->nParameters());
-    this->GetParameters(&parametersBeforeStep);
-
     int step = 0;
     while (step < maxSteps && learningRate != 0) {
+        this->GetParameters(&parametersBeforeStep);
         for (int i = 0; i < this->nResidues(); i++) {
             this->GradientDescentStep(i, learningRate);
         }
@@ -62,6 +63,7 @@ Maybe<double> Model::Train(double learningRate, int maxSteps, bool log) {
             // conditions and reduce the learning rate
             lossAfterStep = lossBeforeStep;
             this->SetParameters(&parametersBeforeStep);
+            learningRate /= 2;
         } else {
             // If it was ok, we update the "before" values to prepare for the
             // next step

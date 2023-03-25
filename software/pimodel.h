@@ -59,7 +59,7 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, PhysicsResiduesTkcZeroDiscTest);
     FRIEND_TEST(PimodelTest, InitialConditionsResiduesTest);
     FRIEND_TEST(PimodelTest, PhysicsResiduesTest);
-    FRIEND_TEST(PimodelTest, nLossTermsTest);
+    FRIEND_TEST(PimodelTest, nResiduesTest);
     FRIEND_TEST(PimodelTest, LossTest);
     FRIEND_TEST(PimodelTest, LossGradientTest);
     FRIEND_TEST(PimodelsTest, ConstructorTest);
@@ -99,21 +99,19 @@ class Pimodel : public Model {
 
     // Caches of residues evaluations such as
     // initialDispResidues[i](modelsCoefficients)
-    bool hasResiduesCache;
-    std::vector<double> initialDispResiduesCache;
-    std::vector<double> initialVelResiduesCache;
-    std::vector<double> physicsResiduesCache;
-    void setResiduesCache();
+    Polys* residueById(int i);
+    double residueWeight(int i);
+    std::vector<bool> residueIsCached;
+    std::vector<double> residueCache;
+    void setResidueCache(int i);
 
-    // Caches of gradients of each residue
+    // Gradients of each residue
     // i.e. what we get from initialDispResidues[i].Da()
-    bool hasResiduesDaCache;
-    std::vector<std::map<std::tuple<int, int>, double>>
-        initialDispResiduesDaCache;
-    std::vector<std::map<std::tuple<int, int>, double>>
-        initialVelResiduesDaCache;
-    std::vector<std::map<std::tuple<int, int>, double>> physicsResiduesDaCache;
-    void setResiduesDaCache();
+    std::vector<std::map<std::tuple<int, int>, double>> initialDispResiduesDa;
+    std::vector<std::map<std::tuple<int, int>, double>> initialVelResiduesDa;
+    std::vector<std::map<std::tuple<int, int>, double>> physicsResiduesDa;
+    void setResiduesDa();
+    std::map<std::tuple<int, int>, double>* residueDaById(int i);
 
     // This model describes the system from t = t0 to t = t1
     double t0;
@@ -149,10 +147,10 @@ class Pimodel : public Model {
     double InitialConditionsWeight();
     double PhysicsWeight();
 
-    double Loss() override;
+    double Residue(int i) override;
     // AddResidues must be called first for this to work properly
-    int nLossTerms() override;
-    std::vector<double> LossGradient() override;
+    int nResidues() override;
+    std::vector<double> ResidueGradient(int i) override;
 
     // Auxiliary functions:
 
