@@ -644,6 +644,41 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
     TEST_MASS_1_PHYSICS_RESIDUE(15, kMax, cMax, tMax, KMax, CMax, TMax);
 }
 
+TEST_F(PimodelTest, nLossTermsTest) {
+    auto pd_ = ProblemDescription();
+    pd_.AddMass(m, 0.0, 0.0);
+    pd_.AddMass(m, 1.0, 0.0);
+    pd_.AddSpring(0, 1, KMin, KMax);
+    pd_.AddDamper(0, 1, CMin, CMax);
+
+    auto model_ = Pimodel(pd, TMin, TMax, 1, 1, 1);
+    // Before calling AddResidues, the function returns 0
+    ASSERT_EQ(model_.nLossTerms(), 0);
+    model_.AddResidues();
+
+    // Residues:
+    // Initial conditions:
+    // KcDisc. = 1 -> residues will be evaluated for [k=0,k=1]X[c=0,c=1]
+    // for k in (0,1):
+    //   for c in (0,1):
+    //     x0Model(t=0,k,c) - x0_t=0
+    //     x1Model(t=0,k,c) - x1_t=0
+    //     x0ModelDot(t=0,k,c) - x0Dot_t=0
+    //     x1ModelDot(t=0,k,c) - x1Dot_t=0
+    // -> 2*2*4 = 16 residues
+    //
+    // TimeDiscretization = 1 -> residues will be evaluated for t = 0 and t=1
+    // KcDisc. = 1 -> residues will be evaluated for [k=0,k=1]X[c=0,c=1]
+    // Physics:
+    // for t in (0, 1):
+    //   for k in (0, 1):
+    //     for c in (0, 1):
+    //       x0ModelDotDot(t,k,c) - x0DotDot(x0Model(t,k,c), x0ModelDot(t,k,c))
+    //       x1ModelDotDot(t,k,c) - x1DotDot(x1Model(t,k,c), x1ModelDot(t,k,c))
+    // -> 2*2*2*2 = 16 residues
+    ASSERT_EQ(model_.nLossTerms(), 16 + 16);
+}
+
 TEST_F(PimodelTest, LossTest) {
     // Full loss test
     std::vector<double> params = std::vector<double>(8);
@@ -1504,4 +1539,3 @@ TEST(PimodelsTrainingTest, TrainTest) {
         std::cout << XDot.val[1] << std::endl;  // modelX1Dot
     }
 }
-

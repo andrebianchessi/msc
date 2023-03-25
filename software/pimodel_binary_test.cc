@@ -71,3 +71,4 @@ int main(int argc, char *argv[]) {
         std::cout << X.val[5] << ",";                              // modelX5,
         std::cout << XDot.val[5] << std::endl;                     // modelX5Dot
     }
+}

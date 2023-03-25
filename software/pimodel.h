@@ -59,6 +59,7 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, PhysicsResiduesTkcZeroDiscTest);
     FRIEND_TEST(PimodelTest, InitialConditionsResiduesTest);
     FRIEND_TEST(PimodelTest, PhysicsResiduesTest);
+    FRIEND_TEST(PimodelTest, nLossTermsTest);
     FRIEND_TEST(PimodelTest, LossTest);
     FRIEND_TEST(PimodelTest, LossGradientTest);
     FRIEND_TEST(PimodelsTest, ConstructorTest);
@@ -149,6 +150,8 @@ class Pimodel : public Model {
     double PhysicsWeight();
 
     double Loss() override;
+    // AddResidues must be called first for this to work properly
+    int nLossTerms() override;
     std::vector<double> LossGradient() override;
 
     // Auxiliary functions:

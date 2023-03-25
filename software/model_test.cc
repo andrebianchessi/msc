@@ -65,6 +65,9 @@ class TestModel : public Model {
         return r;
     };
 
+    FRIEND_TEST(ModelTest, LossTermsTest);
+    int nLossTerms() { return 3; }
+
     FRIEND_TEST(ModelTest, LossTest);
     double Loss() override {
         // Standard quadratic loss
@@ -150,6 +153,20 @@ TEST(ModelTest, OperatorTest) {
     x = {1.0, 2.0};
     v = m(&x);
     ASSERT_TRUE(v.isError);
+}
+
+TEST(ModelTest, LossTermsTest) {
+    TestModel m = TestModel();
+
+    auto lossTerms = m.nLossTerms();
+    // Training data:
+    // x | y
+    // 0 | 5
+    // 1 | 25
+    // 2 | 71
+    // -> 3 residues:
+    // (model(0) - 5), (model(1) - 25), (model(2)-71)
+    ASSERT_EQ(lossTerms, 3);
 }
 
 TEST(ModelTest, LossTest) {

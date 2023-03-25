@@ -424,6 +424,11 @@ void Pimodel::setResiduesCache() {
     }
 }
 
+int Pimodel::nLossTerms() {
+    return this->initialDispResidues.size() + this->initialVelResidues.size() +
+           this->physicsResidues.size();
+}
+
 double Pimodel::Loss() {
     double rv = 0;
 

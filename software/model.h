@@ -34,6 +34,10 @@ class Model {
     // Returns the loss of the model given it's current parameters
     virtual double Loss() = 0;
 
+    // Returns the number of residues in the loss
+    // Ex: loss = (model(x0)-y0)^2 + (model(x1) - y1)^2 -> 2 residues
+    virtual int nLossTerms() = 0;
+
     // Returns the gradient of the loss function with respect to it's parameters
     // i.e. if the model has 2 parameters, the returned vector will be the
     // derivative of the loss function with respect to the first parameter
