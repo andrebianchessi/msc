@@ -31,13 +31,13 @@ int main(int argc, char *argv[]) {
     assert(pd.IsOk());
 
     // Learning parameters
-    double finalT = 0.0001;
+    double finalT = 0.00000001;
     int nModels = 1;
-    int timeDiscretization = 3;
+    int timeDiscretization = 2;
     int kcDiscretization = 0;
     int order = 2;
     double learningRate = 0.01;
-    int maxSteps = 500;
+    int maxSteps = 100;
     bool log = true;
 
     // Train all models
@@ -71,4 +71,3 @@ int main(int argc, char *argv[]) {
         std::cout << X.val[5] << ",";                              // modelX5,
         std::cout << XDot.val[5] << std::endl;                     // modelX5Dot
     }
-}
