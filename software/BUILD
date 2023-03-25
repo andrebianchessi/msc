@@ -316,7 +316,8 @@ cc_library(
     "model.h",
   ],
   deps = [
-    ":maybe"
+    ":maybe",
+    "@com_google_googletest//:gtest_main"
   ]
 )
 

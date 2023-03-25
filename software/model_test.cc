@@ -66,61 +66,75 @@ class TestModel : public Model {
     };
 
     FRIEND_TEST(ModelTest, LossTermsTest);
-    int nLossTerms() { return 3; }
+    int nResidues() override { return 3; }
 
     FRIEND_TEST(ModelTest, LossTest);
-    double Loss() override {
+    double Residue(int i) override {
         // Standard quadratic loss
-        // L = Sum ( (y(x)-y_real)^2 )
-        double l = 0;
+        // L = Sum ( (model(xi)-yi)^2 )
+        double l;
         std::vector<double> X;
 
         // x | y
         // 0 | 5
         // 1 | 25
         // 2 | 71
-        X = {0};
-        l += pow((*this)(&X).val - (5), 2);
-        X = {1};
-        l += pow((*this)(&X).val - (25), 2);
-        X = {2};
-        l += pow((*this)(&X).val - (71), 2);
+        if (i == 0) {
+            X = {0};
+            l = pow((*this)(&X).val - (5), 2);
+        }
+        if (i == 1) {
+            X = {1};
+            l = pow((*this)(&X).val - (25), 2);
+        }
+        if (i == 2) {
+            X = {2};
+            l = pow((*this)(&X).val - (71), 2);
+        }
 
         return l;
     };
 
     FRIEND_TEST(ModelTest, LossGradientTest);
-    std::vector<double> LossGradient() override {
-        // L = Sum ( (y(x)-y_real)^2 )
-        // dL/di = Sum ( 2*(y(x)-y_real)* dy(x)/di  )
+    std::vector<double> ResidueGradient(int i) override {
+        // model(x) = ax^2 + bx + c
+        // Li = (model(xi)-yi)^2
+        // dLi/da = 2*(model(xi)-yi)* dModel(xi)/da
+        // dLi/db = 2*(model(xi)-yi)* dModel(xi)/db
+        // dLi/dc = 2*(model(xi)-yi)* dModel(xi)/dc
         std::vector<double> grad = std::vector<double>(3);
-
         std::vector<double> X = std::vector<double>(1);
 
-        // dL/da = x^2
-        X = {0};
-        grad[0] += 2 * ((*this)(&X).val - (5)) * X[0] * X[0];
-        X = {1};
-        grad[0] += 2 * ((*this)(&X).val - (25)) * X[0] * X[0];
-        X = {2};
-        grad[0] += 2 * ((*this)(&X).val - (71)) * X[0] * X[0];
+        double residue;   // model(xi)-yi
+        double dModelDa;  // x^2
+        double dModelDb;  // x
+        double dModelDc;  // 1
 
-        // dL/db = x
-        X = {0};
-        grad[1] += 2 * ((*this)(&X).val - (5)) * X[0];
-        X = {1};
-        grad[1] += 2 * ((*this)(&X).val - (25)) * X[0];
-        X = {2};
-        grad[1] += 2 * ((*this)(&X).val - (71)) * X[0];
+        if (i == 0) {
+            X = {0.0};
+            dModelDa = X[0] * X[0];
+            dModelDb = X[0];
+            dModelDc = 1.0;
+            residue = (*this)(&X).val - (5);
+        }
+        if (i == 1) {
+            X = {1.0};
+            dModelDa = X[0] * X[0];
+            dModelDb = X[0];
+            dModelDc = 1.0;
+            residue = (*this)(&X).val - (25);
+        }
+        if (i == 2) {
+            X = {2.0};
+            dModelDa = X[0] * X[0];
+            dModelDb = X[0];
+            dModelDc = 1.0;
+            residue = (*this)(&X).val - (71);
+        }
 
-        // dL/dc = 1
-        X = {0};
-        grad[2] += 2 * ((*this)(&X).val - (5)) * 1.0;
-        X = {1};
-        grad[2] += 2 * ((*this)(&X).val - (25)) * 1.0;
-        X = {2};
-        grad[2] += 2 * ((*this)(&X).val - (71)) * 1.0;
-
+        grad[0] = 2 * residue * dModelDa;
+        grad[1] = 2 * residue * dModelDb;
+        grad[2] = 2 * residue * dModelDc;
         return grad;
     };
 };
@@ -158,7 +172,7 @@ TEST(ModelTest, OperatorTest) {
 TEST(ModelTest, LossTermsTest) {
     TestModel m = TestModel();
 
-    auto lossTerms = m.nLossTerms();
+    auto lossTerms = m.nResidues();
     // Training data:
     // x | y
     // 0 | 5
@@ -201,34 +215,39 @@ TEST(ModelTest, LossGradientTest) {
     m.b = b;
     m.c = c;
 
-    auto lossGrad = m.LossGradient();
     // Training data:
     // x | y
     // 0 | 5
     // 1 | 25
     // 2 | 71
-    double da = 0;
-    da += 2 * (a * 0 * 0 + b * 0 + c - 5) * 0 * 0;
-    da += 2 * (a * 1 * 1 + b * 1 + c - 25) * 1 * 1;
-    da += 2 * (a * 2 * 2 + b * 2 + c - 71) * 2 * 2;
+    auto lossGrad = m.ResidueGradient(0);
+    double da = 2 * (a * 0.0 * 0.0 + b * 0.0 + c - 5) * 0.0 * 0.0;
+    double db = 2 * (a * 0.0 * 0.0 + b * 0.0 + c - 5) * 0.0;
+    double dc = 2 * (a * 0.0 * 0.0 + b * 0.0 + c - 5) * 1;
     ASSERT_DOUBLE_EQ(da, lossGrad[0]);
-
-    double db = 0;
-    db += 2 * (a * 0 * 0 + b * 0 + c - 5) * 0;
-    db += 2 * (a * 1 * 1 + b * 1 + c - 25) * 1;
-    db += 2 * (a * 2 * 2 + b * 2 + c - 71) * 2;
     ASSERT_DOUBLE_EQ(db, lossGrad[1]);
+    ASSERT_DOUBLE_EQ(dc, lossGrad[2]);
 
-    double dc = 0;
-    dc += 2 * (a * 0 * 0 + b * 0 + c - 5) * 1;
-    dc += 2 * (a * 1 * 1 + b * 1 + c - 25) * 1;
-    dc += 2 * (a * 2 * 2 + b * 2 + c - 71) * 1;
+    lossGrad = m.ResidueGradient(1);
+    da = 2 * (a * 1.0 * 1.0 + b * 1.0 + c - 25) * 1.0 * 1.0;
+    db = 2 * (a * 1.0 * 1.0 + b * 1.0 + c - 25) * 1.0;
+    dc = 2 * (a * 1.0 * 1.0 + b * 1.0 + c - 25) * 1;
+    ASSERT_DOUBLE_EQ(da, lossGrad[0]);
+    ASSERT_DOUBLE_EQ(db, lossGrad[1]);
+    ASSERT_DOUBLE_EQ(dc, lossGrad[2]);
+
+    lossGrad = m.ResidueGradient(2);
+    da = 2 * (a * 2.0 * 2.0 + b * 2.0 + c - 71) * 2.0 * 2.0;
+    db = 2 * (a * 2.0 * 2.0 + b * 2.0 + c - 71) * 2.0;
+    dc = 2 * (a * 2.0 * 2.0 + b * 2.0 + c - 71) * 1;
+    ASSERT_DOUBLE_EQ(da, lossGrad[0]);
+    ASSERT_DOUBLE_EQ(db, lossGrad[1]);
     ASSERT_DOUBLE_EQ(dc, lossGrad[2]);
 }
 
 TEST(ModelTest, TrainTest) {
     TestModel m = TestModel();
-    auto status = m.Train(0.01, 0.01, true);
+    auto status = m.Train(0.01, 2000, true);
     ASSERT_TRUE(RelativeAbsError(m.a, 13) < 0.001);
     ASSERT_TRUE(RelativeAbsError(m.b, 7) < 0.001);
     ASSERT_TRUE(RelativeAbsError(m.c, 5) < 0.001);
