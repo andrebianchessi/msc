@@ -1556,7 +1556,7 @@ TEST(PimodelsTrainingTest, TrainTest) {
     int order = 3;
     double learningRate = 0.01;
     int maxSteps = 500;
-    bool log = true;
+    bool log = false;
 
     // Train all models
     Pimodels models = Pimodels(pd, tMax, nModels, timeDiscretization,
