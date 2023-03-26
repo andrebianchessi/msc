@@ -793,6 +793,7 @@ TEST_F(PimodelTest, LossGradientTest) {
     // modelXDotDot1(t,k,c) = 0
 
     std::vector<double> expectedGrad = std::vector<double>(8);
+    std::vector<double> grad = std::vector<double>(8);
 
     // Initial values for the problem created in SetUp()
     double initialX0 = 0;
@@ -813,228 +814,282 @@ TEST_F(PimodelTest, LossGradientTest) {
     double tMax = 1, kMax = 1, cMax = 1;
 
     double t = 0;
-    // Initial conditions loss:
+    int residue = 0;
+    // Initial displacements mass 0
     for (double k : std::vector<double>{kMin, kMax}) {
         for (double c : std::vector<double>{cMin, cMax}) {
             double modelX0 = a0 * t + a1 * k + a2 * c + a3 * 1;
-            double modelX1 = a4 * t + a5 * k + a6 * c + a7 * 1;
-            double modelX0Dot = a0 * 1;
-            double modelX1Dot = a4 * 1;
 
             double d_da0_modelX0 = t;
             double d_da1_modelX0 = k;
             double d_da2_modelX0 = c;
             double d_da3_modelX0 = 1;
-            double d_da0_modelX0Dot = 1;
-            double d_da1_modelX0Dot = 0;
-            double d_da2_modelX0Dot = 0;
-            double d_da3_modelX0Dot = 0;
+
+            expectedGrad = std::vector<double>(8);
+            expectedGrad[0] += initialConditionsLossWeight *
+                               (modelX0 - initialX0) * d_da0_modelX0;
+            expectedGrad[1] += initialConditionsLossWeight *
+                               (modelX0 - initialX0) * d_da1_modelX0;
+            expectedGrad[2] += initialConditionsLossWeight *
+                               (modelX0 - initialX0) * d_da2_modelX0;
+            expectedGrad[3] += initialConditionsLossWeight *
+                               (modelX0 - initialX0) * d_da3_modelX0;
+            ASSERT_EQ(expectedGrad, model.ResidueGradient(residue));
+            residue += 1;
+        }
+    }
+
+    // Initial displacements mass 1
+    for (double k : std::vector<double>{kMin, kMax}) {
+        for (double c : std::vector<double>{cMin, cMax}) {
+            double modelX1 = a4 * t + a5 * k + a6 * c + a7 * 1;
 
             double d_da4_modelX1 = t;
             double d_da5_modelX1 = k;
             double d_da6_modelX1 = c;
             double d_da7_modelX1 = 1;
+
+            expectedGrad = std::vector<double>(8);
+            expectedGrad[4] += initialConditionsLossWeight *
+                               (modelX1 - initialX1) * d_da4_modelX1;
+            expectedGrad[5] += initialConditionsLossWeight *
+                               (modelX1 - initialX1) * d_da5_modelX1;
+            expectedGrad[6] += initialConditionsLossWeight *
+                               (modelX1 - initialX1) * d_da6_modelX1;
+            expectedGrad[7] += initialConditionsLossWeight *
+                               (modelX1 - initialX1) * d_da7_modelX1;
+            ASSERT_EQ(expectedGrad, model.ResidueGradient(residue));
+            residue += 1;
+        }
+    }
+
+    // Initial velocities mass 0
+    for (double k : std::vector<double>{kMin, kMax}) {
+        for (double c : std::vector<double>{cMin, cMax}) {
+            double modelX0Dot = a0 * 1;
+
+            double d_da0_modelX0Dot = 1;
+            double d_da1_modelX0Dot = 0;
+            double d_da2_modelX0Dot = 0;
+            double d_da3_modelX0Dot = 0;
+
+            expectedGrad = std::vector<double>(8);
+            expectedGrad[0] += initialConditionsLossWeight *
+                               (modelX0Dot - initialX0Dot) * d_da0_modelX0Dot;
+            expectedGrad[1] += initialConditionsLossWeight *
+                               (modelX0Dot - initialX0Dot) * d_da1_modelX0Dot;
+            expectedGrad[2] += initialConditionsLossWeight *
+                               (modelX0Dot - initialX0Dot) * d_da2_modelX0Dot;
+            expectedGrad[3] += initialConditionsLossWeight *
+                               (modelX0Dot - initialX0Dot) * d_da3_modelX0Dot;
+            ASSERT_EQ(expectedGrad, model.ResidueGradient(residue));
+            residue += 1;
+        }
+    }
+
+    // Initial velocities mass 1
+    for (double k : std::vector<double>{kMin, kMax}) {
+        for (double c : std::vector<double>{cMin, cMax}) {
+            double modelX1Dot = a4 * 1;
+
             double d_da4_modelX1Dot = 1;
             double d_da5_modelX1Dot = 0;
             double d_da6_modelX1Dot = 0;
             double d_da7_modelX1Dot = 0;
 
-            expectedGrad[0] += initialConditionsLossWeight *
-                               (modelX0 - initialX0) * d_da0_modelX0;
-            expectedGrad[0] += initialConditionsLossWeight *
-                               (modelX0Dot - initialX0Dot) * d_da0_modelX0Dot;
-
-            expectedGrad[1] += initialConditionsLossWeight *
-                               (modelX0 - initialX0) * d_da1_modelX0;
-            expectedGrad[1] += initialConditionsLossWeight *
-                               (modelX0Dot - initialX0Dot) * d_da1_modelX0Dot;
-
-            expectedGrad[2] += initialConditionsLossWeight *
-                               (modelX0 - initialX0) * d_da2_modelX0;
-            expectedGrad[2] += initialConditionsLossWeight *
-                               (modelX0Dot - initialX0Dot) * d_da2_modelX0Dot;
-
-            expectedGrad[3] += initialConditionsLossWeight *
-                               (modelX0 - initialX0) * d_da3_modelX0;
-            expectedGrad[3] += initialConditionsLossWeight *
-                               (modelX0Dot - initialX0Dot) * d_da3_modelX0Dot;
-
-            expectedGrad[4] += initialConditionsLossWeight *
-                               (modelX1 - initialX1) * d_da4_modelX1;
+            expectedGrad = std::vector<double>(8);
             expectedGrad[4] += initialConditionsLossWeight *
                                (modelX1Dot - initialX1Dot) * d_da4_modelX1Dot;
-
-            expectedGrad[5] += initialConditionsLossWeight *
-                               (modelX1 - initialX1) * d_da5_modelX1;
             expectedGrad[5] += initialConditionsLossWeight *
                                (modelX1Dot - initialX1Dot) * d_da5_modelX1Dot;
-
-            expectedGrad[6] += initialConditionsLossWeight *
-                               (modelX1 - initialX1) * d_da6_modelX1;
             expectedGrad[6] += initialConditionsLossWeight *
                                (modelX1Dot - initialX1Dot) * d_da6_modelX1Dot;
-
-            expectedGrad[7] += initialConditionsLossWeight *
-                               (modelX1 - initialX1) * d_da7_modelX1;
             expectedGrad[7] += initialConditionsLossWeight *
                                (modelX1Dot - initialX1Dot) * d_da7_modelX1Dot;
+
+            ASSERT_EQ(expectedGrad, model.ResidueGradient(residue));
+            residue += 1;
         }
     }
 
     // Physics loss:
-    for (double t : std::vector<double>{tMin, tMax}) {
-        for (double k : std::vector<double>{kMin, kMax}) {
-            for (double c : std::vector<double>{cMin, cMax}) {
-                double modelX0 = a0 * t + a1 * k + a2 * c + a3 * 1;
-                double modelX1 = a4 * t + a5 * k + a6 * c + a7 * 1;
-                double modelX0Dot = a0;
-                double modelX1Dot = a4;
-                double modelX0DotDot = 0;
-                double modelX1DotDot = 0;
+    for (int mass = 0; mass <= 1; mass++) {
+        for (double t : std::vector<double>{tMin, tMax}) {
+            for (double k : std::vector<double>{kMin, kMax}) {
+                for (double c : std::vector<double>{cMin, cMax}) {
+                    double modelX0 = a0 * t + a1 * k + a2 * c + a3 * 1;
+                    double modelX1 = a4 * t + a5 * k + a6 * c + a7 * 1;
+                    double modelX0Dot = a0;
+                    double modelX1Dot = a4;
+                    double modelX0DotDot = 0;
+                    double modelX1DotDot = 0;
 
-                double K = KMin + k * (KMax - KMin);
-                double C = CMin + c * (CMax - CMin);
-                // Mass 0 is fixed
-                double X0DotDot = 0;
-                double X1DotDot = 1 / m *
-                                  (K * modelX0 - K * modelX1 + C * modelX0Dot -
-                                   C * modelX1Dot);
+                    double K = KMin + k * (KMax - KMin);
+                    double C = CMin + c * (CMax - CMin);
+                    // Mass 0 is fixed
+                    double X0DotDot = 0;
+                    double X1DotDot = 1 / m *
+                                      (K * modelX0 - K * modelX1 +
+                                       C * modelX0Dot - C * modelX1Dot);
 
-                double d_da0_modelX0 = t;
-                double d_da1_modelX0 = k;
-                double d_da2_modelX0 = c;
-                double d_da3_modelX0 = 1;
-                double d_da4_modelX0 = 0;
-                double d_da5_modelX0 = 0;
-                double d_da6_modelX0 = 0;
-                double d_da7_modelX0 = 0;
-                double d_da0_modelX1 = 0;
-                double d_da1_modelX1 = 0;
-                double d_da2_modelX1 = 0;
-                double d_da3_modelX1 = 0;
-                double d_da4_modelX1 = t;
-                double d_da5_modelX1 = k;
-                double d_da6_modelX1 = c;
-                double d_da7_modelX1 = 1;
+                    double d_da0_modelX0 = t;
+                    double d_da1_modelX0 = k;
+                    double d_da2_modelX0 = c;
+                    double d_da3_modelX0 = 1;
+                    double d_da4_modelX0 = 0;
+                    double d_da5_modelX0 = 0;
+                    double d_da6_modelX0 = 0;
+                    double d_da7_modelX0 = 0;
+                    double d_da0_modelX1 = 0;
+                    double d_da1_modelX1 = 0;
+                    double d_da2_modelX1 = 0;
+                    double d_da3_modelX1 = 0;
+                    double d_da4_modelX1 = t;
+                    double d_da5_modelX1 = k;
+                    double d_da6_modelX1 = c;
+                    double d_da7_modelX1 = 1;
 
-                double d_da0_modelX0Dot = 1;
-                double d_da1_modelX0Dot = 0;
-                double d_da2_modelX0Dot = 0;
-                double d_da3_modelX0Dot = 0;
-                double d_da4_modelX0Dot = 0;
-                double d_da5_modelX0Dot = 0;
-                double d_da6_modelX0Dot = 0;
-                double d_da7_modelX0Dot = 0;
-                double d_da0_modelX1Dot = 0;
-                double d_da1_modelX1Dot = 0;
-                double d_da2_modelX1Dot = 0;
-                double d_da3_modelX1Dot = 0;
-                double d_da4_modelX1Dot = 1;
-                double d_da5_modelX1Dot = 0;
-                double d_da6_modelX1Dot = 0;
-                double d_da7_modelX1Dot = 0;
+                    double d_da0_modelX0Dot = 1;
+                    double d_da1_modelX0Dot = 0;
+                    double d_da2_modelX0Dot = 0;
+                    double d_da3_modelX0Dot = 0;
+                    double d_da4_modelX0Dot = 0;
+                    double d_da5_modelX0Dot = 0;
+                    double d_da6_modelX0Dot = 0;
+                    double d_da7_modelX0Dot = 0;
+                    double d_da0_modelX1Dot = 0;
+                    double d_da1_modelX1Dot = 0;
+                    double d_da2_modelX1Dot = 0;
+                    double d_da3_modelX1Dot = 0;
+                    double d_da4_modelX1Dot = 1;
+                    double d_da5_modelX1Dot = 0;
+                    double d_da6_modelX1Dot = 0;
+                    double d_da7_modelX1Dot = 0;
 
-                // modelX0DotDot = modelX1DotDot = 0
-                // -> All derivatives are 0
-                double d_dai_modelX0DotDot = 0;
-                double d_dai_modelX1DotDot = 0;
+                    // modelX0DotDot = modelX1DotDot = 0
+                    // -> All derivatives are 0
+                    double d_dai_modelX0DotDot = 0;
+                    double d_dai_modelX1DotDot = 0;
 
-                double d_da0_X0DotDot = 0;
-                double d_da0_X1DotDot =
-                    1 / m *
-                    (K * d_da0_modelX0 - K * d_da0_modelX1 +
-                     C * d_da0_modelX0Dot - C * d_da0_modelX1Dot);
-                double d_da1_X0DotDot = 0;
-                double d_da1_X1DotDot =
-                    1 / m *
-                    (K * d_da1_modelX0 - K * d_da1_modelX1 +
-                     C * d_da1_modelX0Dot - C * d_da1_modelX1Dot);
-                double d_da2_X0DotDot = 0;
-                double d_da2_X1DotDot =
-                    1 / m *
-                    (K * d_da2_modelX0 - K * d_da2_modelX1 +
-                     C * d_da2_modelX0Dot - C * d_da2_modelX1Dot);
-                double d_da3_X0DotDot = 0;
-                double d_da3_X1DotDot =
-                    1 / m *
-                    (K * d_da3_modelX0 - K * d_da3_modelX1 +
-                     C * d_da3_modelX0Dot - C * d_da3_modelX1Dot);
-                double d_da4_X0DotDot = 0;
-                double d_da4_X1DotDot =
-                    1 / m *
-                    (K * d_da4_modelX0 - K * d_da4_modelX1 +
-                     C * d_da4_modelX0Dot - C * d_da4_modelX1Dot);
-                double d_da5_X0DotDot = 0;
-                double d_da5_X1DotDot =
-                    1 / m *
-                    (K * d_da5_modelX0 - K * d_da5_modelX1 +
-                     C * d_da5_modelX0Dot - C * d_da5_modelX1Dot);
-                double d_da6_X0DotDot = 0;
-                double d_da6_X1DotDot =
-                    1 / m *
-                    (K * d_da6_modelX0 - K * d_da6_modelX1 +
-                     C * d_da6_modelX0Dot - C * d_da6_modelX1Dot);
-                double d_da7_X0DotDot = 0;
-                double d_da7_X1DotDot =
-                    1 / m *
-                    (K * d_da7_modelX0 - K * d_da7_modelX1 +
-                     C * d_da7_modelX0Dot - C * d_da7_modelX1Dot);
+                    double d_da0_X0DotDot = 0;
+                    double d_da0_X1DotDot =
+                        1 / m *
+                        (K * d_da0_modelX0 - K * d_da0_modelX1 +
+                         C * d_da0_modelX0Dot - C * d_da0_modelX1Dot);
+                    double d_da1_X0DotDot = 0;
+                    double d_da1_X1DotDot =
+                        1 / m *
+                        (K * d_da1_modelX0 - K * d_da1_modelX1 +
+                         C * d_da1_modelX0Dot - C * d_da1_modelX1Dot);
+                    double d_da2_X0DotDot = 0;
+                    double d_da2_X1DotDot =
+                        1 / m *
+                        (K * d_da2_modelX0 - K * d_da2_modelX1 +
+                         C * d_da2_modelX0Dot - C * d_da2_modelX1Dot);
+                    double d_da3_X0DotDot = 0;
+                    double d_da3_X1DotDot =
+                        1 / m *
+                        (K * d_da3_modelX0 - K * d_da3_modelX1 +
+                         C * d_da3_modelX0Dot - C * d_da3_modelX1Dot);
+                    double d_da4_X0DotDot = 0;
+                    double d_da4_X1DotDot =
+                        1 / m *
+                        (K * d_da4_modelX0 - K * d_da4_modelX1 +
+                         C * d_da4_modelX0Dot - C * d_da4_modelX1Dot);
+                    double d_da5_X0DotDot = 0;
+                    double d_da5_X1DotDot =
+                        1 / m *
+                        (K * d_da5_modelX0 - K * d_da5_modelX1 +
+                         C * d_da5_modelX0Dot - C * d_da5_modelX1Dot);
+                    double d_da6_X0DotDot = 0;
+                    double d_da6_X1DotDot =
+                        1 / m *
+                        (K * d_da6_modelX0 - K * d_da6_modelX1 +
+                         C * d_da6_modelX0Dot - C * d_da6_modelX1Dot);
+                    double d_da7_X0DotDot = 0;
+                    double d_da7_X1DotDot =
+                        1 / m *
+                        (K * d_da7_modelX0 - K * d_da7_modelX1 +
+                         C * d_da7_modelX0Dot - C * d_da7_modelX1Dot);
 
-                expectedGrad[0] += physicsLossWeight *
-                                   ((modelX0DotDot - X0DotDot) *
-                                        (d_dai_modelX0DotDot - d_da0_X0DotDot) +
-                                    (modelX1DotDot - X1DotDot) *
-                                        (d_dai_modelX1DotDot - d_da0_X1DotDot));
-                expectedGrad[1] += physicsLossWeight *
-                                   ((modelX0DotDot - X0DotDot) *
-                                        (d_dai_modelX0DotDot - d_da1_X0DotDot) +
-                                    (modelX1DotDot - X1DotDot) *
-                                        (d_dai_modelX1DotDot - d_da1_X1DotDot));
-                expectedGrad[2] += physicsLossWeight *
-                                   ((modelX0DotDot - X0DotDot) *
-                                        (d_dai_modelX0DotDot - d_da2_X0DotDot) +
-                                    (modelX1DotDot - X1DotDot) *
-                                        (d_dai_modelX1DotDot - d_da2_X1DotDot));
-                expectedGrad[3] += physicsLossWeight *
-                                   ((modelX0DotDot - X0DotDot) *
-                                        (d_dai_modelX0DotDot - d_da3_X0DotDot) +
-                                    (modelX1DotDot - X1DotDot) *
-                                        (d_dai_modelX1DotDot - d_da3_X1DotDot));
-                expectedGrad[4] += physicsLossWeight *
-                                   ((modelX0DotDot - X0DotDot) *
-                                        (d_dai_modelX0DotDot - d_da4_X0DotDot) +
-                                    (modelX1DotDot - X1DotDot) *
-                                        (d_dai_modelX1DotDot - d_da4_X1DotDot));
-                expectedGrad[5] += physicsLossWeight *
-                                   ((modelX0DotDot - X0DotDot) *
-                                        (d_dai_modelX0DotDot - d_da5_X0DotDot) +
-                                    (modelX1DotDot - X1DotDot) *
-                                        (d_dai_modelX1DotDot - d_da5_X1DotDot));
-                expectedGrad[6] += physicsLossWeight *
-                                   ((modelX0DotDot - X0DotDot) *
-                                        (d_dai_modelX0DotDot - d_da6_X0DotDot) +
-                                    (modelX1DotDot - X1DotDot) *
-                                        (d_dai_modelX1DotDot - d_da6_X1DotDot));
-                expectedGrad[7] += physicsLossWeight *
-                                   ((modelX0DotDot - X0DotDot) *
-                                        (d_dai_modelX0DotDot - d_da7_X0DotDot) +
-                                    (modelX1DotDot - X1DotDot) *
-                                        (d_dai_modelX1DotDot - d_da7_X1DotDot));
+                    expectedGrad = std::vector<double>(8);
+                    if (mass == 0) {
+                        expectedGrad[0] +=
+                            physicsLossWeight *
+                            ((modelX0DotDot - X0DotDot) *
+                             (d_dai_modelX0DotDot - d_da0_X0DotDot));
+                        expectedGrad[1] +=
+                            physicsLossWeight *
+                            ((modelX0DotDot - X0DotDot) *
+                             (d_dai_modelX0DotDot - d_da1_X0DotDot));
+                        expectedGrad[2] +=
+                            physicsLossWeight *
+                            ((modelX0DotDot - X0DotDot) *
+                             (d_dai_modelX0DotDot - d_da2_X0DotDot));
+                        expectedGrad[3] +=
+                            physicsLossWeight *
+                            ((modelX0DotDot - X0DotDot) *
+                             (d_dai_modelX0DotDot - d_da3_X0DotDot));
+                        expectedGrad[4] +=
+                            physicsLossWeight *
+                            ((modelX0DotDot - X0DotDot) *
+                             (d_dai_modelX0DotDot - d_da4_X0DotDot));
+                        expectedGrad[5] +=
+                            physicsLossWeight *
+                            ((modelX0DotDot - X0DotDot) *
+                             (d_dai_modelX0DotDot - d_da5_X0DotDot));
+                        expectedGrad[6] +=
+                            physicsLossWeight *
+                            ((modelX0DotDot - X0DotDot) *
+                             (d_dai_modelX0DotDot - d_da6_X0DotDot));
+                        expectedGrad[7] +=
+                            physicsLossWeight *
+                            ((modelX0DotDot - X0DotDot) *
+                             (d_dai_modelX0DotDot - d_da7_X0DotDot));
+                    }
+                    if (mass == 1) {
+                        expectedGrad[0] +=
+                            physicsLossWeight *
+                            ((modelX1DotDot - X1DotDot) *
+                             (d_dai_modelX1DotDot - d_da0_X1DotDot));
+                        expectedGrad[1] +=
+                            physicsLossWeight *
+                            ((modelX1DotDot - X1DotDot) *
+                             (d_dai_modelX1DotDot - d_da1_X1DotDot));
+                        expectedGrad[2] +=
+                            physicsLossWeight *
+                            ((modelX1DotDot - X1DotDot) *
+                             (d_dai_modelX1DotDot - d_da2_X1DotDot));
+                        expectedGrad[3] +=
+                            physicsLossWeight *
+                            ((modelX1DotDot - X1DotDot) *
+                             (d_dai_modelX1DotDot - d_da3_X1DotDot));
+                        expectedGrad[4] +=
+                            physicsLossWeight *
+                            ((modelX1DotDot - X1DotDot) *
+                             (d_dai_modelX1DotDot - d_da4_X1DotDot));
+                        expectedGrad[5] +=
+                            physicsLossWeight *
+                            ((modelX1DotDot - X1DotDot) *
+                             (d_dai_modelX1DotDot - d_da5_X1DotDot));
+                        expectedGrad[6] +=
+                            physicsLossWeight *
+                            ((modelX1DotDot - X1DotDot) *
+                             (d_dai_modelX1DotDot - d_da6_X1DotDot));
+                        expectedGrad[7] +=
+                            physicsLossWeight *
+                            ((modelX1DotDot - X1DotDot) *
+                             (d_dai_modelX1DotDot - d_da7_X1DotDot));
+                    }
+                    auto obtainedGrad = model.ResidueGradient(residue);
+                    for (int a = 0; a < int(obtainedGrad.size()); a++) {
+                        EXPECT_DOUBLE_EQ(expectedGrad[a], obtainedGrad[a]);
+                    }
+                    residue += 1;
+                }
             }
         }
     }
-
-    // std::vector<double> grad = model.LossGradient();
-
-    // ASSERT_EQ(grad.size(), 8);
-    // EXPECT_DOUBLE_EQ(grad[0], expectedGrad[0]);
-    // EXPECT_DOUBLE_EQ(grad[1], expectedGrad[1]);
-    // EXPECT_DOUBLE_EQ(grad[2], expectedGrad[2]);
-    // EXPECT_DOUBLE_EQ(grad[3], expectedGrad[3]);
-    // EXPECT_DOUBLE_EQ(grad[4], expectedGrad[4]);
-    // EXPECT_DOUBLE_EQ(grad[5], expectedGrad[5]);
-    // EXPECT_DOUBLE_EQ(grad[6], expectedGrad[6]);
-    // EXPECT_DOUBLE_EQ(grad[7], expectedGrad[7]);
 }
 
 class PimodelTrainTest : public testing::Test {
