@@ -1141,7 +1141,6 @@ class PimodelTrainTest : public testing::Test {
         this->model.AddResidues();
 
         double initialLoss = this->model.Loss();
-        initialLoss = this->model.Loss();
         this->model.Train(this->learningRate, this->maxSteps, this->log);
         ASSERT_TRUE(this->model.Loss() < initialLoss);
     }

@@ -51,7 +51,7 @@ Maybe<double> Model::Train(double learningRate, int maxSteps, bool log) {
     std::vector<double> parametersBeforeStep =
         std::vector<double>(this->nParameters());
     int step = 0;
-    while (step < maxSteps && learningRate != 0) {
+    while (step < maxSteps && learningRate != 0 && lossBeforeStep > 0) {
         this->GetParameters(&parametersBeforeStep);
         for (int i = 0; i < this->nResidues(); i++) {
             this->GradientDescentStep(i, learningRate);

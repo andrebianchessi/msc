@@ -394,10 +394,16 @@ void Pimodel::AddPhysicsResidues() {
     double nTotalLossTerms = nInitialConditionsLossTerms + nPhysicsLossTerms;
 double Pimodel::InitialConditionsWeight() {
     LOSS_TERMS
+    if (nPhysicsLossTerms == 0) {
+        return 1;
+    }
     return nPhysicsLossTerms / nTotalLossTerms;
 };
 double Pimodel::PhysicsWeight() {
     LOSS_TERMS
+    if (nInitialConditionsLossTerms == 0) {
+        return 1;
+    }
     return nInitialConditionsLossTerms / nTotalLossTerms;
 };
 
