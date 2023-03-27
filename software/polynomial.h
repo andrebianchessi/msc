@@ -86,7 +86,7 @@ class Poly {
     void SetX(std::vector<double> X);
 
     // Evaluates the polynomial for the given values of its coefficients and
-    // X value set
+    // X value set. Complexity is O(nMonomials)
     Maybe<double> operator()(std::vector<double>& a) const;
 
     // Sets this polynomial as the derivative of this polynomial
@@ -145,10 +145,13 @@ class Polys {
     Polys();
     Polys(const Poly& p);
 
+    int nMonomials() const;
+
     Polys& operator+=(const Poly& right);
     Polys& operator+=(const Polys& right);
     Polys& operator*=(double k);
 
+    // Operator complexity is O(nMonomials)
     Maybe<double> operator()(std::vector<std::vector<double>>& a) const;
     Maybe<Void> Dxi(int i);
 

@@ -602,3 +602,8 @@ TEST_F(PolyTest, EqualityOperatorTest) {
     ASSERT_NE(2 * Polys(n2o2), Polys(n2o2));
     ASSERT_NE(Polys(n2o2) + Polys(n2o2_1), Polys(n2o2_1) + Polys(n2o2));
 }
+
+TEST_F(PolyTest, PolysNMonomialsTest) {
+    ASSERT_EQ(Polys(n2o2).nMonomials(), 6);
+    ASSERT_EQ((Polys(n2o2) + Polys(n2o2)).nMonomials(), 12);
+}

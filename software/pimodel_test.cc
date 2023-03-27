@@ -78,10 +78,10 @@ class PimodelTest : public testing::Test {
         ASSERT_FALSE(e0.isError);
 
         this->simpleModel = new Pimodel(this->pd, TMin, TMax, 1, 1, 1);
-        this->simpleModel->AddResidues();
+        this->simpleModel->SetResidues();
 
         this->secondOrderModel = new Pimodel(this->pd, TMin, TMax, 2, 2, 2);
-        this->secondOrderModel->AddResidues();
+        this->secondOrderModel->SetResidues();
 
         tB = RandomB();
         kB = RandomB();
@@ -654,7 +654,7 @@ TEST_F(PimodelTest, nResiduesTest) {
     auto model_ = Pimodel(pd, TMin, TMax, 1, 1, 1);
     // Before calling AddResidues, the function returns 0
     ASSERT_EQ(model_.nResidues(), 0);
-    model_.AddResidues();
+    model_.SetResidues();
 
     // Residues:
     // Initial conditions:
@@ -773,7 +773,7 @@ TEST_F(PimodelTest, LossTest) {
 
 TEST_F(PimodelTest, LossGradientTest) {
     Pimodel model = Pimodel(this->pd, TMin, TMax, 1, 1, 1);
-    model.AddResidues();
+    model.SetResidues();
     std::vector<double> params = std::vector<double>(8);
     double a0 = 13.0;
     double a1 = 26.0;
@@ -1138,7 +1138,7 @@ class PimodelTrainTest : public testing::Test {
         this->model =
             Pimodel(this->pd, this->tMin, this->tMax, this->timeDiscretization,
                     this->kcDiscretization, this->order);
-        this->model.AddResidues();
+        this->model.SetResidues();
 
         double initialLoss = this->model.Loss();
         this->model.Train(this->learningRate, this->maxSteps, this->log);

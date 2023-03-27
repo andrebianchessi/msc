@@ -25,7 +25,7 @@ class Pimodel : public Model {
 
     // Must be called before Train()
     // Builds all the residues based on problem description.
-    void AddResidues();
+    void SetResidues();
 
     // Returns the position of each mass.
     // The input should be an array with:

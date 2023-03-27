@@ -158,6 +158,15 @@ Polys::Polys(const Poly& p) {
     this->k = std::vector<double>{1.0};
     this->plus = 0;
 }
+
+int Polys::nMonomials() const {
+    int n = 0;
+    for (int i = 0; i < int(this->polys.size()); i++) {
+        n += this->polys[i].nMonomials();
+    }
+    return n;
+}
+
 Polys operator*(double k, const Poly& p) {
     Polys ps = Polys(p);
     ps.k[ps.k.size() - 1] *= k;
