@@ -74,24 +74,30 @@ Poly::Poly() { this->isZero = true; }
 
 Poly::Poly(int k) { this->isZero = true; }
 
-void Poly::buildDfs(std::vector<int>& exponents, int exponentsSum,
-                    int exponentsIndex) {
+void Poly::buildDfs(std::vector<int>& exponents, int exponentsIndex) {
     if (exponentsIndex == int(exponents.size())) {
         this->monomials.push_back(Monomial(exponents));
         return;
     }
 
-    int exponentsLeft = this->order - exponentsSum;
-    for (int e = exponentsLeft; e >= 0; e--) {
+    for (int e = this->orders[exponentsIndex]; e >= 0; e--) {
         exponents[exponentsIndex] = e;
-        buildDfs(exponents, exponentsSum + e, exponentsIndex + 1);
+        buildDfs(exponents, exponentsIndex + 1);
     }
 }
-Maybe<Void> Poly::Build(int n, int order, int id) {
+Maybe<Void> Poly::Build(int n, std::vector<int> orders, int id) {
     Maybe<Void> r;
-    if (n < 0 || order < 0) {
+    if (orders.size() != 0) {
+        int minOrder = (*std::min_element(orders.begin(), orders.end()));
+        if (n < 0 || minOrder < 0) {
+            r.isError = true;
+            r.errMsg = "n and order must be >=0";
+            return r;
+        }
+    }
+    if (int(orders.size()) != n) {
         r.isError = true;
-        r.errMsg = "n and order must be >=0";
+        r.errMsg = "orders.size() and n must be equal";
         return r;
     }
 
@@ -99,17 +105,17 @@ Maybe<Void> Poly::Build(int n, int order, int id) {
     this->n = n;
     this->X = std::vector<double>(n);
 
-    this->order = order;
-    // Source:
-    // https://mathoverflow.net/questions/225953/number-of-polynomial-terms-for-certain-degree-and-certain-number-of-variables/225963#225963?newreg=2a0208ceb740461d8eaa21e304b0e341
-    int nMonomials = int(boost::math::binomial_coefficient<double>(
-        this->n + this->order, this->order));
+    this->orders = orders;
 
+    int nMonomials = 1;
+    for (int i = 0; i < n; i++) {
+        nMonomials *= (orders[i] + 1);
+    }
     this->monomials = std::vector<Monomial>();
-    this->monomials.reserve(nMonomials);
+    monomials.reserve(nMonomials);
 
     std::vector<int> exponents = std::vector<int>(n);
-    this->buildDfs(exponents, 0, 0);
+    this->buildDfs(exponents, 0);
 
     this->isZero = false;
     return r;
@@ -252,7 +258,7 @@ bool operator==(Polys const& right, Polys const& left) {
         if (right.polys[i].n != left.polys[i].n) {
             return false;
         }
-        if (right.polys[i].order != left.polys[i].order) {
+        if (right.polys[i].orders != left.polys[i].orders) {
             return false;
         }
         if (right.polys[i].nMonomials() != left.polys[i].nMonomials()) {
