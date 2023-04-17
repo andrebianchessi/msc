@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "bounded.h"
+#include "polynomial.h"
 #include "problem.h"
 #include "utils.h"
 
@@ -16,231 +17,188 @@ const double KMax = 2.0;
 const double CMin = 10.0;
 const double CMax = 20.0;
 const double initialDisplacement = 10.0;
+const double initialVelocity = 7.0;
 
 class PimodelTest : public testing::Test {
    public:
     ProblemDescription pd;
 
-    // Normalized variables that are used to evaluate the models
+    // Variables that are used to evaluate the models
     Bounded tB;
     Bounded kB;
     Bounded cB;
-    double t;
-    double k;
-    double c;
-    std::vector<Bounded> tkc;
-    std::vector<double> tkc_;
+    std::vector<Bounded> tkc;  // Normalized
+    std::vector<double> TKC;   // Un-normalized
 
-    // Auxiliary variables
+    Pimodel piModel;
+    Poly p0;  // model that describes displacement of mass 0
+    Poly p1;  // model that describes displacement of mass 1
+    const int timeDiscretization = 2;
+    const int kcDiscretization = 2;
+    const int order = 2;
+
+    int parametersPerModel;
+    std::vector<double> p0Parameters;
+    std::vector<double> p1Parameters;
+    std::vector<double> piModelParameters;
+
     double x;
     double y;
-    std::vector<double> xy;
-
-    // First order model (polynomials of order 1) with time and kc
-    // discretization 1.
-    // i.e. in loss function we considered:
-    // t = 0 and t = tMax
-    // k = kMin and kMax
-    // c = cMin and cMax
-    //
-    // The polynomials that describe each mass are:
-    // x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
-    // x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
-    Pimodel* simpleModel;
-
-    // Second order model (polynomials of order 2) with time and kc
-    // discretization 2.
-    // i.e. in loss function we considered:
-    // t = 0, t=tMax/2 and t = tMax
-    // k = kMin, k = (kMin+kMax)/2 and k = kMax
-    // c = cMin, c = (cMin+cMax)/2 and c = cMax
-    //
-    // The polynomials (with coefficients a0, a1... omitted) that describe each
-    // mass are in the form:
-    // x0(t,k,c) = t^2 + tk + tc + t + k^2 + kc + k + c^2 + c + 1
-    // x1(t,k,c) = t^2 + tk + tc + t + k^2 + kc + k + c^2 + c + 1
-    Pimodel* secondOrderModel;
+    std::vector<double> X;
 
     void SetUp() {
         // Called before every TEST_F
         // Create problem description of two masses,
         // connected with a spring and damper. One is fixed
         // and the other has initial displacement.
-        this->pd = ProblemDescription();
-        this->pd.AddMass(m, 0.0, 0.0);
-        this->pd.AddMass(m, 1.0, 0.0);
-        this->pd.AddSpring(0, 1, KMin, KMax);
-        this->pd.AddDamper(0, 1, CMin, CMax);
-        this->pd.SetFixedMass(0);
-        this->pd.AddInitialDisp(1, initialDisplacement);
+        pd = ProblemDescription();
+        pd.AddMass(m, 0.0, 0.0);
+        pd.AddMass(m, 1.0, 0.0);
+        pd.AddSpring(0, 1, KMin, KMax);
+        pd.AddDamper(0, 1, CMin, CMax);
+        pd.SetFixedMass(0);
+        pd.AddInitialDisp(1, initialDisplacement);
+        pd.AddInitialVel(1, initialVelocity);
         std::vector<Bounded> dna = std::vector<Bounded>(2);
-        auto e0 = this->pd.BuildFromDNA(dna);
+        auto e0 = pd.BuildFromDNA(dna);
         ASSERT_FALSE(e0.isError);
 
-        this->simpleModel = new Pimodel(this->pd, TMin, TMax, 1, 1, 1);
-        this->simpleModel->SetResidues();
+        piModel = Pimodel(pd, TMin, TMax, timeDiscretization, kcDiscretization,
+                          order);
+        piModel.SetResidues();
+        parametersPerModel = piModel.nParameters() / 2;
 
-        this->secondOrderModel = new Pimodel(this->pd, TMin, TMax, 2, 2, 2);
-        this->secondOrderModel->SetResidues();
+        // 3 input variables:
+        // t, k, c
+        p0.Build(3, order, 0);
+        p1.Build(3, order, 1);
 
         tB = RandomB();
         kB = RandomB();
         cB = RandomB();
-        t = tB.Get();
-        k = kB.Get();
-        c = cB.Get();
         tkc = std::vector<Bounded>{tB, kB, cB};
-        tkc_ = std::vector<double>(3);
-        tkc_[0] = Unnormalize(tB, TMin, TMax);
-        tkc_[1] = Unnormalize(kB, KMin, KMax);
-        tkc_[2] = Unnormalize(cB, CMin, CMax);
+        TKC = std::vector<double>(3);
+        TKC[0] = Unnormalize(tB, TMin, TMax);
+        TKC[1] = Unnormalize(kB, KMin, KMax);
+        TKC[2] = Unnormalize(cB, CMin, CMax);
+
+        p0.SetX(Bounded::Get(tkc));
+        p1.SetX(Bounded::Get(tkc));
+
+        p0Parameters = std::vector<double>(parametersPerModel);
+        p1Parameters = std::vector<double>(parametersPerModel);
+        for (int i = 0; i < parametersPerModel; i++) {
+            p0Parameters[i] = Random();
+            p1Parameters[i] = Random();
+        }
+        piModelParameters = std::vector<double>(2 * parametersPerModel);
+        int param = 0;
+        for (int i = 0; i < parametersPerModel; i++) {
+            piModelParameters[param] = p0Parameters[i];
+            param++;
+        }
+        for (int i = 0; i < parametersPerModel; i++) {
+            piModelParameters[param] = p1Parameters[i];
+            param++;
+        }
+        piModel.SetParameters(&piModelParameters);
 
         x = Random(10, 1000);
         y = Random(10, 1000);
-        xy = std::vector<double>{x, y};
-    }
-
-    void SetParameters() {
-        // Convenient helper to set parameters of the model to increasing values
-        std::vector<double> params = {1, 2, 3, 4, 5, 6, 7, 8};
-        ASSERT_FALSE(this->simpleModel->SetParameters(&params).isError);
-
-        params = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
-                  11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
-        ASSERT_FALSE(secondOrderModel->SetParameters(&params).isError);
+        X = std::vector<double>{x, y};
     }
 };
 
 TEST_F(PimodelTest, ConstructorTest) {
-    ASSERT_EQ(simpleModel->models.size1(), 2);
-    ASSERT_EQ(simpleModel->models.size2(), 1);
-    ASSERT_EQ(simpleModel->models(0, 0).id, 0);
-    ASSERT_EQ(simpleModel->models(1, 0).id, 1);
+    ASSERT_EQ(piModel.models.size1(), 2);
+    ASSERT_EQ(piModel.models.size2(), 1);
+    ASSERT_EQ(piModel.models(0, 0).id, 0);
+    ASSERT_EQ(piModel.models(1, 0).id, 1);
 
-    ASSERT_EQ(simpleModel->modelsD.size(), 2);
-    ASSERT_EQ(simpleModel->modelsD[0].id, 0);
-    ASSERT_EQ(simpleModel->modelsD[1].id, 1);
+    ASSERT_EQ(piModel.modelsD.size(), 2);
+    ASSERT_EQ(piModel.modelsD[0].id, 0);
+    ASSERT_EQ(piModel.modelsD[1].id, 1);
 
-    ASSERT_EQ(simpleModel->modelsDD.size(), 2);
-    ASSERT_EQ(simpleModel->modelsDD[0].id, 0);
-    ASSERT_EQ(simpleModel->modelsDD[1].id, 1);
+    ASSERT_EQ(piModel.modelsDD.size(), 2);
+    ASSERT_EQ(piModel.modelsDD[0].id, 0);
+    ASSERT_EQ(piModel.modelsDD[1].id, 1);
 }
 
 TEST_F(PimodelTest, OperatorTest) {
-    Pimodel& model = (*this->secondOrderModel);
-
-    // x0(t,k,c) = a0*t^2 + a1*tk + a2*tc + a3*t + a4*k^2 + a5*kc + a6*k +
-    //             a7*c^2 + a8*c + a9*1
-    // dx0Dt(t,k,c) = 2*a0*t + a1*k + a2*c + a3
-    // x1(t,k,c) = b0*t^2 + b1*tk + b2*tc + b3*t + b4*k^2 +
-    //             b5*kc + b6*k + b7*c^2 + b8*c + b9*1
-    // dx1Dt(t,k,c) = 2*b0*t + b1*k + b2*c + b3
-    std::vector<double> a =
-        std::vector<double>{Random(), Random(), Random(), Random(), Random(),
-                            Random(), Random(), Random(), Random(), Random()};
-    std::vector<double> b =
-        std::vector<double>{Random(), Random(), Random(), Random(), Random(),
-                            Random(), Random(), Random(), Random(), Random()};
-    std::vector<double> parameters = std::vector<double>{
-        a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9],
-        b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9]};
-    model.SetParameters(&parameters);
-
-    auto eval = model(&tkc_);
+    auto eval = piModel(&TKC);
     ASSERT_FALSE(eval.isError);
     ASSERT_EQ(eval.val.size(), 2);
-    ASSERT_DOUBLE_EQ(eval.val[0], a[0] * t * t + a[1] * t * k + a[2] * t * c +
-                                      a[3] * t + a[4] * k * k + a[5] * k * c +
-                                      a[6] * k + a[7] * c * c + a[8] * c +
-                                      a[9] * 1);
-    ASSERT_DOUBLE_EQ(eval.val[1], b[0] * t * t + b[1] * t * k + b[2] * t * c +
-                                      b[3] * t + b[4] * k * k + b[5] * k * c +
-                                      b[6] * k + b[7] * c * c + b[8] * c +
-                                      b[9] * 1);
-    eval = model.GetVelocities(&tkc_);
+    ASSERT_DOUBLE_EQ(eval.val[0], p0(p0Parameters).val);
+    ASSERT_DOUBLE_EQ(eval.val[1], p1(p1Parameters).val);
+
+    ASSERT_FALSE(p0.Dxi(0).isError);
+    ASSERT_FALSE(p1.Dxi(0).isError);
+    eval = piModel.GetVelocities(&TKC);
     ASSERT_FALSE(eval.isError);
     ASSERT_EQ(eval.val.size(), 2);
-    ASSERT_DOUBLE_EQ(eval.val[0], 2 * a[0] * t + a[1] * k + a[2] * c + a[3]);
-    ASSERT_DOUBLE_EQ(eval.val[1], 2 * b[0] * t + b[1] * k + b[2] * c + b[3]);
+    ASSERT_DOUBLE_EQ(eval.val[0], p0(p0Parameters).val);
+    ASSERT_DOUBLE_EQ(eval.val[1], p1(p1Parameters).val);
 
     // Test error cases
     // tkc too large
-    tkc_ = std::vector<double>{1.1, 1.0, 2.0, 3.0};
-    eval = model(&tkc_);
+    TKC = std::vector<double>{1.1, 1.0, 2.0, 3.0};
+    eval = piModel(&TKC);
     ASSERT_TRUE(eval.isError);
 
     // tkc too small
-    tkc_ = std::vector<double>{1.1, 1.0};
-    eval = model(&tkc_);
+    TKC = std::vector<double>{1.1, 1.0};
+    eval = piModel(&TKC);
     ASSERT_TRUE(eval.isError);
 }
 
 TEST_F(PimodelTest, nParametersTest) {
-    // See PimodelTest class
-    ASSERT_EQ(simpleModel->nParameters(), 8);
-
-    // See PimodelTest class
-    ASSERT_EQ(secondOrderModel->nParameters(), 20);
+    ASSERT_EQ(piModel.nParameters(), p0.nMonomials() + p1.nMonomials());
 }
 
 TEST_F(PimodelTest, SetParametersTest) {
-    std::vector<double> params = {1, 2, 3, 4, 5, 6, 7, 8};
-    auto r = simpleModel->SetParameters(&params);
+    double p = 99;
+    std::vector<double> params = std::vector<double>(parametersPerModel * 2, p);
+    auto r = piModel.SetParameters(&params);
     ASSERT_FALSE(r.isError);
 
-    // simpleModel->modelsCoefficients[timeBucket][mass][coeff]
-    ASSERT_EQ(simpleModel->modelsCoefficients[0][0], 1);
-    ASSERT_EQ(simpleModel->modelsCoefficients[0][1], 2);
-    ASSERT_EQ(simpleModel->modelsCoefficients[0][2], 3);
-    ASSERT_EQ(simpleModel->modelsCoefficients[0][3], 4);
-    ASSERT_EQ(simpleModel->modelsCoefficients[1][0], 5);
-    ASSERT_EQ(simpleModel->modelsCoefficients[1][1], 6);
-    ASSERT_EQ(simpleModel->modelsCoefficients[1][2], 7);
-    ASSERT_EQ(simpleModel->modelsCoefficients[1][3], 8);
+    // piModel->modelsCoefficients[mass][coeff]
+    for (int i = 0; i < parametersPerModel; i++) {
+        ASSERT_EQ(piModel.modelsCoefficients[0][i], p);
+    }
+    for (int i = 0; i < parametersPerModel; i++) {
+        ASSERT_EQ(piModel.modelsCoefficients[1][i], p);
+    }
 
     // Test error cases
-    params = {1, 2, 3, 4, 5, 6, 7};
-    r = simpleModel->SetParameters(&params);
+    params = std::vector<double>(parametersPerModel * 2 - 1);
+    r = piModel.SetParameters(&params);
     ASSERT_TRUE(r.isError);
-    params = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-    r = simpleModel->SetParameters(&params);
+    params = std::vector<double>(parametersPerModel * 2 + 1);
+    r = piModel.SetParameters(&params);
     ASSERT_TRUE(r.isError);
 }
 
 TEST_F(PimodelTest, GetParametersTest) {
-    std::vector<double> params = std::vector<double>(8);
-    ASSERT_FALSE(simpleModel->GetParameters(&params).isError);
+    std::vector<double> params = std::vector<double>(parametersPerModel * 2);
+    ASSERT_FALSE(piModel.GetParameters(&params).isError);
 
-    ASSERT_DOUBLE_EQ(params[0], 0.0);
-    ASSERT_DOUBLE_EQ(params[1], 0.0);
-    ASSERT_DOUBLE_EQ(params[2], 0.0);
-    ASSERT_DOUBLE_EQ(params[3], 0.0);
-    ASSERT_DOUBLE_EQ(params[4], 0.0);
-    ASSERT_DOUBLE_EQ(params[5], 0.0);
-    ASSERT_DOUBLE_EQ(params[6], 0.0);
-    ASSERT_DOUBLE_EQ(params[7], 0.0);
-
-    this->SetParameters();
-
-    ASSERT_FALSE(simpleModel->GetParameters(&params).isError);
-    ASSERT_DOUBLE_EQ(params[0], 1.0);
-    ASSERT_DOUBLE_EQ(params[1], 2.0);
-    ASSERT_DOUBLE_EQ(params[2], 3.0);
-    ASSERT_DOUBLE_EQ(params[3], 4.0);
-    ASSERT_DOUBLE_EQ(params[4], 5.0);
-    ASSERT_DOUBLE_EQ(params[5], 6.0);
-    ASSERT_DOUBLE_EQ(params[6], 7.0);
-    ASSERT_DOUBLE_EQ(params[7], 8.0);
+    int paramIndex = 0;
+    for (int m = 0; m < 2; m++) {
+        for (int i = 0; i < parametersPerModel; i++) {
+            ASSERT_EQ(piModel.modelsCoefficients[m][i], params[paramIndex]);
+            paramIndex += 1;
+        }
+    }
 
     // Test error cases
-    params = std::vector<double>(7);
-    ASSERT_TRUE(simpleModel->GetParameters(&params).isError);
-    params = std::vector<double>(9);
-    ASSERT_TRUE(simpleModel->GetParameters(&params).isError);
+    params = std::vector<double>(parametersPerModel * 2 - 1);
+    ASSERT_TRUE(piModel.GetParameters(&params).isError);
+    params = std::vector<double>(parametersPerModel * 2 + 1);
+    ASSERT_TRUE(piModel.GetParameters(&params).isError);
 }
 
 TEST_F(PimodelTest, ProblemFromTkcTest) {
-    Problem p = simpleModel->problemFromTkc(&tkc);
+    Problem p = piModel.problemFromTkc(&tkc);
 
     ASSERT_EQ(p.masses.size(), 2);
     ASSERT_EQ(p.masses[0].m, m);
@@ -253,50 +211,40 @@ TEST_F(PimodelTest, ProblemFromTkcTest) {
 }
 
 TEST_F(PimodelTest, getXModelTest) {
-    // x0(t,k,c) = 1*t + 2*k + 3*c + 4*1
-    // x1(t,k,c) = 5*t + 6*k + 7*c + 8*1
-    this->SetParameters();
+    std::vector<double> XModel = piModel.getXModel(&tkc);
 
-    std::vector<double> X = simpleModel->getXModel(&tkc);
-
-    ASSERT_EQ(X.size(), 4);
-    ASSERT_EQ(X[0], 1 * t + 2 * k + 3 * c + 4 * 1);
-    ASSERT_EQ(X[1], 5 * t + 6 * k + 7 * c + 8 * 1);
-    ASSERT_EQ(X[2], 1);  // dx0/dt = 1
-    ASSERT_EQ(X[3], 5);  // dx1/dt = 5
+    ASSERT_EQ(XModel.size(), 4);
+    ASSERT_EQ(XModel[0], p0(p0Parameters).val);
+    ASSERT_EQ(XModel[1], p1(p1Parameters).val);
+    p0.Dxi(0);
+    p1.Dxi(0);
+    ASSERT_EQ(XModel[2], p0(p0Parameters).val);  // dx0/dt = 1
+    ASSERT_EQ(XModel[3], p1(p1Parameters).val);  // dx1/dt = 5
 }
 
 TEST_F(PimodelTest, getAccelsFromDiffEqTest) {
-    this->SetParameters();
-    // modelX0(t,k,c) = 1*t + 2*k + 3*c + 4*1
-    // modelX1(t,k,c) = 5*t + 6*k + 7*c + 8*1
-    // modelXDot0(t,k,c) = 1
-    // modelXDot1(t,k,c) = 5
-
     Maybe<Problem> mProblem =
         this->pd.BuildFromVector(std::vector<double>{KMin, CMin});
     ASSERT_FALSE(mProblem.isError);
     Problem problem = mProblem.val;
 
-    auto A = simpleModel->getAccelsFromDiffEq(&problem, tkc);
+    auto A = piModel.getAccelsFromDiffEq(&problem, tkc);
     ASSERT_EQ(A.size1(), 2);
     ASSERT_EQ(A.size2(), 1);
 
-    // expectedAccel0(t,k,c) = 1 / m * (-kMin * x0 + kMin * x1 - cMin * dx0dt
-    // + cMin * dx1dt);
-    // expectedAccel0 = 1 / m * (-kMin * (1*t + 2*k + 3*c + 4*1) + kMin *(5*t
-    // + 6*k + 7*c + 8*1) - cMin * 1 + cMin * 5);
-    // expectedAccel0 = (4*kMin/m)*t + (4*kMin)/m*k + (4 *kMin)/m*c  +
-    // (4*kMin+4*cMin)/m*1
-    double expectedEval =
-        1 / m *
-        (-KMin * (1 * t + 2 * k + 3 * c + 4 * 1) +
-         KMin * (5 * t + 6 * k + 7 * c + 8 * 1) - CMin * 1 + CMin * 5);
+    Poly dp0dt = p0;
+    ASSERT_FALSE(dp0dt.Dxi(0).isError);
+    Poly dp1dt = p1;
+    ASSERT_FALSE(dp1dt.Dxi(0).isError);
 
-    std::vector<std::vector<double>> coefs = std::vector<std::vector<double>>{
-        std::vector<double>{1, 2, 3, 4}, std::vector<double>{5, 6, 7, 8}};
-    ASSERT_DOUBLE_EQ(A(0, 0)(coefs).val, expectedEval);
-    ASSERT_DOUBLE_EQ(A(1, 0)(coefs).val, -expectedEval);
+    // expectedAccel0(t,k,c) =
+    // 1 / m * (-kMin * p0 + kMin * p1 - cMin * dp0dt + cMin * dp1dt);
+    // expectedAccel1(t,k,c) = -expectedAccel0(t,k,c)
+    Polys expectedPolys =
+        1 / m * (-KMin * p0 + KMin * p1 + (-CMin) * dp0dt + CMin * dp1dt);
+
+    ASSERT_EQ(A(0, 0), expectedPolys);
+    ASSERT_EQ(A(1, 0), -1 * expectedPolys);
 }
 
 TEST_F(PimodelTest, getInitialXTest) {
@@ -326,322 +274,240 @@ TEST_F(PimodelTest, getInitialXTest) {
 }
 
 TEST_F(PimodelTest, InitialConditionsResiduesTkcTest) {
-    ASSERT_EQ(simpleModel->initialConditionsResiduesTkc.size(), 4);
+    auto model = Pimodel(pd, TMin, TMax, 0, 0, 1);
+    model.SetResidues();
+    ASSERT_EQ(model.initialConditionsResiduesTkc.size(), 1);
+    ASSERT_DOUBLE_EQ(model.initialConditionsResiduesTkc[0][0].Get(), 0);
+    ASSERT_DOUBLE_EQ(model.initialConditionsResiduesTkc[0][1].Get(), 0.5);
+    ASSERT_DOUBLE_EQ(model.initialConditionsResiduesTkc[0][2].Get(), 0.5);
 
-    double tMin = 0, kMin = 0, cMin = 0;
-    double kMax = 1, cMax = 1;
+    double t = 0;
+    double k = 0;
+    double c = 0;
 
-    // kMin, cMin
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[0].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[0][0].Get(),
-                     tMin);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[0][1].Get(),
-                     kMin);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[0][2].Get(),
-                     cMin);
-
-    // kMin, cMax
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[1].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[1][0].Get(),
-                     tMin);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[1][1].Get(),
-                     kMin);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[1][2].Get(),
-                     cMax);
-
-    // kMax, cMin
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[2].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[2][0].Get(),
-                     tMin);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[2][1].Get(),
-                     kMax);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[2][2].Get(),
-                     cMin);
-
-    // kMax, cMax
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[3].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[3][0].Get(),
-                     tMin);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[3][1].Get(),
-                     kMax);
-    ASSERT_DOUBLE_EQ(simpleModel->initialConditionsResiduesTkc[3][2].Get(),
-                     cMax);
-}
-
-TEST_F(PimodelTest, InitialConditionsResiduesTkcZeroDiscTest) {
-    // Test with kcDiscretization = timeDiscretization = 0;
-
-    auto pd_ = ProblemDescription();
-    pd_.AddMass(Random(), Random(), Random());
-    pd_.AddMass(Random(), Random(), Random());
-    pd_.AddSpring(0, 1, KMin, KMax);
-    pd_.AddDamper(0, 1, CMin, CMax);
-
-    auto model_ = Pimodel(pd_, TMin, TMax, 0, 0, 1);
-    model_.AddResiduesTkc();
-
-    ASSERT_EQ(model_.initialConditionsResiduesTkc.size(), 1);
-
-    ASSERT_DOUBLE_EQ(model_.initialConditionsResiduesTkc[0].size(), 3);
-    ASSERT_DOUBLE_EQ(model_.initialConditionsResiduesTkc[0][0].Get(), 0);
-    ASSERT_DOUBLE_EQ(model_.initialConditionsResiduesTkc[0][1].Get(), 0.5);
-    ASSERT_DOUBLE_EQ(model_.initialConditionsResiduesTkc[0][2].Get(), 0.5);
+    int i = 0;
+    while (k <= 1) {
+        c = 0;
+        while (c <= 1) {
+            ASSERT_DOUBLE_EQ(piModel.initialConditionsResiduesTkc[i][0].Get(),
+                             t);
+            ASSERT_DOUBLE_EQ(piModel.initialConditionsResiduesTkc[i][1].Get(),
+                             k);
+            ASSERT_DOUBLE_EQ(piModel.initialConditionsResiduesTkc[i][2].Get(),
+                             c);
+            i++;
+            c += 1 / (kcDiscretization + 0.0);
+        }
+        k += 1 / (kcDiscretization + 0.0);
+    }
 }
 
 TEST_F(PimodelTest, PhysicsResiduesTkcTest) {
-    // Note: AddResidues is already called at the model constructor
+    auto model = Pimodel(pd, TMin, TMax, 0, 0, 1);
+    model.SetResidues();
+    ASSERT_EQ(model.physicsResiduesTkc.size(), 1);
+    ASSERT_DOUBLE_EQ(model.physicsResiduesTkc[0][0].Get(), 0.5);
+    ASSERT_DOUBLE_EQ(model.physicsResiduesTkc[0][1].Get(), 0.5);
+    ASSERT_DOUBLE_EQ(model.physicsResiduesTkc[0][2].Get(), 0.5);
 
-    ASSERT_EQ(simpleModel->physicsResiduesTkc.size(), 8);
+    double t = 0;
+    double k = 0;
+    double c = 0;
 
-    double tMin = 0, kMin = 0, cMin = 0;
-    double tMax = 1, kMax = 1, cMax = 1;
-
-    // t0, kMin, cMin
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[0].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[0][0].Get(), tMin);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[0][1].Get(), kMin);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[0][2].Get(), cMin);
-
-    // t0, kMin, cMax
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[1].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[1][0].Get(), tMin);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[1][1].Get(), kMin);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[1][2].Get(), cMax);
-
-    // t0, kMax, cMin
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[2].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[2][0].Get(), tMin);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[2][1].Get(), kMax);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[2][2].Get(), cMin);
-
-    // t0, kMax, cMax
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[3].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[3][0].Get(), tMin);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[3][1].Get(), kMax);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[3][2].Get(), cMax);
-
-    // tMax, kMin, cMin
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[4].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[4][0].Get(), tMax);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[4][1].Get(), kMin);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[4][2].Get(), cMin);
-
-    // tMax, kMin, cMax
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[5].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[5][0].Get(), tMax);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[5][1].Get(), kMin);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[5][2].Get(), cMax);
-
-    // tMax, kMax, cMin
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[6].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[6][0].Get(), tMax);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[6][1].Get(), kMax);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[6][2].Get(), cMin);
-
-    // tMax, kMax, cMax
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[7].size(), 3);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[7][0].Get(), tMax);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[7][1].Get(), kMax);
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResiduesTkc[7][2].Get(), cMax);
-}
-
-TEST_F(PimodelTest, PhysicsResiduesTkcZeroDiscTest) {
-    // Test with kcDiscretization = timeDiscretization = 0;
-
-    auto pd_ = ProblemDescription();
-    pd_.AddMass(Random(), Random(), Random());
-    pd_.AddMass(Random(), Random(), Random());
-    pd_.AddSpring(0, 1, KMin, KMax);
-    pd_.AddDamper(0, 1, CMin, CMax);
-
-    auto model_ = Pimodel(pd_, TMin, TMax, 0, 0, 1);
-    model_.AddResiduesTkc();
-
-    ASSERT_EQ(model_.physicsResiduesTkc.size(), 1);
-
-    ASSERT_DOUBLE_EQ(model_.physicsResiduesTkc[0].size(), 3);
-    ASSERT_DOUBLE_EQ(model_.physicsResiduesTkc[0][0].Get(), 0.5);
-    ASSERT_DOUBLE_EQ(model_.physicsResiduesTkc[0][1].Get(), 0.5);
-    ASSERT_DOUBLE_EQ(model_.physicsResiduesTkc[0][2].Get(), 0.5);
+    int i = 0;
+    while (t <= 1) {
+        k = 0;
+        while (k <= 1) {
+            c = 0;
+            while (c <= 1) {
+                ASSERT_DOUBLE_EQ(piModel.physicsResiduesTkc[i][0].Get(), t);
+                ASSERT_DOUBLE_EQ(piModel.physicsResiduesTkc[i][1].Get(), k);
+                ASSERT_DOUBLE_EQ(piModel.physicsResiduesTkc[i][2].Get(), c);
+                i++;
+                c += 1 / (kcDiscretization + 0.0);
+            }
+            k += 1 / (kcDiscretization + 0.0);
+        }
+        t += 1 / (kcDiscretization + 0.0);
+    }
 }
 
 TEST_F(PimodelTest, InitialConditionsResiduesTest) {
-    // Note: AddResidues is already called at the model constructor
-
-    // 4 total values of (k,c) per mass (see InitialConditionsResiduesTkcTest)
+    // For each mass, one residue for each tkc value
+    // Ex:
     // 2 masses
-    // -> 8 residues in total
-    ASSERT_EQ(simpleModel->initialDispResidues.size(), 8);
-    ASSERT_EQ(simpleModel->initialVelResidues.size(), 8);
+    // timeDiscretization = 1
+    // kcDiscretization = 0
+    // -> tkc values = [0,0.5,0.5], [1,0.5,0.5]
+    // initialDisplacementResidues:
+    //  (x0-x0Model(t = 0, k = 0.5, c = 0.5))
+    //  (x0-x0Model(t = 1, k = 0.5, c = 0.5))
+    //  (x1-x1Model(t = 0, k = 0.5, c = 0.5))
+    //  (x1-x1Model(t = 1, k = 0.5, c = 0.5))
+    ASSERT_EQ(piModel.initialDispResidues.size(),
+              piModel.initialConditionsResiduesTkc.size() * 2);  // 2 masses
+    ASSERT_EQ(piModel.initialVelResidues.size(),
+              piModel.initialConditionsResiduesTkc.size() * 2);  // 2 masses
 
-    double tMin = 0, kMin = 0, cMin = 0;
-    double kMax = 1, cMax = 1;
+    // Verify all the X values are set correctly in the models
+    for (int resId = 0; resId < piModel.initialConditionsResiduesTkc.size();
+         resId++) {
+        for (int massId = 0; massId < 2; massId++) {
+            for (int p = 0; p < piModel.initialDispResidues[resId].polys.size();
+                 p++) {
+                auto tkc = piModel.initialDispResidues[resId].polys[p].GetX();
+                ASSERT_DOUBLE_EQ(
+                    tkc[0],  // t
+                    piModel.initialConditionsResiduesTkc[resId][0].Get());
+                ASSERT_DOUBLE_EQ(
+                    tkc[1],  // k
+                    piModel.initialConditionsResiduesTkc[resId][1].Get());
+                ASSERT_DOUBLE_EQ(
+                    tkc[2],  // c
+                    piModel.initialConditionsResiduesTkc[resId][2].Get());
 
-    std::vector<double> tkcSet;
-    double initialX0 = 0;
-    double initialX1 = initialDisplacement;
+                tkc = piModel.initialVelResidues[resId].polys[p].GetX();
+                ASSERT_DOUBLE_EQ(
+                    tkc[0],  // t
+                    piModel.initialConditionsResiduesTkc[resId][0].Get());
+                ASSERT_DOUBLE_EQ(
+                    tkc[1],  // k
+                    piModel.initialConditionsResiduesTkc[resId][1].Get());
+                ASSERT_DOUBLE_EQ(
+                    tkc[2],  // c
+                    piModel.initialConditionsResiduesTkc[resId][2].Get());
+            }
+        }
+    }
 
-#define TEST_DISP_RESIDUES(residue, mass, initialX, expectedT, expectedK, \
-                           expectedC)                                     \
-    ASSERT_EQ(simpleModel->initialDispResidues[residue].polys.size(), 1); \
-    ASSERT_EQ(simpleModel->initialDispResidues[residue].k.size(), 1);     \
-    ASSERT_EQ(simpleModel->initialDispResidues[residue].k[0], 1.0);       \
-    ASSERT_EQ(simpleModel->initialDispResidues[residue].polys[0],         \
-              this->simpleModel->models(mass, 0));                        \
-    ASSERT_EQ(simpleModel->initialDispResidues[residue].plus, -initialX); \
-    tkcSet = simpleModel->initialDispResidues[residue].polys[0].GetX();   \
-    ASSERT_EQ(tkcSet.size(), 3);                                          \
-    ASSERT_DOUBLE_EQ(tkcSet[0], expectedT);                               \
-    ASSERT_DOUBLE_EQ(tkcSet[1], expectedK);                               \
-    ASSERT_DOUBLE_EQ(tkcSet[2], expectedC);
+    // Check initial displacement residues
+    std::vector<Polys> residues = std::vector<Polys>();
+    std::vector<double> initial = std::vector<double>{0.0, initialDisplacement};
+    for (int massId = 0; massId < 2; massId++) {
+        for (int i = 0; i < piModel.initialConditionsResiduesTkc.size(); i++) {
+            Poly p = piModel.models(massId, 0);
+            p.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
 
-    TEST_DISP_RESIDUES(0, 0, initialX0, tMin, kMin, cMin);
-    TEST_DISP_RESIDUES(1, 0, initialX0, tMin, kMin, cMax);
-    TEST_DISP_RESIDUES(2, 0, initialX0, tMin, kMax, cMin);
-    TEST_DISP_RESIDUES(3, 0, initialX0, tMin, kMax, cMax);
-    TEST_DISP_RESIDUES(4, 1, initialX1, tMin, kMin, cMin);
-    TEST_DISP_RESIDUES(5, 1, initialX1, tMin, kMin, cMax);
-    TEST_DISP_RESIDUES(6, 1, initialX1, tMin, kMax, cMin);
-    TEST_DISP_RESIDUES(7, 1, initialX1, tMin, kMax, cMax);
+            residues.push_back(p + (-initial[massId]));
+        }
+    }
+    ASSERT_EQ(residues.size(), piModel.initialDispResidues.size());
+    for (int i = 0; i < residues.size(); i++) {
+        ASSERT_EQ(residues[i], piModel.initialDispResidues[i]);
+    }
 
-    double initialX0Dot = 0;
-    double initialX1Dot = 0;
-    Poly model;
-#define TEST_VEL_RESIDUES(residue, mass, initialXDot, expectedT, expectedK, \
-                          expectedC)                                        \
-    ASSERT_EQ(simpleModel->initialVelResidues[residue].polys.size(), 1);    \
-    ASSERT_EQ(simpleModel->initialVelResidues[residue].k.size(), 1);        \
-    ASSERT_EQ(simpleModel->initialVelResidues[residue].k[0], 1.0);          \
-    model = this->simpleModel->models(mass, 0);                             \
-    model.Dxi(0);                                                           \
-    ASSERT_EQ(simpleModel->initialVelResidues[residue].polys[0], model);    \
-    ASSERT_EQ(simpleModel->initialVelResidues[residue].plus, -initialXDot); \
-    tkcSet = simpleModel->initialVelResidues[residue].polys[0].GetX();      \
-    ASSERT_EQ(tkcSet.size(), 3);                                            \
-    ASSERT_DOUBLE_EQ(tkcSet[0], expectedT);                                 \
-    ASSERT_DOUBLE_EQ(tkcSet[1], expectedK);                                 \
-    ASSERT_DOUBLE_EQ(tkcSet[2], expectedC);
+    // Check initial velocity residues
+    residues = std::vector<Polys>();
+    initial = std::vector<double>{0.0, initialVelocity};
+    for (int massId = 0; massId < 2; massId++) {
+        for (int i = 0; i < piModel.initialConditionsResiduesTkc.size(); i++) {
+            Poly p = piModel.models(massId, 0);
+            p.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
+            ASSERT_FALSE(p.Dxi(0).isError);
 
-    TEST_VEL_RESIDUES(0, 0, initialX0Dot, tMin, kMin, cMin);
-    TEST_VEL_RESIDUES(1, 0, initialX0Dot, tMin, kMin, cMax);
-    TEST_VEL_RESIDUES(2, 0, initialX0Dot, tMin, kMax, cMin);
-    TEST_VEL_RESIDUES(3, 0, initialX0Dot, tMin, kMax, cMax);
-    TEST_VEL_RESIDUES(4, 1, initialX1Dot, tMin, kMin, cMin);
-    TEST_VEL_RESIDUES(5, 1, initialX1Dot, tMin, kMin, cMax);
-    TEST_VEL_RESIDUES(6, 1, initialX1Dot, tMin, kMax, cMin);
-    TEST_VEL_RESIDUES(7, 1, initialX1Dot, tMin, kMax, cMax);
+            residues.push_back(p + (-initial[massId]));
+        }
+    }
+    ASSERT_EQ(residues.size(), piModel.initialVelResidues.size());
+    for (int i = 0; i < residues.size(); i++) {
+        ASSERT_EQ(residues[i], piModel.initialVelResidues[i]);
+    }
 }
 
 TEST_F(PimodelTest, PhysicsResiduesTest) {
-    // Note: AddResidues is already called at the model constructor
+    // For each mass, one residue for each tkc value
+    // Ex:
+    // 2 masses
+    // timeDiscretization = 1
+    // kcDiscretization = 0
+    // -> tkc values = [0,0.5,0.5], [1,0.5,0.5]
+    // physicsResidues:
+    //  (x0ModelDotDot-x0DotDot(x0Model(t = 0, k = 0.5, c = 0.5),
+    //                          x0ModelDot(t = 0, k = 0.5, c = 0.5))
+    //
+    //  (x0ModelDotDot-x0DotDot(x0Model(t = 1, k = 0.5, c = 0.5),
+    //                          x0ModelDot(t = 1, k = 0.5, c = 0.5))
+    //
+    //  (x1ModelDotDot-x1DotDot(x1Model(t = 0, k = 0.5, c = 0.5),
+    //                          x1ModelDot(t = 0, k = 0.5, c = 0.5))
+    //
+    //  (x1ModelDotDot-x1DotDot(x1Model(t = 1, k = 0.5, c = 0.5),
+    //                          x1ModelDot(t = 1, k = 0.5, c = 0.5))
 
-    // 8 total values of (t, k,c) per mass (see
-    // InitialConditionsResiduesTkcTest) 2 masses
-    // -> 16 residues in total
-    ASSERT_EQ(simpleModel->physicsResidues.size(), 16);
+    ASSERT_EQ(piModel.physicsResidues.size(),
+              piModel.physicsResiduesTkc.size() * 2);  // 2 masses
 
-    std::vector<double> tkcSet;
-    double tMin = 0, kMin = 0, cMin = 0;
-    double tMax = 1, kMax = 1, cMax = 1;
+    // Verify all the X values are set correctly in the models
+    for (int resId = 0; resId < piModel.physicsResiduesTkc.size(); resId++) {
+        for (int massId = 0; massId < 2; massId++) {
+            for (int p = 0; p < piModel.physicsResidues[resId].polys.size();
+                 p++) {
+                auto tkc = piModel.physicsResidues[resId].polys[p].GetX();
+                ASSERT_DOUBLE_EQ(tkc[0],  // t
+                                 piModel.physicsResiduesTkc[resId][0].Get());
+                ASSERT_DOUBLE_EQ(tkc[1],  // k
+                                 piModel.physicsResiduesTkc[resId][1].Get());
+                ASSERT_DOUBLE_EQ(tkc[2],  // c
+                                 piModel.physicsResiduesTkc[resId][2].Get());
+            }
+        }
+    }
 
-    Poly x0, x1, x0Dot, x1Dot, x0DotDot, x1DotDot;
+    std::vector<Polys> residues = std::vector<Polys>();
 
-#define TEST_MASS_0_PHYSICS_RESIDUE(residue, kValue, cValue, tValue)     \
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResidues[residue].plus, -0);    \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].polys.size(), 1);    \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].k.size(), 1);        \
-                                                                         \
-    /* x0DotDot */                                                       \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].k[0], 1.0);          \
-    x0DotDot = this->simpleModel->models(0, 0);                          \
-    x0DotDot.Dxi(0);                                                     \
-    x0DotDot.Dxi(0);                                                     \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].polys[0], x0DotDot); \
-                                                                         \
-    tkcSet = simpleModel->physicsResidues[residue].polys[0].GetX();      \
-    ASSERT_EQ(tkcSet.size(), 3);                                         \
-    ASSERT_DOUBLE_EQ(tkcSet[0], tValue);                                 \
-    ASSERT_DOUBLE_EQ(tkcSet[1], kValue);                                 \
-    ASSERT_DOUBLE_EQ(tkcSet[2], cValue);
+    for (int i = 0; i < piModel.physicsResiduesTkc.size(); i++) {
+        Poly x0Model = piModel.models(0, 0);
+        Poly x0ModelDot = piModel.models(0, 0);
+        ASSERT_FALSE(x0ModelDot.Dxi(0).isError);
+        Poly x0ModelDotDot = piModel.models(0, 0);
+        ASSERT_FALSE(x0ModelDotDot.Dxi(0).isError);
+        ASSERT_FALSE(x0ModelDotDot.Dxi(0).isError);
 
-    TEST_MASS_0_PHYSICS_RESIDUE(0, kMin, cMin, tMin);
-    TEST_MASS_0_PHYSICS_RESIDUE(1, kMin, cMax, tMin);
-    TEST_MASS_0_PHYSICS_RESIDUE(2, kMax, cMin, tMin);
-    TEST_MASS_0_PHYSICS_RESIDUE(3, kMax, cMax, tMin);
-    TEST_MASS_0_PHYSICS_RESIDUE(4, kMin, cMin, tMax);
-    TEST_MASS_0_PHYSICS_RESIDUE(5, kMin, cMax, tMax);
-    TEST_MASS_0_PHYSICS_RESIDUE(6, kMax, cMin, tMax);
-    TEST_MASS_0_PHYSICS_RESIDUE(7, kMax, cMax, tMax);
+        x0Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+        x0ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+        x0ModelDotDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
 
-#define TEST_MASS_1_PHYSICS_RESIDUE(residue, kValue, cValue, tValue, KValue,   \
-                                    CValue, TValue)                            \
-    ASSERT_DOUBLE_EQ(simpleModel->physicsResidues[residue].plus, 0);           \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].polys.size(), 5);          \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].k.size(), 5);              \
-                                                                               \
-    /* x1DotDot */                                                             \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].k[0], 1.0);                \
-    x1DotDot = this->simpleModel->models(1, 0);                                \
-    x1DotDot.Dxi(0);                                                           \
-    x1DotDot.Dxi(0);                                                           \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].polys[0], x1DotDot);       \
-                                                                               \
-    /* -1/m*(k*x0) */                                                          \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].k[1], -1 / m * (KValue));  \
-    x0 = this->simpleModel->models(0, 0);                                      \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].polys[1], x0);             \
-                                                                               \
-    /* -1/m*(-k*x1) */                                                         \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].k[2], -1 / m * (-KValue)); \
-    x1 = this->simpleModel->models(1, 0);                                      \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].polys[2], x1);             \
-                                                                               \
-    /* -1/m*(c*x0Dot) */                                                       \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].k[3], -1 / m * (CValue));  \
-    x0Dot = this->simpleModel->models(0, 0);                                   \
-    x0Dot.Dxi(0);                                                              \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].polys[3], x0Dot);          \
-                                                                               \
-    /* -1/m*(-c*x1Dot) */                                                      \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].k[4], -1 / m * (-CValue)); \
-    x1Dot = this->simpleModel->models(1, 0);                                   \
-    x1Dot.Dxi(0);                                                              \
-    ASSERT_EQ(simpleModel->physicsResidues[residue].polys[4], x1Dot);          \
-                                                                               \
-    tkcSet = simpleModel->physicsResidues[residue].polys[0].GetX();            \
-    ASSERT_EQ(tkcSet.size(), 3);                                               \
-    ASSERT_DOUBLE_EQ(tkcSet[0], tValue);                                       \
-    ASSERT_DOUBLE_EQ(tkcSet[1], kValue);                                       \
-    ASSERT_DOUBLE_EQ(tkcSet[2], cValue);                                       \
-    tkcSet = simpleModel->physicsResidues[residue].polys[1].GetX();            \
-    ASSERT_EQ(tkcSet.size(), 3);                                               \
-    ASSERT_DOUBLE_EQ(tkcSet[0], tValue);                                       \
-    ASSERT_DOUBLE_EQ(tkcSet[1], kValue);                                       \
-    ASSERT_DOUBLE_EQ(tkcSet[2], cValue);                                       \
-    tkcSet = simpleModel->physicsResidues[residue].polys[2].GetX();            \
-    ASSERT_EQ(tkcSet.size(), 3);                                               \
-    ASSERT_DOUBLE_EQ(tkcSet[0], tValue);                                       \
-    ASSERT_DOUBLE_EQ(tkcSet[1], kValue);                                       \
-    ASSERT_DOUBLE_EQ(tkcSet[2], cValue);                                       \
-    tkcSet = simpleModel->physicsResidues[residue].polys[3].GetX();            \
-    ASSERT_EQ(tkcSet.size(), 3);                                               \
-    ASSERT_DOUBLE_EQ(tkcSet[0], tValue);                                       \
-    ASSERT_DOUBLE_EQ(tkcSet[1], kValue);                                       \
-    ASSERT_DOUBLE_EQ(tkcSet[2], cValue);                                       \
-    tkcSet = simpleModel->physicsResidues[residue].polys[4].GetX();            \
-    ASSERT_EQ(tkcSet.size(), 3);                                               \
-    ASSERT_DOUBLE_EQ(tkcSet[0], tValue);                                       \
-    ASSERT_DOUBLE_EQ(tkcSet[1], kValue);                                       \
-    ASSERT_DOUBLE_EQ(tkcSet[2], cValue);
+        residues.push_back(x0ModelDotDot + (-0));  // Initial mass is fixed
+    }
 
-    TEST_MASS_1_PHYSICS_RESIDUE(8, kMin, cMin, tMin, KMin, CMin, TMin);
-    TEST_MASS_1_PHYSICS_RESIDUE(9, kMin, cMax, tMin, KMin, CMax, TMin);
-    TEST_MASS_1_PHYSICS_RESIDUE(10, kMax, cMin, tMin, KMax, CMin, TMin);
-    TEST_MASS_1_PHYSICS_RESIDUE(11, kMax, cMax, tMin, KMax, CMax, TMin);
-    TEST_MASS_1_PHYSICS_RESIDUE(12, kMin, cMin, tMax, KMin, CMin, TMax);
-    TEST_MASS_1_PHYSICS_RESIDUE(13, kMin, cMax, tMax, KMin, CMax, TMax);
-    TEST_MASS_1_PHYSICS_RESIDUE(14, kMax, cMin, tMax, KMax, CMin, TMax);
-    TEST_MASS_1_PHYSICS_RESIDUE(15, kMax, cMax, tMax, KMax, CMax, TMax);
+    Bounded k;  // normalized k (from 0 to 1)
+    Bounded c;  // normalized c (from 0 to 1)
+    double K;   // actual value of K
+    double C;   // actual value of C
+    for (int i = 0; i < piModel.physicsResiduesTkc.size(); i++) {
+        Poly x0Model = piModel.models(0, 0);
+        Poly x0ModelDot = piModel.models(0, 0);
+        ASSERT_FALSE(x0ModelDot.Dxi(0).isError);
+        x0Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+        x0ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+
+        Poly x1Model = piModel.models(1, 0);
+        Poly x1ModelDot = piModel.models(1, 0);
+        ASSERT_FALSE(x1ModelDot.Dxi(0).isError);
+        Poly x1ModelDotDot = piModel.models(1, 0);
+        ASSERT_FALSE(x1ModelDotDot.Dxi(0).isError);
+        ASSERT_FALSE(x1ModelDotDot.Dxi(0).isError);
+        x1Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+        x1ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+        x1ModelDotDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+
+        // x1DotDot(x0Model, x1Model) =
+        //  1/m1*
+        //      ( K*x0Model -  K*x1Model
+        //       + C*x0DotModel -  C*x1DotModel)
+        k = piModel.physicsResiduesTkc[i][1];
+        c = piModel.physicsResiduesTkc[i][2];
+        K = Unnormalize(k, KMin, KMax);
+        C = Unnormalize(c, CMin, CMax);
+        residues.push_back(Polys(x1ModelDotDot) +
+                           (-1 / m) * (K * x0Model + (-K) * x1Model +
+                                       C * x0ModelDot + (-C) * x1ModelDot));
+    }
+
+    ASSERT_EQ(residues.size(), piModel.physicsResidues.size());
+    for (int i = 0; i < residues.size(); i++) {
+        ASSERT_EQ(piModel.physicsResidues[i], residues[i]);
+    }
 }
 
 TEST_F(PimodelTest, nResiduesTest) {
@@ -673,423 +539,132 @@ TEST_F(PimodelTest, nResiduesTest) {
     // for t in (0, 1):
     //   for k in (0, 1):
     //     for c in (0, 1):
-    //       x0ModelDotDot(t,k,c) - x0DotDot(x0Model(t,k,c), x0ModelDot(t,k,c))
-    //       x1ModelDotDot(t,k,c) - x1DotDot(x1Model(t,k,c), x1ModelDot(t,k,c))
+    //       x0ModelDotDot(t,k,c) - x0DotDot(x0Model(t,k,c),
+    //       x0ModelDot(t,k,c))
+    //       x1ModelDotDot(t,k,c) - x1DotDot(x1Model(t,k,c),
+    //       x1ModelDot(t,k,c))
     // -> 2*2*2*2 = 16 residues
     ASSERT_EQ(model_.nResidues(), 16 + 16);
 }
 
 TEST_F(PimodelTest, LossTest) {
-    // Full loss test
-    std::vector<double> params = std::vector<double>(8);
-    params = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10,
-              11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
-    ASSERT_FALSE(secondOrderModel->SetParameters(&params).isError);
-    // modelX0(t,k,c) = 1*t^2 + 2*tk + 3*tc + 4*t + 5*k^2 + 6*kc + 7*k
-    // + 8*c^2 + 9*c + 10*1
-    // modelX1(t,k,c) = 11*t^2 + 12*tk + 13*tc + 14*t + 15*k^2 + 16*kc + 17*k
-    // + 18*c^2 + 19*c + 20*1
-    // modelX0Dot(t,k,c) = 2t + 2k + 3c + 4
-    // modelX1Dot(t,k,c) = 22t + 12k + 13c + 14
-    // modelX0DotDot(t,k,c) = 2
-    // modelX1DotDot(t,k,c) = 22
+    // Basically a combination of InitialConditionsResiduesTest
+    // and PhysicsResiduesTest
 
-    int nInitialDispLoss = 3 * 3;  // 3k * 3c
-    int nInitialVelLoss = 3 * 3;   // 3k * 3c
-    int nInitialCondLoss = nInitialDispLoss + nInitialVelLoss;
-    int nPhysicsLoss = 3 * 3 * 3;  // 3t * 3k * 3c
-    double totalLossTerms = nInitialDispLoss + nInitialDispLoss + nPhysicsLoss;
+    int nInitialDispResidues = 0;
+    int nInitialVelResidues = 0;
+    double k = 0;
+    double c = 0;
+    while (k <= 1) {
+        c = 0;
+        while (c <= 1) {
+            nInitialDispResidues++;
+            nInitialVelResidues++;
 
-    double initialConditionsLossWeight = nPhysicsLoss / totalLossTerms;
-    double physicsLossWeight = nInitialCondLoss / totalLossTerms;
-
-    double expectedLoss = 0;
-
-    // Initial values for the problem created in SetUp()
-    double initialX0 = 0;
-    double initialX1 = initialDisplacement;
-    double initialXDot0 = 0;
-    double initialXDot1 = 0;
-
-    double tMin = 0, kMin = 0, cMin = 0;
-    double tMax = 1, kMax = 1, cMax = 1;
-    // Initial conditions loss:
-    for (double k : std::vector<double>{kMin, (kMin + kMax) / 2, kMax}) {
-        for (double c : std::vector<double>{cMin, (cMin + cMax) / 2, cMax}) {
-            double t = 0;
-            double modelX0 = 1 * t * t + 2 * t * k + 3 * t * c + 4 * t +
-                             5 * k * k + 6 * k * c + 7 * k + 8 * c * c + 9 * c +
-                             10 * 1;
-            double modelX1 = 11 * t * t + 12 * t * k + 13 * t * c + 14 * t +
-                             15 * k * k + 16 * k * c + 17 * k + 18 * c * c +
-                             19 * c + 20 * 1;
-            double modelX0Dot = 2 * t + 2 * k + 3 * c + 4;
-            double modelX1Dot = 22 * t + 12 * k + 13 * c + 14;
-            expectedLoss += pow(modelX0 - initialX0, 2);
-            expectedLoss += pow(modelX1 - initialX1, 2);
-            expectedLoss += pow(modelX0Dot - initialXDot0, 2);
-            expectedLoss += pow(modelX1Dot - initialXDot1, 2);
+            c += 1 / (kcDiscretization + 0.0);
         }
+        k += 1 / (kcDiscretization + 0.0);
     }
-    expectedLoss *= initialConditionsLossWeight;
+    int nInitialCondResidues = nInitialDispResidues + nInitialVelResidues;
 
-    // Physics loss:
-    for (double t : std::vector<double>{tMin, (tMax + tMin) / 2, tMax}) {
-        for (double k : std::vector<double>{kMin, (kMin + kMax) / 2, kMax}) {
-            for (double c :
-                 std::vector<double>{cMin, (cMin + cMax) / 2, cMax}) {
-                double modelX0 = 1 * t * t + 2 * t * k + 3 * t * c + 4 * t +
-                                 5 * k * k + 6 * k * c + 7 * k + 8 * c * c +
-                                 9 * c + 10 * 1;
-                double modelX1 = 11 * t * t + 12 * t * k + 13 * t * c + 14 * t +
-                                 15 * k * k + 16 * k * c + 17 * k + 18 * c * c +
-                                 19 * c + 20 * 1;
-                double modelX0Dot = 2 * t + 2 * k + 3 * c + 4;
-                double modelX1Dot = 22 * t + 12 * k + 13 * c + 14;
-                double modelX0DotDot = 2;
-                double modelX1DotDot = 22;
-
-                // Mass 0 is fixed
-                double x0DotDot = 0;
-                double K = KMin + k * (KMax - KMin);
-                double C = CMin + c * (CMax - CMin);
-                double x1DotDot = 1 / m *
-                                  (K * modelX0 - K * modelX1 + C * modelX0Dot -
-                                   C * modelX1Dot);
-                expectedLoss +=
-                    physicsLossWeight * pow(modelX0DotDot - x0DotDot, 2);
-                expectedLoss +=
-                    physicsLossWeight * pow(modelX1DotDot - x1DotDot, 2);
-            }
-        }
-    }
-
-    ASSERT_EQ(secondOrderModel->nResidues(), 3 * 3 * 4 + 3 * 3 * 3 * 2);
-
-    double loss = secondOrderModel->Loss();
-
-    ASSERT_DOUBLE_EQ(expectedLoss, loss);
-}
-
-TEST_F(PimodelTest, LossGradientTest) {
-    Pimodel model = Pimodel(this->pd, TMin, TMax, 1, 1, 1);
-    model.SetResidues();
-    std::vector<double> params = std::vector<double>(8);
-    double a0 = 13.0;
-    double a1 = 26.0;
-    double a2 = 332.0;
-    double a3 = 44.0;
-    double a4 = 56.0;
-    double a5 = 61.0;
-    double a6 = 722.0;
-    double a7 = 58.0;
-    params = {a0, a1, a2, a3, a4, a5, a6, a7};
-    ASSERT_FALSE(model.SetParameters(&params).isError);
-    // modelX0(t,k,c) = a0*t + a1*k + a2*c + a3*1
-    // modelX1(t,k,c) = a4*t + a5*k + a6*c + a7*1
-    // modelXDot0(t,k,c) = a0
-    // modelXDot1(t,k,c) = a4
-    // modelXDotDot0(t,k,c) = 0
-    // modelXDotDot1(t,k,c) = 0
-
-    std::vector<double> expectedGrad = std::vector<double>(8);
-    std::vector<double> grad = std::vector<double>(8);
-
-    // Initial values for the problem created in SetUp()
-    double initialX0 = 0;
-    double initialX1 = initialDisplacement;
-    double initialX0Dot = 0;
-    double initialX1Dot = 0;
-
-    int nInitialDispLoss = 2 * 2;  // 2k * 2c
-    int nInitialVelLoss = 2 * 2;   // 2k * 2c
-    int nInitialCondLoss = nInitialDispLoss + nInitialVelLoss;
-    int nPhysicsLoss = 2 * 2 * 2;  // 2t * 2k * 2c
-    double totalLossTerms = nInitialDispLoss + nInitialDispLoss + nPhysicsLoss;
-
-    double initialConditionsLossWeight = nPhysicsLoss / totalLossTerms;
-    double physicsLossWeight = nInitialCondLoss / totalLossTerms;
-
-    double tMin = 0, kMin = 0, cMin = 0;
-    double tMax = 1, kMax = 1, cMax = 1;
-
+    int nPhysicsResidues = 0;
     double t = 0;
-    int residue = 0;
-    // Initial displacements mass 0
-    for (double k : std::vector<double>{kMin, kMax}) {
-        for (double c : std::vector<double>{cMin, cMax}) {
-            double modelX0 = a0 * t + a1 * k + a2 * c + a3 * 1;
-
-            double d_da0_modelX0 = t;
-            double d_da1_modelX0 = k;
-            double d_da2_modelX0 = c;
-            double d_da3_modelX0 = 1;
-
-            expectedGrad = std::vector<double>(8);
-            expectedGrad[0] += initialConditionsLossWeight *
-                               (modelX0 - initialX0) * d_da0_modelX0;
-            expectedGrad[1] += initialConditionsLossWeight *
-                               (modelX0 - initialX0) * d_da1_modelX0;
-            expectedGrad[2] += initialConditionsLossWeight *
-                               (modelX0 - initialX0) * d_da2_modelX0;
-            expectedGrad[3] += initialConditionsLossWeight *
-                               (modelX0 - initialX0) * d_da3_modelX0;
-            ASSERT_EQ(expectedGrad, model.ResidueGradient(residue));
-            residue += 1;
-        }
-    }
-
-    // Initial displacements mass 1
-    for (double k : std::vector<double>{kMin, kMax}) {
-        for (double c : std::vector<double>{cMin, cMax}) {
-            double modelX1 = a4 * t + a5 * k + a6 * c + a7 * 1;
-
-            double d_da4_modelX1 = t;
-            double d_da5_modelX1 = k;
-            double d_da6_modelX1 = c;
-            double d_da7_modelX1 = 1;
-
-            expectedGrad = std::vector<double>(8);
-            expectedGrad[4] += initialConditionsLossWeight *
-                               (modelX1 - initialX1) * d_da4_modelX1;
-            expectedGrad[5] += initialConditionsLossWeight *
-                               (modelX1 - initialX1) * d_da5_modelX1;
-            expectedGrad[6] += initialConditionsLossWeight *
-                               (modelX1 - initialX1) * d_da6_modelX1;
-            expectedGrad[7] += initialConditionsLossWeight *
-                               (modelX1 - initialX1) * d_da7_modelX1;
-            ASSERT_EQ(expectedGrad, model.ResidueGradient(residue));
-            residue += 1;
-        }
-    }
-
-    // Initial velocities mass 0
-    for (double k : std::vector<double>{kMin, kMax}) {
-        for (double c : std::vector<double>{cMin, cMax}) {
-            double modelX0Dot = a0 * 1;
-
-            double d_da0_modelX0Dot = 1;
-            double d_da1_modelX0Dot = 0;
-            double d_da2_modelX0Dot = 0;
-            double d_da3_modelX0Dot = 0;
-
-            expectedGrad = std::vector<double>(8);
-            expectedGrad[0] += initialConditionsLossWeight *
-                               (modelX0Dot - initialX0Dot) * d_da0_modelX0Dot;
-            expectedGrad[1] += initialConditionsLossWeight *
-                               (modelX0Dot - initialX0Dot) * d_da1_modelX0Dot;
-            expectedGrad[2] += initialConditionsLossWeight *
-                               (modelX0Dot - initialX0Dot) * d_da2_modelX0Dot;
-            expectedGrad[3] += initialConditionsLossWeight *
-                               (modelX0Dot - initialX0Dot) * d_da3_modelX0Dot;
-            ASSERT_EQ(expectedGrad, model.ResidueGradient(residue));
-            residue += 1;
-        }
-    }
-
-    // Initial velocities mass 1
-    for (double k : std::vector<double>{kMin, kMax}) {
-        for (double c : std::vector<double>{cMin, cMax}) {
-            double modelX1Dot = a4 * 1;
-
-            double d_da4_modelX1Dot = 1;
-            double d_da5_modelX1Dot = 0;
-            double d_da6_modelX1Dot = 0;
-            double d_da7_modelX1Dot = 0;
-
-            expectedGrad = std::vector<double>(8);
-            expectedGrad[4] += initialConditionsLossWeight *
-                               (modelX1Dot - initialX1Dot) * d_da4_modelX1Dot;
-            expectedGrad[5] += initialConditionsLossWeight *
-                               (modelX1Dot - initialX1Dot) * d_da5_modelX1Dot;
-            expectedGrad[6] += initialConditionsLossWeight *
-                               (modelX1Dot - initialX1Dot) * d_da6_modelX1Dot;
-            expectedGrad[7] += initialConditionsLossWeight *
-                               (modelX1Dot - initialX1Dot) * d_da7_modelX1Dot;
-
-            ASSERT_EQ(expectedGrad, model.ResidueGradient(residue));
-            residue += 1;
-        }
-    }
-
-    // Physics loss:
-    for (int mass = 0; mass <= 1; mass++) {
-        for (double t : std::vector<double>{tMin, tMax}) {
-            for (double k : std::vector<double>{kMin, kMax}) {
-                for (double c : std::vector<double>{cMin, cMax}) {
-                    double modelX0 = a0 * t + a1 * k + a2 * c + a3 * 1;
-                    double modelX1 = a4 * t + a5 * k + a6 * c + a7 * 1;
-                    double modelX0Dot = a0;
-                    double modelX1Dot = a4;
-                    double modelX0DotDot = 0;
-                    double modelX1DotDot = 0;
-
-                    double K = KMin + k * (KMax - KMin);
-                    double C = CMin + c * (CMax - CMin);
-                    // Mass 0 is fixed
-                    double X0DotDot = 0;
-                    double X1DotDot = 1 / m *
-                                      (K * modelX0 - K * modelX1 +
-                                       C * modelX0Dot - C * modelX1Dot);
-
-                    double d_da0_modelX0 = t;
-                    double d_da1_modelX0 = k;
-                    double d_da2_modelX0 = c;
-                    double d_da3_modelX0 = 1;
-                    double d_da4_modelX0 = 0;
-                    double d_da5_modelX0 = 0;
-                    double d_da6_modelX0 = 0;
-                    double d_da7_modelX0 = 0;
-                    double d_da0_modelX1 = 0;
-                    double d_da1_modelX1 = 0;
-                    double d_da2_modelX1 = 0;
-                    double d_da3_modelX1 = 0;
-                    double d_da4_modelX1 = t;
-                    double d_da5_modelX1 = k;
-                    double d_da6_modelX1 = c;
-                    double d_da7_modelX1 = 1;
-
-                    double d_da0_modelX0Dot = 1;
-                    double d_da1_modelX0Dot = 0;
-                    double d_da2_modelX0Dot = 0;
-                    double d_da3_modelX0Dot = 0;
-                    double d_da4_modelX0Dot = 0;
-                    double d_da5_modelX0Dot = 0;
-                    double d_da6_modelX0Dot = 0;
-                    double d_da7_modelX0Dot = 0;
-                    double d_da0_modelX1Dot = 0;
-                    double d_da1_modelX1Dot = 0;
-                    double d_da2_modelX1Dot = 0;
-                    double d_da3_modelX1Dot = 0;
-                    double d_da4_modelX1Dot = 1;
-                    double d_da5_modelX1Dot = 0;
-                    double d_da6_modelX1Dot = 0;
-                    double d_da7_modelX1Dot = 0;
-
-                    // modelX0DotDot = modelX1DotDot = 0
-                    // -> All derivatives are 0
-                    double d_dai_modelX0DotDot = 0;
-                    double d_dai_modelX1DotDot = 0;
-
-                    double d_da0_X0DotDot = 0;
-                    double d_da0_X1DotDot =
-                        1 / m *
-                        (K * d_da0_modelX0 - K * d_da0_modelX1 +
-                         C * d_da0_modelX0Dot - C * d_da0_modelX1Dot);
-                    double d_da1_X0DotDot = 0;
-                    double d_da1_X1DotDot =
-                        1 / m *
-                        (K * d_da1_modelX0 - K * d_da1_modelX1 +
-                         C * d_da1_modelX0Dot - C * d_da1_modelX1Dot);
-                    double d_da2_X0DotDot = 0;
-                    double d_da2_X1DotDot =
-                        1 / m *
-                        (K * d_da2_modelX0 - K * d_da2_modelX1 +
-                         C * d_da2_modelX0Dot - C * d_da2_modelX1Dot);
-                    double d_da3_X0DotDot = 0;
-                    double d_da3_X1DotDot =
-                        1 / m *
-                        (K * d_da3_modelX0 - K * d_da3_modelX1 +
-                         C * d_da3_modelX0Dot - C * d_da3_modelX1Dot);
-                    double d_da4_X0DotDot = 0;
-                    double d_da4_X1DotDot =
-                        1 / m *
-                        (K * d_da4_modelX0 - K * d_da4_modelX1 +
-                         C * d_da4_modelX0Dot - C * d_da4_modelX1Dot);
-                    double d_da5_X0DotDot = 0;
-                    double d_da5_X1DotDot =
-                        1 / m *
-                        (K * d_da5_modelX0 - K * d_da5_modelX1 +
-                         C * d_da5_modelX0Dot - C * d_da5_modelX1Dot);
-                    double d_da6_X0DotDot = 0;
-                    double d_da6_X1DotDot =
-                        1 / m *
-                        (K * d_da6_modelX0 - K * d_da6_modelX1 +
-                         C * d_da6_modelX0Dot - C * d_da6_modelX1Dot);
-                    double d_da7_X0DotDot = 0;
-                    double d_da7_X1DotDot =
-                        1 / m *
-                        (K * d_da7_modelX0 - K * d_da7_modelX1 +
-                         C * d_da7_modelX0Dot - C * d_da7_modelX1Dot);
-
-                    expectedGrad = std::vector<double>(8);
-                    if (mass == 0) {
-                        expectedGrad[0] +=
-                            physicsLossWeight *
-                            ((modelX0DotDot - X0DotDot) *
-                             (d_dai_modelX0DotDot - d_da0_X0DotDot));
-                        expectedGrad[1] +=
-                            physicsLossWeight *
-                            ((modelX0DotDot - X0DotDot) *
-                             (d_dai_modelX0DotDot - d_da1_X0DotDot));
-                        expectedGrad[2] +=
-                            physicsLossWeight *
-                            ((modelX0DotDot - X0DotDot) *
-                             (d_dai_modelX0DotDot - d_da2_X0DotDot));
-                        expectedGrad[3] +=
-                            physicsLossWeight *
-                            ((modelX0DotDot - X0DotDot) *
-                             (d_dai_modelX0DotDot - d_da3_X0DotDot));
-                        expectedGrad[4] +=
-                            physicsLossWeight *
-                            ((modelX0DotDot - X0DotDot) *
-                             (d_dai_modelX0DotDot - d_da4_X0DotDot));
-                        expectedGrad[5] +=
-                            physicsLossWeight *
-                            ((modelX0DotDot - X0DotDot) *
-                             (d_dai_modelX0DotDot - d_da5_X0DotDot));
-                        expectedGrad[6] +=
-                            physicsLossWeight *
-                            ((modelX0DotDot - X0DotDot) *
-                             (d_dai_modelX0DotDot - d_da6_X0DotDot));
-                        expectedGrad[7] +=
-                            physicsLossWeight *
-                            ((modelX0DotDot - X0DotDot) *
-                             (d_dai_modelX0DotDot - d_da7_X0DotDot));
-                    }
-                    if (mass == 1) {
-                        expectedGrad[0] +=
-                            physicsLossWeight *
-                            ((modelX1DotDot - X1DotDot) *
-                             (d_dai_modelX1DotDot - d_da0_X1DotDot));
-                        expectedGrad[1] +=
-                            physicsLossWeight *
-                            ((modelX1DotDot - X1DotDot) *
-                             (d_dai_modelX1DotDot - d_da1_X1DotDot));
-                        expectedGrad[2] +=
-                            physicsLossWeight *
-                            ((modelX1DotDot - X1DotDot) *
-                             (d_dai_modelX1DotDot - d_da2_X1DotDot));
-                        expectedGrad[3] +=
-                            physicsLossWeight *
-                            ((modelX1DotDot - X1DotDot) *
-                             (d_dai_modelX1DotDot - d_da3_X1DotDot));
-                        expectedGrad[4] +=
-                            physicsLossWeight *
-                            ((modelX1DotDot - X1DotDot) *
-                             (d_dai_modelX1DotDot - d_da4_X1DotDot));
-                        expectedGrad[5] +=
-                            physicsLossWeight *
-                            ((modelX1DotDot - X1DotDot) *
-                             (d_dai_modelX1DotDot - d_da5_X1DotDot));
-                        expectedGrad[6] +=
-                            physicsLossWeight *
-                            ((modelX1DotDot - X1DotDot) *
-                             (d_dai_modelX1DotDot - d_da6_X1DotDot));
-                        expectedGrad[7] +=
-                            physicsLossWeight *
-                            ((modelX1DotDot - X1DotDot) *
-                             (d_dai_modelX1DotDot - d_da7_X1DotDot));
-                    }
-                    auto obtainedGrad = model.ResidueGradient(residue);
-                    for (int a = 0; a < int(obtainedGrad.size()); a++) {
-                        EXPECT_DOUBLE_EQ(expectedGrad[a], obtainedGrad[a]);
-                    }
-                    residue += 1;
-                }
+    while (t <= 1) {
+        k = 0;
+        while (k <= 1) {
+            c = 0;
+            while (c <= 1) {
+                nPhysicsResidues++;
+                c += 1 / (kcDiscretization + 0.0);
             }
+            k += 1 / (kcDiscretization + 0.0);
+        }
+        t += 1 / (kcDiscretization + 0.0);
+    }
+    double totalResiduesTerms =
+        nInitialDispResidues + nInitialDispResidues + nPhysicsResidues;
+    double initialConditionsResiduesWeight =
+        nPhysicsResidues / totalResiduesTerms;
+    double physicsResiduesWeight = nInitialCondResidues / totalResiduesTerms;
+
+    double expectedLoss = 0.0;
+    std::vector<double> initial = std::vector<double>{0.0, initialDisplacement};
+    for (int massId = 0; massId < 2; massId++) {
+        for (int i = 0; i < piModel.initialConditionsResiduesTkc.size(); i++) {
+            Poly p = piModel.models(massId, 0);
+            p.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
+
+            Polys residue = p + (-initial[massId]);
+            expectedLoss += initialConditionsResiduesWeight *
+                            pow(residue(piModel.modelsCoefficients).val, 2);
         }
     }
+    initial = std::vector<double>{0.0, initialVelocity};
+    for (int massId = 0; massId < 2; massId++) {
+        for (int i = 0; i < piModel.initialConditionsResiduesTkc.size(); i++) {
+            Poly p = piModel.models(massId, 0);
+            p.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
+            ASSERT_FALSE(p.Dxi(0).isError);
+
+            Polys residue = (p + (-initial[massId]));
+            expectedLoss += initialConditionsResiduesWeight *
+                            pow(residue(piModel.modelsCoefficients).val, 2);
+        }
+    }
+    for (int i = 0; i < piModel.physicsResiduesTkc.size(); i++) {
+        Poly x0Model = piModel.models(0, 0);
+        Poly x0ModelDot = piModel.models(0, 0);
+        ASSERT_FALSE(x0ModelDot.Dxi(0).isError);
+        Poly x0ModelDotDot = piModel.models(0, 0);
+        ASSERT_FALSE(x0ModelDotDot.Dxi(0).isError);
+        ASSERT_FALSE(x0ModelDotDot.Dxi(0).isError);
+
+        x0Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+        x0ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+        x0ModelDotDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+
+        Polys residue = (x0ModelDotDot + (-0));  // Initial mass is fixed
+        expectedLoss += physicsResiduesWeight *
+                        pow(residue(piModel.modelsCoefficients).val, 2);
+    }
+    Bounded kb;  // normalized k (from 0 to 1)
+    Bounded cb;  // normalized c (from 0 to 1)
+    double K;    // actual value of K
+    double C;    // actual value of C
+    for (int i = 0; i < piModel.physicsResiduesTkc.size(); i++) {
+        Poly x0Model = piModel.models(0, 0);
+        Poly x0ModelDot = piModel.models(0, 0);
+        ASSERT_FALSE(x0ModelDot.Dxi(0).isError);
+        x0Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+        x0ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+
+        Poly x1Model = piModel.models(1, 0);
+        Poly x1ModelDot = piModel.models(1, 0);
+        ASSERT_FALSE(x1ModelDot.Dxi(0).isError);
+        Poly x1ModelDotDot = piModel.models(1, 0);
+        ASSERT_FALSE(x1ModelDotDot.Dxi(0).isError);
+        ASSERT_FALSE(x1ModelDotDot.Dxi(0).isError);
+        x1Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+        x1ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+        x1ModelDotDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+
+        // x1DotDot(x0Model, x1Model) =
+        //  1/m1*
+        //      ( K*x0Model -  K*x1Model
+        //       + C*x0DotModel -  C*x1DotModel)
+        kb = piModel.physicsResiduesTkc[i][1];
+        cb = piModel.physicsResiduesTkc[i][2];
+        K = Unnormalize(kb, KMin, KMax);
+        C = Unnormalize(cb, CMin, CMax);
+
+        Polys residue = (Polys(x1ModelDotDot) +
+                         (-1 / m) * (K * x0Model + (-K) * x1Model +
+                                     C * x0ModelDot + (-C) * x1ModelDot));
+        expectedLoss += physicsResiduesWeight *
+                        pow(residue(piModel.modelsCoefficients).val, 2);
+    }
+
+    ASSERT_DOUBLE_EQ(piModel.Loss(), expectedLoss);
 }
 
 class PimodelTrainTest : public testing::Test {
@@ -1358,78 +933,77 @@ TEST_F(PimodelsTest, getContinuityTkcTest) {
 }
 
 TEST_F(PimodelsTest, setContinuityTest) {
-    auto a = std::vector<double>{Random(), Random(), Random(), Random()};
-    auto b = std::vector<double>{Random(), Random(), Random(), Random()};
-    auto ab =
-        std::vector<double>{a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]};
-    auto c = std::vector<double>{Random(), Random(), Random(), Random()};
-    auto d = std::vector<double>{Random(), Random(), Random(), Random()};
-    auto cd =
-        std::vector<double>{c[0], c[1], c[2], c[3], d[0], d[1], d[2], d[3]};
-    auto e = std::vector<double>{Random(), Random(), Random(), Random()};
-    auto f = std::vector<double>{Random(), Random(), Random(), Random()};
-    auto ef =
-        std::vector<double>{e[0], e[1], e[2], e[3], f[0], f[1], f[2], f[3]};
-
     double totalT = 100 + Random();
     double K = Random(KMin, KMax);
     double C = Random(CMin, CMax);
     std::vector<double> TKC = std::vector<double>{0, K, C};
-    double k_ = Normalize(K, KMin, KMax).val.Get();
-    double c_ = Normalize(C, CMin, CMax).val.Get();
-    double t_ = 1;  // In the point where we set continuity, t(local) = 1
 
     // Single Pimodel
     Pimodels pimodels = Pimodels(this->pd, totalT, 1, 1, 1, 1);
     ASSERT_DEATH({ pimodels.setContinuity(0, TKC); }, "");
 
     // Two Pimodels
-    // t in [0, tMax/2):
-    //  x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
-    //  x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
-    // t in [tMax/2, tMax]:
-    //  x0(t,k,c) = c0*t + c1*k + c2*c + c3*1
-    //  x1(t,k,c) = d0*t + d1*k + d2*c + d3*1
+    // -> t in [0, totalT/2)
+    // -> t in [totalT/2, totalT]
     pimodels = Pimodels(this->pd, totalT, 2, 1, 1, 1);
-    ASSERT_FALSE(pimodels.pimodels[0].SetParameters(&ab).isError);
-    ASSERT_FALSE(pimodels.pimodels[1].SetParameters(&cd).isError);
+    std::vector<double> params0 =
+        std::vector<double>(pimodels.pimodels[0].nParameters());
+    for (int i = 0; i < params0.size(); i++) {
+        params0[i] = Random();
+    }
+    std::vector<double> params1 =
+        std::vector<double>(pimodels.pimodels[1].nParameters());
+    for (int i = 0; i < params1.size(); i++) {
+        params1[i] = Random();
+    }
+    ASSERT_FALSE(pimodels.pimodels[0].SetParameters(&params0).isError);
+    ASSERT_FALSE(pimodels.pimodels[1].SetParameters(&params1).isError);
     ASSERT_DEATH({ pimodels.setContinuity(0, TKC); }, "");
     pimodels.setContinuity(1, TKC);
+
     // No initial conditions are added to the first pimodel
     ASSERT_EQ(pimodels.pimodels[0].p.initialDisps.size(), 0);
     ASSERT_EQ(pimodels.pimodels[0].p.initialVels.size(), 0);
+
     // One initial condition (disp and vel) is added for each mass
     // for the second pimodel
+    TKC[0] = totalT / 2;
     ASSERT_EQ(pimodels.pimodels[1].p.initialDisps.size(), 2);
     ASSERT_EQ(pimodels.pimodels[1].p.initialVels.size(), 2);
-
     ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[0].massId, 0);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[0].val,
-                     a[0] * t_ + a[1] * k_ + a[2] * c_ + a[3]);
+                     pimodels.pimodels[0](&TKC).val[0]);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[1].massId, 1);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[1].val,
-                     b[0] * t_ + b[1] * k_ + b[2] * c_ + b[3]);
-
-    // C1 continuity
+                     pimodels.pimodels[0](&TKC).val[1]);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[0].massId, 0);
-    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[0].val, a[0]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[0].val,
+                     pimodels.pimodels[0].GetVelocities(&TKC).val[0]);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[1].massId, 1);
-    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[1].val, b[0]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[1].val,
+                     pimodels.pimodels[0].GetVelocities(&TKC).val[1]);
 
     // Three Pimodels
-    // t in [0, tMax/3):
-    //  x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
-    //  x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
-    // t in [tMax/3, 2*tMax/3):
-    //  x0(t,k,c) = c0*t + c1*k + c2*c + c3*1
-    //  x1(t,k,c) = d0*t + d1*k + d2*c + d3*1
-    // t in [2*tMax/3, tMax]:
-    //  x0(t,k,c) = e0*t + e1*k + e2*e + e3*1
-    //  x1(t,k,c) = f0*t + f1*k + f2*c + f3*1
+    // t in [0, totalT/3)
+    // t in [totalT/3, 2*totalT/3)
+    // t in [2*totalT/3, totalT]
+
     pimodels = Pimodels(this->pd, totalT, 3, 1, 1, 1);
-    ASSERT_FALSE(pimodels.pimodels[0].SetParameters(&ab).isError);
-    ASSERT_FALSE(pimodels.pimodels[1].SetParameters(&cd).isError);
-    ASSERT_FALSE(pimodels.pimodels[2].SetParameters(&ef).isError);
+    params0 = std::vector<double>(pimodels.pimodels[0].nParameters());
+    for (int i = 0; i < params0.size(); i++) {
+        params0[i] = Random();
+    }
+    params1 = std::vector<double>(pimodels.pimodels[1].nParameters());
+    for (int i = 0; i < params1.size(); i++) {
+        params1[i] = Random();
+    }
+    auto params2 = std::vector<double>(pimodels.pimodels[2].nParameters());
+    for (int i = 0; i < params1.size(); i++) {
+        params2[i] = Random();
+    }
+    ASSERT_FALSE(pimodels.pimodels[0].SetParameters(&params0).isError);
+    ASSERT_FALSE(pimodels.pimodels[1].SetParameters(&params1).isError);
+    ASSERT_FALSE(pimodels.pimodels[2].SetParameters(&params2).isError);
     pimodels.setContinuity(1, TKC);
     pimodels.setContinuity(2, TKC);
     ASSERT_DEATH({ pimodels.setContinuity(3, TKC); }, "");
@@ -1442,94 +1016,90 @@ TEST_F(PimodelsTest, setContinuityTest) {
     ASSERT_EQ(pimodels.pimodels[2].p.initialVels.size(), 2);
 
     // Pimodel 1
+    TKC[0] = totalT / 3;
     ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[0].massId, 0);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[0].val,
-                     a[0] * t_ + a[1] * k_ + a[2] * c_ + a[3]);
+                     pimodels.pimodels[0](&TKC).val[0]);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[1].massId, 1);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialDisps[1].val,
-                     b[0] * t_ + b[1] * k_ + b[2] * c_ + b[3]);
+                     pimodels.pimodels[0](&TKC).val[1]);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[0].massId, 0);
-    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[0].val, a[0]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[0].val,
+                     pimodels.pimodels[0].GetVelocities(&TKC).val[0]);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[1].massId, 1);
-    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[1].val, b[0]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[1].p.initialVels[1].val,
+                     pimodels.pimodels[0].GetVelocities(&TKC).val[1]);
 
     // Pimodel 2
+    TKC[0] = 2 * totalT / 3;
     ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialDisps[0].massId, 0);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialDisps[0].val,
-                     c[0] * t_ + c[1] * k_ + c[2] * c_ + c[3]);
+                     pimodels.pimodels[1](&TKC).val[0]);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialDisps[1].massId, 1);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialDisps[1].val,
-                     d[0] * t_ + d[1] * k_ + d[2] * c_ + d[3]);
+                     pimodels.pimodels[1](&TKC).val[1]);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialVels[0].massId, 0);
-    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialVels[0].val, c[0]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialVels[0].val,
+                     pimodels.pimodels[1].GetVelocities(&TKC).val[0]);
     ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialVels[1].massId, 1);
-    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialVels[1].val, d[0]);
+    ASSERT_DOUBLE_EQ(pimodels.pimodels[2].p.initialVels[1].val,
+                     pimodels.pimodels[1].GetVelocities(&TKC).val[1]);
 }
 
 TEST_F(PimodelsTest, OperatorTest) {
-    auto a = std::vector<double>{Random(), Random(), Random(), Random()};
-    auto b = std::vector<double>{Random(), Random(), Random(), Random()};
-    auto ab =
-        std::vector<double>{a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3]};
-    auto c = std::vector<double>{Random(), Random(), Random(), Random()};
-    auto d = std::vector<double>{Random(), Random(), Random(), Random()};
-    auto cd =
-        std::vector<double>{c[0], c[1], c[2], c[3], d[0], d[1], d[2], d[3]};
-    auto e = std::vector<double>{Random(), Random(), Random(), Random()};
-    auto f = std::vector<double>{Random(), Random(), Random(), Random()};
-    auto ef =
-        std::vector<double>{e[0], e[1], e[2], e[3], f[0], f[1], f[2], f[3]};
-
     double totalT = 100 + Random();
     double K = Random(KMin, KMax);
     double C = Random(CMin, CMax);
     std::vector<double> TKC = std::vector<double>{0, K, C};
-    double k_ = Normalize(K, KMin, KMax).val.Get();
-    double c_ = Normalize(C, CMin, CMax).val.Get();
 
     // Three Pimodels
     // t in [0, tMax/3):
-    //  x0(t,k,c) = a0*t + a1*k + a2*c + a3*1
-    //  x1(t,k,c) = b0*t + b1*k + b2*c + b3*1
+    //  x0(t,k,c) = p0_0
+    //  x1(t,k,c) = p1_0
     // t in [tMax/3, 2*tMax/3):
-    //  x0(t,k,c) = c0*t + c1*k + c2*c + c3*1
-    //  x1(t,k,c) = d0*t + d1*k + d2*c + d3*1
+    //  x0(t,k,c) = p0_1
+    //  x1(t,k,c) = p1_1
     // t in [2*tMax/3, tMax]:
-    //  x0(t,k,c) = e0*t + e1*k + e2*e + e3*1
-    //  x1(t,k,c) = f0*t + f1*k + f2*c + f3*1
+    //  x0(t,k,c) = p0_2
+    //  x1(t,k,c) = p1_2
     Pimodels pimodels = Pimodels(this->pd, totalT, 3, 1, 1, 1);
-    ASSERT_FALSE(pimodels.pimodels[0].SetParameters(&ab).isError);
-    ASSERT_FALSE(pimodels.pimodels[1].SetParameters(&cd).isError);
-    ASSERT_FALSE(pimodels.pimodels[2].SetParameters(&ef).isError);
+    auto params0 = std::vector<double>(pimodels.pimodels[0].nParameters());
+    for (int i = 0; i < params0.size(); i++) {
+        params0[i] = Random();
+    }
+    auto params1 = std::vector<double>(pimodels.pimodels[1].nParameters());
+    for (int i = 0; i < params1.size(); i++) {
+        params1[i] = Random();
+    }
+    auto params2 = std::vector<double>(pimodels.pimodels[2].nParameters());
+    for (int i = 0; i < params1.size(); i++) {
+        params2[i] = Random();
+    }
+    ASSERT_FALSE(pimodels.pimodels[0].SetParameters(&params0).isError);
+    ASSERT_FALSE(pimodels.pimodels[1].SetParameters(&params1).isError);
+    ASSERT_FALSE(pimodels.pimodels[2].SetParameters(&params2).isError);
 
     double T;
-    double t_;
     // Pimodel 0
     T = 0;
     TKC[0] = T;
-    t_ = Normalize(T, 0, totalT / 3).val.Get();
     auto eval = pimodels(&TKC);
     ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val[0], a[0] * t_ + a[1] * k_ + a[2] * c_ + a[3]);
-    ASSERT_DOUBLE_EQ(eval.val[1], b[0] * t_ + b[1] * k_ + b[2] * c_ + b[3]);
+    ASSERT_EQ(eval.val, pimodels.pimodels[0](&TKC).val);
 
     // Pimodel 1
     T = totalT / 3;
     TKC[0] = T;
-    t_ = Normalize(T, totalT / 3, 2 * totalT / 3).val.Get();
     eval = pimodels(&TKC);
     ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val[0], c[0] * t_ + c[1] * k_ + c[2] * c_ + c[3]);
-    ASSERT_DOUBLE_EQ(eval.val[1], d[0] * t_ + d[1] * k_ + d[2] * c_ + d[3]);
+    ASSERT_EQ(eval.val, pimodels.pimodels[1](&TKC).val);
 
     // Pimodel 2
     T = 2 * totalT / 3;
     TKC[0] = T;
-    t_ = Normalize(T, 2 * totalT / 3, totalT).val.Get();
     eval = pimodels(&TKC);
     ASSERT_FALSE(eval.isError);
-    ASSERT_DOUBLE_EQ(eval.val[0], e[0] * t_ + e[1] * k_ + e[2] * c_ + e[3]);
-    ASSERT_DOUBLE_EQ(eval.val[1], f[0] * t_ + f[1] * k_ + f[2] * c_ + f[3]);
+    ASSERT_EQ(eval.val, pimodels.pimodels[2](&TKC).val);
 }
 
 TEST(PimodelsTrainingTest, TrainTest) {

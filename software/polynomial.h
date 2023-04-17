@@ -86,6 +86,12 @@ class Poly {
     Maybe<Void> Build(int n, std::vector<int> order) {
         return this->Build(n, order, 0);
     };
+    Maybe<Void> Build(int n, int orders, int id) {
+        return this->Build(n, std::vector<int>(n, orders), id);
+    }
+    Maybe<Void> Build(int n, int orders) {
+        return this->Build(n, std::vector<int>(n, orders));
+    }
 
     // Getter and setter for X, which hold the values of the variables in which
     // this instance is evaluated

@@ -543,24 +543,24 @@ std::vector<double> Pimodels::continuityTkc() const {
     return tkc;
 }
 
-void Pimodels::setContinuity(int timeBucket, std::vector<double>& tkc) {
+void Pimodels::setContinuity(int timeBucket, std::vector<double>& TKC) {
     assert(timeBucket >= 1 && timeBucket < int(this->pimodels.size()));
     int& nMasses = this->pimodels[0].nMasses;
 
     Pimodel& thisPiModel = this->pimodels[timeBucket];
     Pimodel& previousPiModel = this->pimodels[timeBucket - 1];
 
-    // Set t at tkc
-    tkc[0] = this->timeBuckets[timeBucket];
+    // Set t at TKC
+    TKC[0] = this->timeBuckets[timeBucket];
 
     // Clear initial conditions
     thisPiModel.p.initialDisps.clear();
     thisPiModel.p.initialVels.clear();
 
     // Calculate displacements and velocities of previous model
-    auto disps = previousPiModel(&tkc);
+    auto disps = previousPiModel(&TKC);
     assert(!disps.isError);
-    auto vels = previousPiModel.GetVelocities(&tkc);
+    auto vels = previousPiModel.GetVelocities(&TKC);
     assert(!vels.isError);
 
     // C0 continuity
