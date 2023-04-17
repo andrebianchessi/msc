@@ -35,28 +35,21 @@ class Polys;
 
 class Poly {
     // Class that represents a multivariate polynomial
-    // These polynomials are sum of monomials in which the exponent of each
-    // variable is <= than a certain number. We refer to this `certain number`
-    // as the order of that variable.
+    // These polynomials are sum of terms in which the sum of the exponents
+    // is <= than a certain number - the order of the polynomial.
     //
-    // For example, consider a polynomial of 2 variables, x and y.
-    // Let a,b,c,d,e,f be constants and P_i,j be the polynomial with
-    // (x_order, y_order) = (i,j):
-    //
-    // P_0,0 = a
-    // P_1,0 = a*x + b
-    // P_1,1 = a*x + b*y + c
-    // P_2,1 = a*x^2 + b*x*y + c*x + d*y + e
-    // P_2,2 = a*x^2 + b*x*y + c*x + d*y^2 + e*y + f
+    // For example, consider a polynomial of 2 variables, x and y
+    // Let a,b,c,d,e,f be constants, the polynomials of order 0, 1 and 2 are:
+    // P_0 = a
+    // P_1 = a*x + b*y + c
+    // P_2 = a*x^2 + b*x*y + c*x + d*y^2 + e*y + f
     //
     // Through all the comments related to this class, the constants
     // (a,b,c...) are considered 1 for simplicity.
     // With this simplification, the P_i above become:
-    // P_0,0 = 1
-    // P_1,0 = x + 1
-    // P_1,1 = x + y + 1
-    // P_2,1 = x^2*y + x^2 + x*y + x + y + 1
-    // P_2,2 = x^2*y^2 + x^2*y + x^2 + x*y^2 + x*y + x + y^2 + y + 1
+    // P_0 = 1
+    // P_1 = x + y + 1
+    // P_2 = x^2 + x*y + x + y^2 + y + 1
    public:
     // Identifier
     // Used to order polynomial coefficients when calculating gradient of
@@ -64,12 +57,14 @@ class Poly {
     int id;
 
     // Number of variables
+    // P = x^2 + xy + x + y^2 + y + 1 -> n = 2
     // P = x + y + z + 1 -> n = 3
     int n;
 
-    // Highest order of each variable
-    // P = x^2*y + x^2 + x*y + x + y + 1 -> orders = [2,1]
-    std::vector<int> orders;
+    // Highest order of the polynomial
+    // P = x^2 + xy + x + y^2 + y + 1 -> order = 2
+    // P = x + y + z + 1 -> oder = 1
+    int order;
     int nMonomials() const;  // number of monomials the polynomial has
 
     // Constructor
@@ -79,19 +74,11 @@ class Poly {
     // Build method to be called after the constructor
     // Arguments are the number:
     // number of inputs
-    // order of each variable
+    // order of polynomial
     // identifier of polynomial (only used when doing linear combination of
     // polynomials)
-    Maybe<Void> Build(int n, std::vector<int> order, int id);
-    Maybe<Void> Build(int n, std::vector<int> order) {
-        return this->Build(n, order, 0);
-    };
-    Maybe<Void> Build(int n, int orders, int id) {
-        return this->Build(n, std::vector<int>(n, orders), id);
-    }
-    Maybe<Void> Build(int n, int orders) {
-        return this->Build(n, std::vector<int>(n, orders));
-    }
+    Maybe<Void> Build(int n, int order, int id);
+    Maybe<Void> Build(int n, int order) { return this->Build(n, order, 0); };
 
     // Getter and setter for X, which hold the values of the variables in which
     // this instance is evaluated
@@ -132,7 +119,8 @@ class Poly {
     FRIEND_TEST(PimodelTest, OperatorTest);
 
     // Auxiliary function used in Build method.
-    void buildDfs(std::vector<int>& exponents, int exponentsIndex);
+    void buildDfs(std::vector<int>& exponents, int exponentsSum,
+                  int exponentsIndex);
 
     friend class Polys;
     friend class PolyTest;
