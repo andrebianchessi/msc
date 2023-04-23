@@ -70,8 +70,8 @@ class PimodelTest : public testing::Test {
 
         // 3 input variables:
         // t, k, c
-        p0.Build(3, order, 0);
-        p1.Build(3, order, 1);
+        p0.Build(3, order, true, 0);
+        p1.Build(3, order, true, 1);
 
         tB = RandomB();
         kB = RandomB();

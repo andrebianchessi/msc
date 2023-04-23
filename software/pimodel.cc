@@ -40,7 +40,7 @@ Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
     // Derivative of "t" (normalized time from [0,1]) w.r.t. T ("regular" time)
     double dtDT = 1 / (finalT - initialT);
     for (int massId = 0; massId < p.NumberOfMasses(); massId++) {
-        r = poly.Build(nSprings + nDampers + 1, this->order, massId);
+        r = poly.Build(nSprings + nDampers + 1, this->order, true, massId);
         assert(!r.isError);
         this->models(massId, 0) = poly;
         this->modelsCoefficients[massId] =

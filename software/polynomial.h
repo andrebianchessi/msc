@@ -66,6 +66,9 @@ class Poly {
     // P = x + y + z + 1 -> oder = 1
     int order;
     int nMonomials() const;  // number of monomials the polynomial has
+    // Used when we want to reduce the number of therms in the polynomial.
+    // See Build method for more details.
+    bool tiny;
 
     // Constructor
     Poly();
@@ -73,12 +76,20 @@ class Poly {
 
     // Build method to be called after the constructor
     // Arguments are the number:
-    // number of inputs
-    // order of polynomial
-    // identifier of polynomial (only used when doing linear combination of
-    // polynomials)
-    Maybe<Void> Build(int n, int order, int id);
-    Maybe<Void> Build(int n, int order) { return this->Build(n, order, 0); };
+    // n: number of inputs
+    // order: order of polynomial
+    // tiny: parameter used to reduce the number of monomials. When set true,
+    // the resulting polynomial will only contain the monomials in which the
+    // first input variable has exponent in [order, 0], and the other variables
+    // have either exponent 1 or zero. When the first variable has
+    // exponent zero, all the other ones also do so. See the constructor tests
+    // for more details.
+    // id: identifier of polynomial (only used
+    // when doing linear combination of polynomials)
+    Maybe<Void> Build(int n, int order, bool tiny, int id);
+    Maybe<Void> Build(int n, int order) {
+        return this->Build(n, order, false, 0);
+    };
 
     // Getter and setter for X, which hold the values of the variables in which
     // this instance is evaluated

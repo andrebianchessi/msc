@@ -81,13 +81,39 @@ void Poly::buildDfs(std::vector<int>& exponents, int exponentsSum,
         return;
     }
 
-    int exponentsLeft = this->order - exponentsSum;
+    int exponentsLeft;
+    if (this->tiny) {
+        // For the first variable we use all exponents
+        if (exponentsIndex == 0) {
+            exponentsLeft = this->order - exponentsSum;
+        } else {
+            // When the first variable has exponent 0, we only take
+            // exponent 0 of all the other variables
+            if (exponents[0] == 0) {
+                exponentsLeft = 0;
+            } else {
+                // If another variable other than the first one has non-zero exp
+                if (exponents[0] != exponentsSum) {
+                    exponentsLeft = 0;
+                } else {
+                    if (exponents[0] < order) {
+                        exponentsLeft = 1;
+                    } else {
+                        exponentsLeft = 0;
+                    }
+                }
+            }
+        }
+    } else {
+        exponentsLeft = this->order - exponentsSum;
+    }
+
     for (int e = exponentsLeft; e >= 0; e--) {
         exponents[exponentsIndex] = e;
         buildDfs(exponents, exponentsSum + e, exponentsIndex + 1);
     }
 }
-Maybe<Void> Poly::Build(int n, int order, int id) {
+Maybe<Void> Poly::Build(int n, int order, bool tiny, int id) {
     Maybe<Void> r;
     if (n < 0 || order < 0) {
         r.isError = true;
@@ -100,13 +126,19 @@ Maybe<Void> Poly::Build(int n, int order, int id) {
     this->X = std::vector<double>(n);
 
     this->order = order;
-    // Source:
-    // https://mathoverflow.net/questions/225953/number-of-polynomial-terms-for-certain-degree-and-certain-number-of-variables/225963#225963?newreg=2a0208ceb740461d8eaa21e304b0e341
-    int nMonomials = int(boost::math::binomial_coefficient<double>(
-        this->n + this->order, this->order));
+    this->tiny = tiny;
+
+    int _nMonomials = 0;
+    if (!tiny) {
+        // Source:
+        // https://mathoverflow.net/questions/225953/number-of-polynomial-terms-for-certain-degree-and-certain-number-of-variables/225963#225963?newreg=2a0208ceb740461d8eaa21e304b0e341
+        // Note:
+        _nMonomials = int(boost::math::binomial_coefficient<double>(
+            this->n + this->order, this->order));
+    }
 
     this->monomials = std::vector<Monomial>();
-    this->monomials.reserve(nMonomials);
+    this->monomials.reserve(_nMonomials);
 
     std::vector<int> exponents = std::vector<int>(n);
     this->buildDfs(exponents, 0, 0);

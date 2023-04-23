@@ -90,6 +90,59 @@ TEST(PolyConstructorTest, constructorTest) {
     ASSERT_EQ(p.monomials[5].exps.size(), 2);
     ASSERT_EQ(p.monomials[5].exps[0], 0);
     ASSERT_EQ(p.monomials[5].exps[1], 0);
+
+    r = p.Build(3, 3, false, 0);
+    // t^3
+    // t^2x + t^2y + t^2
+    // tx^2 + txy + tx + ty^2 + ty + t
+    // x^3
+    // x^2y + x^2
+    // xy^2 + x*y + x
+    // y^3 + y^2 + y + 1
+    ASSERT_EQ(p.monomials.size(), 20);
+    std::vector<std::vector<int>> exps = std::vector<std::vector<int>>{
+        std::vector<int>{3, 0, 0},
+
+        std::vector<int>{2, 1, 0}, std::vector<int>{2, 0, 1},
+        std::vector<int>{2, 0, 0},
+
+        std::vector<int>{1, 2, 0}, std::vector<int>{1, 1, 1},
+        std::vector<int>{1, 1, 0}, std::vector<int>{1, 0, 2},
+        std::vector<int>{1, 0, 1}, std::vector<int>{1, 0, 0},
+
+        std::vector<int>{0, 3, 0}, std::vector<int>{0, 2, 1},
+        std::vector<int>{0, 2, 0},
+
+        std::vector<int>{0, 1, 2}, std::vector<int>{0, 1, 1},
+        std::vector<int>{0, 1, 0},
+
+        std::vector<int>{0, 0, 3}, std::vector<int>{0, 0, 2},
+        std::vector<int>{0, 0, 1}, std::vector<int>{0, 0, 0},
+    };
+    for (int i = 0; i < 20; i++) {
+        ASSERT_EQ(p.monomials[i].exps, exps[i]);
+    }
+
+    r = p.Build(3, 3, true, 0);
+    // t^3
+    // t^2x + t^2y + t^2
+    // tx + ty + t
+    // 1
+    ASSERT_EQ(p.monomials.size(), 8);
+    exps = std::vector<std::vector<int>>{
+        std::vector<int>{3, 0, 0},
+
+        std::vector<int>{2, 1, 0}, std::vector<int>{2, 0, 1},
+        std::vector<int>{2, 0, 0},
+
+        std::vector<int>{1, 1, 0}, std::vector<int>{1, 0, 1},
+        std::vector<int>{1, 0, 0},
+
+        std::vector<int>{0, 0, 0},
+    };
+    for (int i = 0; i < 8; i++) {
+        ASSERT_EQ(p.monomials[i].exps, exps[i]);
+    }
 }
 
 class PolyTest : public testing::Test {
@@ -109,11 +162,11 @@ class PolyTest : public testing::Test {
 
     void SetUp() {
         // Called before every TEST_F
-        Maybe<Void> r = n2o2.Build(2, 2, 0);
+        Maybe<Void> r = n2o2.Build(2, 2, false, 0);
         ASSERT_FALSE(r.isError);
-        r = n2o2_1.Build(2, 2, 1);
+        r = n2o2_1.Build(2, 2, false, 1);
         ASSERT_FALSE(r.isError);
-        r = n2o2_2.Build(2, 2, 2);
+        r = n2o2_2.Build(2, 2, false, 2);
         ASSERT_FALSE(r.isError);
 
         zeros = std::vector<double>{0, 0, 0, 0, 0, 0};
@@ -351,11 +404,11 @@ TEST_F(PolyTest, MatrixMultiplicationTest) {
     std::vector<double> xy = {x, y};
 
     Poly p0;
-    p0.Build(2, 1, 0);
+    p0.Build(2, 1, false, 0);
     p0.SetX(xy);
 
     Poly p1;
-    p1.Build(2, 1, 1);
+    p1.Build(2, 1, false, 1);
     p1.SetX(xy);
 
     using namespace boost::numeric::ublas;
