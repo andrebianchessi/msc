@@ -149,6 +149,21 @@ TEST_F(PolyTest, GetSetXTest) {
     ASSERT_DEATH({ n2o2.SetX(X); }, "");
 }
 
+TEST_F(PolyTest, scalarMultiplicationTest) {
+    for (int i = 0; i < n2o2.monomials.size(); i++) {
+        n2o2.monomials[i].k = i;
+    }
+
+    n2o2 *= 10;
+    for (int i = 0; i < n2o2.monomials.size(); i++) {
+        ASSERT_DOUBLE_EQ(n2o2.monomials[i].k, i * 10);
+    }
+    n2o2 *= 0;
+    for (int i = 0; i < n2o2.monomials.size(); i++) {
+        ASSERT_DOUBLE_EQ(n2o2.monomials[i].k, i * 0);
+    }
+}
+
 TEST_F(PolyTest, operatorTest) {
     std::vector<double> X;
     double x1 = 9.0;

@@ -89,6 +89,9 @@ class Poly {
     // X value set. Complexity is O(nMonomials)
     Maybe<double> operator()(std::vector<double>& a) const;
 
+    // Multiply by scalar
+    Poly& operator*=(double s);
+
     // Sets this polynomial as the derivative of this polynomial
     // with respect to i-th variable.
     // Ex:
@@ -117,6 +120,7 @@ class Poly {
     FRIEND_TEST(PolyTest, DaPolysTest);
     FRIEND_TEST(PimodelTest, InitialConditionsResiduesTest);
     FRIEND_TEST(PimodelTest, OperatorTest);
+    FRIEND_TEST(PolyTest, scalarMultiplicationTest);
 
     // Auxiliary function used in Build method.
     void buildDfs(std::vector<int>& exponents, int exponentsSum,

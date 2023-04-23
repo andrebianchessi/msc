@@ -131,8 +131,12 @@ TEST_F(PimodelTest, OperatorTest) {
     ASSERT_DOUBLE_EQ(eval.val[0], p0(p0Parameters).val);
     ASSERT_DOUBLE_EQ(eval.val[1], p1(p1Parameters).val);
 
+    // d/dT = dt/dT*d/dt
     ASSERT_FALSE(p0.Dxi(0).isError);
+    p0 *= 1 / (TMax - TMin);
     ASSERT_FALSE(p1.Dxi(0).isError);
+    p1 *= 1 / (TMax - TMin);
+
     eval = piModel.GetVelocities(&TKC);
     ASSERT_FALSE(eval.isError);
     ASSERT_EQ(eval.val.size(), 2);
@@ -216,10 +220,15 @@ TEST_F(PimodelTest, getXModelTest) {
     ASSERT_EQ(XModel.size(), 4);
     ASSERT_EQ(XModel[0], p0(p0Parameters).val);
     ASSERT_EQ(XModel[1], p1(p1Parameters).val);
-    p0.Dxi(0);
-    p1.Dxi(0);
-    ASSERT_EQ(XModel[2], p0(p0Parameters).val);  // dx0/dt = 1
-    ASSERT_EQ(XModel[3], p1(p1Parameters).val);  // dx1/dt = 5
+
+    // d/dT = dt/dT*d/dt
+    ASSERT_FALSE(p0.Dxi(0).isError);
+    p0 *= 1 / (TMax - TMin);
+    ASSERT_FALSE(p1.Dxi(0).isError);
+    p1 *= 1 / (TMax - TMin);
+
+    ASSERT_EQ(XModel[2], p0(p0Parameters).val);  // dx0/dT = 1
+    ASSERT_EQ(XModel[3], p1(p1Parameters).val);  // dx1/dT = 5
 }
 
 TEST_F(PimodelTest, getAccelsFromDiffEqTest) {
@@ -234,8 +243,11 @@ TEST_F(PimodelTest, getAccelsFromDiffEqTest) {
 
     Poly dp0dt = p0;
     ASSERT_FALSE(dp0dt.Dxi(0).isError);
+    dp0dt *= 1 / (TMax - TMin);
+
     Poly dp1dt = p1;
     ASSERT_FALSE(dp1dt.Dxi(0).isError);
+    dp1dt *= 1 / (TMax - TMin);
 
     // expectedAccel0(t,k,c) =
     // 1 / m * (-kMin * p0 + kMin * p1 - cMin * dp0dt + cMin * dp1dt);
@@ -403,7 +415,9 @@ TEST_F(PimodelTest, InitialConditionsResiduesTest) {
         for (int i = 0; i < piModel.initialConditionsResiduesTkc.size(); i++) {
             Poly p = piModel.models(massId, 0);
             p.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
+
             ASSERT_FALSE(p.Dxi(0).isError);
+            p *= 1 / (TMax - TMin);
 
             residues.push_back(p + (-initial[massId]));
         }
@@ -457,11 +471,16 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
 
     for (int i = 0; i < piModel.physicsResiduesTkc.size(); i++) {
         Poly x0Model = piModel.models(0, 0);
+
         Poly x0ModelDot = piModel.models(0, 0);
         ASSERT_FALSE(x0ModelDot.Dxi(0).isError);
+        x0ModelDot *= 1 / (TMax - TMin);
+
         Poly x0ModelDotDot = piModel.models(0, 0);
         ASSERT_FALSE(x0ModelDotDot.Dxi(0).isError);
         ASSERT_FALSE(x0ModelDotDot.Dxi(0).isError);
+        x0ModelDotDot *= 1 / (TMax - TMin);
+        x0ModelDotDot *= 1 / (TMax - TMin);
 
         x0Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
         x0ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
@@ -476,17 +495,26 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
     double C;   // actual value of C
     for (int i = 0; i < piModel.physicsResiduesTkc.size(); i++) {
         Poly x0Model = piModel.models(0, 0);
+
         Poly x0ModelDot = piModel.models(0, 0);
         ASSERT_FALSE(x0ModelDot.Dxi(0).isError);
+        x0ModelDot *= 1 / (TMax - TMin);
+
         x0Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
         x0ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
 
         Poly x1Model = piModel.models(1, 0);
+
         Poly x1ModelDot = piModel.models(1, 0);
         ASSERT_FALSE(x1ModelDot.Dxi(0).isError);
+        x1ModelDot *= 1 / (TMax - TMin);
+
         Poly x1ModelDotDot = piModel.models(1, 0);
         ASSERT_FALSE(x1ModelDotDot.Dxi(0).isError);
         ASSERT_FALSE(x1ModelDotDot.Dxi(0).isError);
+        x1ModelDotDot *= 1 / (TMax - TMin);
+        x1ModelDotDot *= 1 / (TMax - TMin);
+
         x1Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
         x1ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
         x1ModelDotDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
@@ -591,10 +619,10 @@ TEST_F(PimodelTest, LossTest) {
     std::vector<double> initial = std::vector<double>{0.0, initialDisplacement};
     for (int massId = 0; massId < 2; massId++) {
         for (int i = 0; i < piModel.initialConditionsResiduesTkc.size(); i++) {
-            Poly p = piModel.models(massId, 0);
-            p.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
+            Poly xModel = piModel.models(massId, 0);
+            xModel.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
 
-            Polys residue = p + (-initial[massId]);
+            Polys residue = xModel + (-initial[massId]);
             expectedLoss += initialConditionsResiduesWeight *
                             pow(residue(piModel.modelsCoefficients).val, 2);
         }
@@ -602,11 +630,13 @@ TEST_F(PimodelTest, LossTest) {
     initial = std::vector<double>{0.0, initialVelocity};
     for (int massId = 0; massId < 2; massId++) {
         for (int i = 0; i < piModel.initialConditionsResiduesTkc.size(); i++) {
-            Poly p = piModel.models(massId, 0);
-            p.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
-            ASSERT_FALSE(p.Dxi(0).isError);
+            Poly xModelDot = piModel.models(massId, 0);
+            ASSERT_FALSE(xModelDot.Dxi(0).isError);
+            xModelDot *= 1 / (TMax - TMin);
+            xModelDot.SetX(
+                Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
 
-            Polys residue = (p + (-initial[massId]));
+            Polys residue = (xModelDot + (-initial[massId]));
             expectedLoss += initialConditionsResiduesWeight *
                             pow(residue(piModel.modelsCoefficients).val, 2);
         }
@@ -614,10 +644,15 @@ TEST_F(PimodelTest, LossTest) {
     for (int i = 0; i < piModel.physicsResiduesTkc.size(); i++) {
         Poly x0Model = piModel.models(0, 0);
         Poly x0ModelDot = piModel.models(0, 0);
+
         ASSERT_FALSE(x0ModelDot.Dxi(0).isError);
+        x0ModelDot *= 1 / (TMax - TMin);
+
         Poly x0ModelDotDot = piModel.models(0, 0);
         ASSERT_FALSE(x0ModelDotDot.Dxi(0).isError);
         ASSERT_FALSE(x0ModelDotDot.Dxi(0).isError);
+        x0ModelDotDot *= 1 / (TMax - TMin);
+        x0ModelDotDot *= 1 / (TMax - TMin);
 
         x0Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
         x0ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
@@ -634,16 +669,24 @@ TEST_F(PimodelTest, LossTest) {
     for (int i = 0; i < piModel.physicsResiduesTkc.size(); i++) {
         Poly x0Model = piModel.models(0, 0);
         Poly x0ModelDot = piModel.models(0, 0);
+
         ASSERT_FALSE(x0ModelDot.Dxi(0).isError);
+        x0ModelDot *= 1 / (TMax - TMin);
+
         x0Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
         x0ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
 
         Poly x1Model = piModel.models(1, 0);
         Poly x1ModelDot = piModel.models(1, 0);
         ASSERT_FALSE(x1ModelDot.Dxi(0).isError);
+        x1ModelDot *= 1 / (TMax - TMin);
+
         Poly x1ModelDotDot = piModel.models(1, 0);
         ASSERT_FALSE(x1ModelDotDot.Dxi(0).isError);
         ASSERT_FALSE(x1ModelDotDot.Dxi(0).isError);
+        x1ModelDotDot *= 1 / (TMax - TMin);
+        x1ModelDotDot *= 1 / (TMax - TMin);
+
         x1Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
         x1ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
         x1ModelDotDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));

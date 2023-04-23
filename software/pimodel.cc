@@ -37,16 +37,24 @@ Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
     int nDampers = p.dampers.size();
     Poly poly;
     Maybe<Void> r;
+    // Derivative of "t" (normalized time from [0,1]) w.r.t. T ("regular" time)
+    double dtDT = 1 / (finalT - initialT);
     for (int massId = 0; massId < p.NumberOfMasses(); massId++) {
         r = poly.Build(nSprings + nDampers + 1, this->order, massId);
         assert(!r.isError);
         this->models(massId, 0) = poly;
         this->modelsCoefficients[massId] =
             std::vector<double>(poly.nMonomials());
+
+        // Calculate first time derivative
         this->modelsD[massId] = poly;
         assert(!this->modelsD[massId].Dxi(0).isError);
+        this->modelsD[massId] *= dtDT;
+
+        // Calculate second derivative
         this->modelsDD[massId] = this->modelsD[massId];
         assert(!this->modelsDD[massId].Dxi(0).isError);
+        this->modelsDD[massId] *= dtDT;
     }
 }
 

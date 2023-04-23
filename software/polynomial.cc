@@ -141,6 +141,12 @@ Maybe<double> Poly::operator()(std::vector<double>& a) const {
     return r;
 };
 
+Poly& Poly::operator*=(double s) {
+    for (int i = 0; i < this->monomials.size(); i++) {
+        this->monomials[i].k *= s;
+    }
+}
+
 Polys::Polys() {
     this->polys = std::vector<Poly>(0);
     this->k = std::vector<double>(0);
@@ -261,6 +267,9 @@ bool operator==(Polys const& right, Polys const& left) {
         for (int m = 0; m < right.polys[i].nMonomials(); m++) {
             if (right.polys[i].monomials[m].exps !=
                 left.polys[i].monomials[m].exps) {
+                return false;
+            }
+            if (right.polys[i].monomials[m].k != left.polys[i].monomials[m].k) {
                 return false;
             }
         }
