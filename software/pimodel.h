@@ -25,7 +25,11 @@ class Pimodel : public Model {
 
     // Must be called before Train()
     // Builds all the residues based on problem description.
-    void SetResidues();
+    // If called with `true` argument, only considers the initial condition
+    // residues. The idea is that training only initial conditions is MUCH
+    // faster, hence it makes sense to always first train a bit only considering
+    // initial conditions to find better initial parameter values.
+    void SetResidues(bool useOnlyInitialConditions);
 
     // Returns the position of each mass.
     // The input should be an array with:

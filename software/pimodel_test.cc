@@ -65,7 +65,7 @@ class PimodelTest : public testing::Test {
 
         piModel = Pimodel(pd, TMin, TMax, timeDiscretization, kcDiscretization,
                           order);
-        piModel.SetResidues();
+        piModel.SetResidues(false);
         parametersPerModel = piModel.nParameters() / 2;
 
         // 3 input variables:
@@ -287,7 +287,7 @@ TEST_F(PimodelTest, getInitialXTest) {
 
 TEST_F(PimodelTest, InitialConditionsResiduesTkcTest) {
     auto model = Pimodel(pd, TMin, TMax, 0, 0, 1);
-    model.SetResidues();
+    model.SetResidues(false);
     ASSERT_EQ(model.initialConditionsResiduesTkc.size(), 1);
     ASSERT_DOUBLE_EQ(model.initialConditionsResiduesTkc[0][0].Get(), 0);
     ASSERT_DOUBLE_EQ(model.initialConditionsResiduesTkc[0][1].Get(), 0.5);
@@ -316,7 +316,7 @@ TEST_F(PimodelTest, InitialConditionsResiduesTkcTest) {
 
 TEST_F(PimodelTest, PhysicsResiduesTkcTest) {
     auto model = Pimodel(pd, TMin, TMax, 0, 0, 1);
-    model.SetResidues();
+    model.SetResidues(false);
     ASSERT_EQ(model.physicsResiduesTkc.size(), 1);
     ASSERT_DOUBLE_EQ(model.physicsResiduesTkc[0][0].Get(), 0.5);
     ASSERT_DOUBLE_EQ(model.physicsResiduesTkc[0][1].Get(), 0.5);
@@ -548,8 +548,8 @@ TEST_F(PimodelTest, nResiduesTest) {
     auto model_ = Pimodel(pd, TMin, TMax, 1, 1, 1);
     // Before calling AddResidues, the function returns 0
     ASSERT_EQ(model_.nResidues(), 0);
-    model_.SetResidues();
 
+    model_.SetResidues(false);
     // Residues:
     // Initial conditions:
     // KcDisc. = 1 -> residues will be evaluated for [k=0,k=1]X[c=0,c=1]
@@ -573,6 +573,9 @@ TEST_F(PimodelTest, nResiduesTest) {
     //       x1ModelDot(t,k,c))
     // -> 2*2*2*2 = 16 residues
     ASSERT_EQ(model_.nResidues(), 16 + 16);
+
+    model_.SetResidues(true);
+    ASSERT_EQ(model_.nResidues(), 16);
 }
 
 TEST_F(PimodelTest, LossTest) {
@@ -756,7 +759,7 @@ class PimodelTrainTest : public testing::Test {
         this->model =
             Pimodel(this->pd, this->tMin, this->tMax, this->timeDiscretization,
                     this->kcDiscretization, this->order);
-        this->model.SetResidues();
+        this->model.SetResidues(false);
 
         double initialLoss = this->model.Loss();
         this->model.Train(this->learningRate, this->maxSteps, this->log);

@@ -58,7 +58,7 @@ Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
     }
 }
 
-void Pimodel::SetResidues() {
+void Pimodel::SetResidues(bool useOnlyInitialConditions) {
     this->initialConditionsResiduesTkc = std::vector<std::vector<Bounded>>();
     this->physicsResiduesTkc = std::vector<std::vector<Bounded>>();
     this->AddResiduesTkc();
@@ -67,7 +67,9 @@ void Pimodel::SetResidues() {
     this->initialVelResidues = std::vector<Polys>();
     AddInitialConditionsResidues();
     this->physicsResidues = std::vector<Polys>();
-    AddPhysicsResidues();
+    if (!useOnlyInitialConditions) {
+        AddPhysicsResidues();
+    }
 
     this->residueIsCached = std::vector<bool>(this->nResidues());
     this->residueCache = std::vector<double>(this->nResidues());
@@ -582,11 +584,14 @@ void Pimodels::setContinuity(int timeBucket, std::vector<double>& TKC) {
 }
 
 Maybe<double> Pimodels::Train(double learningRate, int maxSteps, bool log) {
+    const int initialConditionsTrainingSteps = 200;
+    const double initialConditionsTrainingLr = 0.1;
     double learningRate0 = learningRate;
     Maybe<double> r;
-    this->pimodels[0].SetResidues();
 
     if (log) {
+        // Set all the residues just so that we can print the complexity stats
+        this->pimodels[0].SetResidues(false);
         std::cout << "## Complexity Stats ##" << std::endl;
 
         std::cout << "Number of polynomial models (1 for each mass): "
@@ -636,14 +641,28 @@ Maybe<double> Pimodels::Train(double learningRate, int maxSteps, bool log) {
         std::cout << std::endl;
     }
 
+    // First train only initial conditions, then train considering everything
+    // We do so bc training only considering them is MUCH faster; so
+    // it allows us to start with a better guess
+    std::cout << "## Training initial conditions ##" << std::endl;
+    this->pimodels[0].SetResidues(true);
+    r = this->pimodels[0].Train(initialConditionsTrainingLr,
+                                initialConditionsTrainingSteps, false);
+    std::cout << "######################" << std::endl;
+    this->pimodels[0].SetResidues(false);
     r = this->pimodels[0].Train(learningRate, maxSteps, log);
 
     std::vector<double> tkc = this->continuityTkc();
-
     for (int b = 1; b < int(this->pimodels.size()); b++) {
         learningRate = learningRate0;
         this->setContinuity(b, tkc);
-        this->pimodels[b].SetResidues();
+
+        std::cout << "## Training initial conditions ##" << std::endl;
+        this->pimodels[b].SetResidues(true);
+        r = this->pimodels[b].Train(initialConditionsTrainingLr,
+                                    initialConditionsTrainingSteps, false);
+        std::cout << "######################" << std::endl;
+        this->pimodels[b].SetResidues(false);
         this->pimodels[b].Train(learningRate, maxSteps, log);
     }
     return r;
