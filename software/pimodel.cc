@@ -584,7 +584,7 @@ void Pimodels::setContinuity(int timeBucket, std::vector<double>& TKC) {
 }
 
 Maybe<double> Pimodels::Train(double learningRate, int maxSteps, bool log) {
-    const int initialConditionsTrainingSteps = 200;
+    const int initialConditionsTrainingSteps = maxSteps / 2;
     const double initialConditionsTrainingLr = 0.1;
     double learningRate0 = learningRate;
     Maybe<double> r;

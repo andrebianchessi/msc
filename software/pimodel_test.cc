@@ -362,10 +362,11 @@ TEST_F(PimodelTest, InitialConditionsResiduesTest) {
               piModel.initialConditionsResiduesTkc.size() * 2);  // 2 masses
 
     // Verify all the X values are set correctly in the models
-    for (int resId = 0; resId < piModel.initialConditionsResiduesTkc.size();
-         resId++) {
+    for (int resId = 0;
+         resId < int(piModel.initialConditionsResiduesTkc.size()); resId++) {
         for (int massId = 0; massId < 2; massId++) {
-            for (int p = 0; p < piModel.initialDispResidues[resId].polys.size();
+            for (int p = 0;
+                 p < int(piModel.initialDispResidues[resId].polys.size());
                  p++) {
                 auto tkc = piModel.initialDispResidues[resId].polys[p].GetX();
                 ASSERT_DOUBLE_EQ(
@@ -396,7 +397,8 @@ TEST_F(PimodelTest, InitialConditionsResiduesTest) {
     std::vector<Polys> residues = std::vector<Polys>();
     std::vector<double> initial = std::vector<double>{0.0, initialDisplacement};
     for (int massId = 0; massId < 2; massId++) {
-        for (int i = 0; i < piModel.initialConditionsResiduesTkc.size(); i++) {
+        for (int i = 0; i < int(piModel.initialConditionsResiduesTkc.size());
+             i++) {
             Poly p = piModel.models(massId, 0);
             p.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
 
@@ -404,7 +406,7 @@ TEST_F(PimodelTest, InitialConditionsResiduesTest) {
         }
     }
     ASSERT_EQ(residues.size(), piModel.initialDispResidues.size());
-    for (int i = 0; i < residues.size(); i++) {
+    for (int i = 0; i < int(residues.size()); i++) {
         ASSERT_EQ(residues[i], piModel.initialDispResidues[i]);
     }
 
@@ -412,7 +414,8 @@ TEST_F(PimodelTest, InitialConditionsResiduesTest) {
     residues = std::vector<Polys>();
     initial = std::vector<double>{0.0, initialVelocity};
     for (int massId = 0; massId < 2; massId++) {
-        for (int i = 0; i < piModel.initialConditionsResiduesTkc.size(); i++) {
+        for (int i = 0; i < int(piModel.initialConditionsResiduesTkc.size());
+             i++) {
             Poly p = piModel.models(massId, 0);
             p.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
 
@@ -423,7 +426,7 @@ TEST_F(PimodelTest, InitialConditionsResiduesTest) {
         }
     }
     ASSERT_EQ(residues.size(), piModel.initialVelResidues.size());
-    for (int i = 0; i < residues.size(); i++) {
+    for (int i = 0; i < int(residues.size()); i++) {
         ASSERT_EQ(residues[i], piModel.initialVelResidues[i]);
     }
 }
@@ -452,10 +455,11 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
               piModel.physicsResiduesTkc.size() * 2);  // 2 masses
 
     // Verify all the X values are set correctly in the models
-    for (int resId = 0; resId < piModel.physicsResiduesTkc.size(); resId++) {
+    for (int resId = 0; resId < int(piModel.physicsResiduesTkc.size());
+         resId++) {
         for (int massId = 0; massId < 2; massId++) {
-            for (int p = 0; p < piModel.physicsResidues[resId].polys.size();
-                 p++) {
+            for (int p = 0;
+                 p < int(piModel.physicsResidues[resId].polys.size()); p++) {
                 auto tkc = piModel.physicsResidues[resId].polys[p].GetX();
                 ASSERT_DOUBLE_EQ(tkc[0],  // t
                                  piModel.physicsResiduesTkc[resId][0].Get());
@@ -469,7 +473,7 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
 
     std::vector<Polys> residues = std::vector<Polys>();
 
-    for (int i = 0; i < piModel.physicsResiduesTkc.size(); i++) {
+    for (int i = 0; i < int(piModel.physicsResiduesTkc.size()); i++) {
         Poly x0Model = piModel.models(0, 0);
 
         Poly x0ModelDot = piModel.models(0, 0);
@@ -493,7 +497,7 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
     Bounded c;  // normalized c (from 0 to 1)
     double K;   // actual value of K
     double C;   // actual value of C
-    for (int i = 0; i < piModel.physicsResiduesTkc.size(); i++) {
+    for (int i = 0; i < int(piModel.physicsResiduesTkc.size()); i++) {
         Poly x0Model = piModel.models(0, 0);
 
         Poly x0ModelDot = piModel.models(0, 0);
@@ -533,7 +537,7 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
     }
 
     ASSERT_EQ(residues.size(), piModel.physicsResidues.size());
-    for (int i = 0; i < residues.size(); i++) {
+    for (int i = 0; i < int(residues.size()); i++) {
         ASSERT_EQ(piModel.physicsResidues[i], residues[i]);
     }
 }
@@ -621,7 +625,8 @@ TEST_F(PimodelTest, LossTest) {
     double expectedLoss = 0.0;
     std::vector<double> initial = std::vector<double>{0.0, initialDisplacement};
     for (int massId = 0; massId < 2; massId++) {
-        for (int i = 0; i < piModel.initialConditionsResiduesTkc.size(); i++) {
+        for (int i = 0; i < int(piModel.initialConditionsResiduesTkc.size());
+             i++) {
             Poly xModel = piModel.models(massId, 0);
             xModel.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
 
@@ -632,7 +637,8 @@ TEST_F(PimodelTest, LossTest) {
     }
     initial = std::vector<double>{0.0, initialVelocity};
     for (int massId = 0; massId < 2; massId++) {
-        for (int i = 0; i < piModel.initialConditionsResiduesTkc.size(); i++) {
+        for (int i = 0; i < int(piModel.initialConditionsResiduesTkc.size());
+             i++) {
             Poly xModelDot = piModel.models(massId, 0);
             ASSERT_FALSE(xModelDot.Dxi(0).isError);
             xModelDot *= 1 / (TMax - TMin);
@@ -644,7 +650,7 @@ TEST_F(PimodelTest, LossTest) {
                             pow(residue(piModel.modelsCoefficients).val, 2);
         }
     }
-    for (int i = 0; i < piModel.physicsResiduesTkc.size(); i++) {
+    for (int i = 0; i < int(piModel.physicsResiduesTkc.size()); i++) {
         Poly x0Model = piModel.models(0, 0);
         Poly x0ModelDot = piModel.models(0, 0);
 
@@ -669,7 +675,7 @@ TEST_F(PimodelTest, LossTest) {
     Bounded cb;  // normalized c (from 0 to 1)
     double K;    // actual value of K
     double C;    // actual value of C
-    for (int i = 0; i < piModel.physicsResiduesTkc.size(); i++) {
+    for (int i = 0; i < int(piModel.physicsResiduesTkc.size()); i++) {
         Poly x0Model = piModel.models(0, 0);
         Poly x0ModelDot = piModel.models(0, 0);
 
@@ -994,12 +1000,12 @@ TEST_F(PimodelsTest, setContinuityTest) {
     pimodels = Pimodels(this->pd, totalT, 2, 1, 1, 1);
     std::vector<double> params0 =
         std::vector<double>(pimodels.pimodels[0].nParameters());
-    for (int i = 0; i < params0.size(); i++) {
+    for (int i = 0; i < int(params0.size()); i++) {
         params0[i] = Random();
     }
     std::vector<double> params1 =
         std::vector<double>(pimodels.pimodels[1].nParameters());
-    for (int i = 0; i < params1.size(); i++) {
+    for (int i = 0; i < int(params1.size()); i++) {
         params1[i] = Random();
     }
     ASSERT_FALSE(pimodels.pimodels[0].SetParameters(&params0).isError);
@@ -1036,15 +1042,15 @@ TEST_F(PimodelsTest, setContinuityTest) {
 
     pimodels = Pimodels(this->pd, totalT, 3, 1, 1, 1);
     params0 = std::vector<double>(pimodels.pimodels[0].nParameters());
-    for (int i = 0; i < params0.size(); i++) {
+    for (int i = 0; i < int(params0.size()); i++) {
         params0[i] = Random();
     }
     params1 = std::vector<double>(pimodels.pimodels[1].nParameters());
-    for (int i = 0; i < params1.size(); i++) {
+    for (int i = 0; i < int(params1.size()); i++) {
         params1[i] = Random();
     }
     auto params2 = std::vector<double>(pimodels.pimodels[2].nParameters());
-    for (int i = 0; i < params1.size(); i++) {
+    for (int i = 0; i < int(params1.size()); i++) {
         params2[i] = Random();
     }
     ASSERT_FALSE(pimodels.pimodels[0].SetParameters(&params0).isError);
@@ -1110,15 +1116,15 @@ TEST_F(PimodelsTest, OperatorTest) {
     //  x1(t,k,c) = p1_2
     Pimodels pimodels = Pimodels(this->pd, totalT, 3, 1, 1, 1);
     auto params0 = std::vector<double>(pimodels.pimodels[0].nParameters());
-    for (int i = 0; i < params0.size(); i++) {
+    for (int i = 0; i < int(params0.size()); i++) {
         params0[i] = Random();
     }
     auto params1 = std::vector<double>(pimodels.pimodels[1].nParameters());
-    for (int i = 0; i < params1.size(); i++) {
+    for (int i = 0; i < int(params1.size()); i++) {
         params1[i] = Random();
     }
     auto params2 = std::vector<double>(pimodels.pimodels[2].nParameters());
-    for (int i = 0; i < params1.size(); i++) {
+    for (int i = 0; i < int(params1.size()); i++) {
         params2[i] = Random();
     }
     ASSERT_FALSE(pimodels.pimodels[0].SetParameters(&params0).isError);

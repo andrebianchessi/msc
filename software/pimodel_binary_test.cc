@@ -31,13 +31,13 @@ int main(int argc, char *argv[]) {
     assert(pd.IsOk());
 
     // Learning parameters
-    double finalT = 0.01;
-    int nModels = 1;
-    int timeDiscretization = 1;
+    double finalT = 0.05;
+    int nModels = 12;
+    int timeDiscretization = 2;
     int kcDiscretization = 0;
     int order = 3;
     double learningRate = 0.1;
-    int maxSteps = 300;
+    int maxSteps = 5000;
     bool log = true;
 
     // Train all models
