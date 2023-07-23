@@ -589,57 +589,51 @@ Maybe<double> Pimodels::Train(double learningRate, int maxSteps, bool log) {
     double learningRate0 = learningRate;
     Maybe<double> r;
 
-    if (log) {
-        // Set all the residues just so that we can print the complexity stats
-        this->pimodels[0].SetResidues(false);
-        std::cout << "## Complexity Stats ##" << std::endl;
-
-        std::cout << "Number of polynomial models (1 for each mass): "
-                  << this->pimodels[0].models.size1() << std::endl;
-        std::cout << "Number of monomials per polynomial model: "
-                  << this->pimodels[0].models(0, 0).nMonomials() << std::endl;
-        std::cout << "Number of initial conditions residues: "
-                  << this->pimodels[0].initialDispResidues.size() +
-                         this->pimodels[0].initialVelResidues.size()
-                  << std::endl;
-        std::cout << "Number of physics residues: "
-                  << this->pimodels[0].physicsResidues.size() << std::endl;
-        int n = 0;
-        for (int i = 0; i < this->pimodels[0].initialDispResidues.size(); i++) {
-            n += this->pimodels[0].initialDispResidues[i].nMonomials();
-        }
-        std::cout
-            << "Avg number of monomials in initial displacement residues: "
-            << n / this->pimodels[0].initialDispResidues.size() << std::endl;
-        n = 0;
-        for (int i = 0; i < this->pimodels[0].initialVelResidues.size(); i++) {
-            n += this->pimodels[0].initialVelResidues[i].nMonomials();
-        }
-        std::cout << "Avg number of monomials in initial velocity residues: "
-                  << n / this->pimodels[0].initialVelResidues.size()
-                  << std::endl;
-        n = 0;
-        for (int i = 0; i < this->pimodels[0].physicsResidues.size(); i++) {
-            n += this->pimodels[0].physicsResidues[i].nMonomials();
-        }
-        std::cout << "Avg number of monomials in physics residues: "
-                  << n / this->pimodels[0].physicsResidues.size() << std::endl;
-
-        std::cout << "Note: the cost of calculating each residue is "
-                     "proportional to the # of monomials"
-                  << std::endl;
-        std::cout << "Note: the cost of calculating the gradient of each "
-                     "residue is proportional to (nMasses*nMonomials)"
-                  << std::endl;
-        // calculating the derivatives themselves is O(1), because the
-        // derivative of each residue is constant and we cache it. However,
-        // every time we calculate the gradient we calculate the derivative with
-        // respect to each and all parameters. The total number of parameters is
-        // nMonomialsPerModel*nModels
-
-        std::cout << "######################" << std::endl;
-        std::cout << std::endl;
+    // Set all the residues just so that we can print the complexity stats
+    this->pimodels[0].SetResidues(false);
+    std::cout << "## Complexity Stats ##" << std::endl;
+    std::cout << "Number of polynomial models (1 for each mass): "
+              << this->pimodels[0].models.size1() << std::endl;
+    std::cout << "Number of monomials per polynomial model: "
+              << this->pimodels[0].models(0, 0).nMonomials() << std::endl;
+    std::cout << "Number of initial conditions residues: "
+              << this->pimodels[0].initialDispResidues.size() +
+                     this->pimodels[0].initialVelResidues.size()
+              << std::endl;
+    std::cout << "Number of physics residues: "
+              << this->pimodels[0].physicsResidues.size() << std::endl;
+    int n = 0;
+    for (int i = 0; i < this->pimodels[0].initialDispResidues.size(); i++) {
+        n += this->pimodels[0].initialDispResidues[i].nMonomials();
     }
+    std::cout << "Avg number of monomials in initial displacement residues: "
+              << n / this->pimodels[0].initialDispResidues.size() << std::endl;
+    n = 0;
+    for (int i = 0; i < this->pimodels[0].initialVelResidues.size(); i++) {
+        n += this->pimodels[0].initialVelResidues[i].nMonomials();
+    }
+    std::cout << "Avg number of monomials in initial velocity residues: "
+              << n / this->pimodels[0].initialVelResidues.size() << std::endl;
+    n = 0;
+    for (int i = 0; i < this->pimodels[0].physicsResidues.size(); i++) {
+        n += this->pimodels[0].physicsResidues[i].nMonomials();
+    }
+    std::cout << "Avg number of monomials in physics residues: "
+              << n / this->pimodels[0].physicsResidues.size() << std::endl;
+
+    std::cout << "Note: the cost of calculating each residue is "
+                 "proportional to the # of monomials"
+              << std::endl;
+    std::cout << "Note: the cost of calculating the gradient of each "
+                 "residue is proportional to (nMasses*nMonomials)"
+              << std::endl;
+    // calculating the derivatives themselves is O(1), because the
+    // derivative of each residue is constant and we cache it. However,
+    // every time we calculate the gradient we calculate the derivative with
+    // respect to each and all parameters. The total number of parameters is
+    // nMonomialsPerModel*nModels
+    std::cout << "######################" << std::endl;
+    std::cout << std::endl;
 
     // First train only initial conditions, then train considering everything
     // We do so bc training only considering them is MUCH faster; so
@@ -648,7 +642,7 @@ Maybe<double> Pimodels::Train(double learningRate, int maxSteps, bool log) {
     this->pimodels[0].SetResidues(true);
     r = this->pimodels[0].Train(initialConditionsTrainingLr,
                                 initialConditionsTrainingSteps, false);
-    std::cout << "######################" << std::endl;
+    std::cout << "## Training physics and initial conditions ##" << std::endl;
     this->pimodels[0].SetResidues(false);
     r = this->pimodels[0].Train(learningRate, maxSteps, log);
 
@@ -661,7 +655,8 @@ Maybe<double> Pimodels::Train(double learningRate, int maxSteps, bool log) {
         this->pimodels[b].SetResidues(true);
         r = this->pimodels[b].Train(initialConditionsTrainingLr,
                                     initialConditionsTrainingSteps, false);
-        std::cout << "######################" << std::endl;
+        std::cout << "## Training physics and initial conditions ##"
+                  << std::endl;
         this->pimodels[b].SetResidues(false);
         this->pimodels[b].Train(learningRate, maxSteps, log);
     }

@@ -32,13 +32,13 @@ int main(int argc, char *argv[]) {
 
     // Learning parameters
     double finalT = 0.05;
-    int nModels = 12;
-    int timeDiscretization = 2;
+    int nModels = 3;
+    int timeDiscretization = 1;
     int kcDiscretization = 0;
     int order = 3;
     double learningRate = 0.1;
-    int maxSteps = 5000;
-    bool log = true;
+    int maxSteps = 2000;
+    bool log = false;
 
     // Train all models
     Pimodels models = Pimodels(pd, finalT, nModels, timeDiscretization,
