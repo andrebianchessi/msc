@@ -206,6 +206,10 @@ int Polys::nMonomials() const {
 }
 
 Polys operator*(double k, const Poly& p) {
+    if (k == 0) {
+        Polys ps;
+        return ps;
+    }
     Polys ps = Polys(p);
     ps.k[ps.k.size() - 1] *= k;
     return ps;
@@ -247,6 +251,9 @@ Polys operator+(Polys const& left, Polys const& right) {
 };
 
 Polys operator+(Poly const& p, double k) {
+    if (k == 0) {
+        return Polys(p);
+    }
     Polys copy = Polys(p);
     copy.plus += k;
     return copy;
@@ -262,6 +269,12 @@ Polys& Polys::operator+=(const Polys& right) {
     return (*this);
 }
 Polys& Polys::operator*=(double k) {
+    if (k == 0) {
+        this->polys.clear();
+        this->k.clear();
+        this->plus = 0;
+        return (*this);
+    }
     for (int i = 0; i < int(this->k.size()); i++) {
         this->k[i] *= k;
     }
@@ -269,6 +282,9 @@ Polys& Polys::operator*=(double k) {
 }
 
 Polys operator*(double k, Polys const& right) {
+    if (k == 0) {
+        return Polys();
+    }
     Polys p = right;
     for (int i = 0; i < int(p.k.size()); i++) {
         p.k[i] *= k;
