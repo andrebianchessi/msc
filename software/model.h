@@ -15,7 +15,10 @@ class Model {
     // The learning rate is automatically reduced by half when needed, until
     // it reaches a value lower than minLearningRate. Set log to true to log
     // the learning. Function returns the latest loss function value.
-    Maybe<double> Train(double learningRate, int maxSteps, bool log);
+    // Note: its ok if batchSize>nResidues (the method then sets it to
+    // nResidues)
+    Maybe<double> Train(double learningRate, int batchSize, int maxSteps,
+                        bool log);
 
     // Returns the total loss, i.e. the mean squared error
     double Loss();

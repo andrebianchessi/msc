@@ -24,12 +24,9 @@ class Pimodel : public Model {
             int timeDiscretization, int kcDiscretization, int order);
 
     // Must be called before Train()
-    // Builds all the residues based on problem description.
-    // If called with `true` argument, only considers the initial condition
-    // residues. The idea is that training only initial conditions is MUCH
-    // faster, hence it makes sense to always first train a bit only considering
-    // initial conditions to find better initial parameter values.
-    void SetResidues(bool useOnlyInitialConditions);
+    // Builds the residues based on problem description.
+    // The arguments define which residues will be considered.
+    void SetResidues(bool initialConditions, bool physics);
 
     // Returns the position of each mass.
     // The input should be an array with:
@@ -180,7 +177,8 @@ class Pimodels {
     Pimodels(ProblemDescription p, double finalT, int nModels,
              int timeDiscretization, int kcDiscretization, int order);
 
-    Maybe<double> Train(double learningRate, int maxSteps, bool log);
+    Maybe<double> Train(double learningRate, int batchSize, int maxSteps,
+                        bool log);
 
     Maybe<std::vector<double>> operator()(std::vector<double>* TKC);
     Maybe<std::vector<double>> GetVelocities(std::vector<double>* TKC);
@@ -204,6 +202,8 @@ class Pimodels {
     std::vector<double> continuityTkc() const;
 
     void setContinuity(int timeBucket, std::vector<double>& TKC);
+
+    void logComplexity();
 
     FRIEND_TEST(PimodelsTest, ConstructorTest);
     FRIEND_TEST(PimodelsTest, GetTimeBucketTest);

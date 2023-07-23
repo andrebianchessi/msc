@@ -317,6 +317,7 @@ cc_library(
   ],
   deps = [
     ":maybe",
+    ":utils",
     "@com_google_googletest//:gtest_main"
   ]
 )

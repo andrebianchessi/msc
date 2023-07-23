@@ -65,7 +65,7 @@ class PimodelTest : public testing::Test {
 
         piModel = Pimodel(pd, TMin, TMax, timeDiscretization, kcDiscretization,
                           order);
-        piModel.SetResidues(false);
+        piModel.SetResidues(true, true);
         parametersPerModel = piModel.nParameters() / 2;
 
         // 3 input variables:
@@ -287,7 +287,7 @@ TEST_F(PimodelTest, getInitialXTest) {
 
 TEST_F(PimodelTest, InitialConditionsResiduesTkcTest) {
     auto model = Pimodel(pd, TMin, TMax, 0, 0, 1);
-    model.SetResidues(false);
+    model.SetResidues(true, false);
     ASSERT_EQ(model.initialConditionsResiduesTkc.size(), 1);
     ASSERT_DOUBLE_EQ(model.initialConditionsResiduesTkc[0][0].Get(), 0);
     ASSERT_DOUBLE_EQ(model.initialConditionsResiduesTkc[0][1].Get(), 0.5);
@@ -316,7 +316,7 @@ TEST_F(PimodelTest, InitialConditionsResiduesTkcTest) {
 
 TEST_F(PimodelTest, PhysicsResiduesTkcTest) {
     auto model = Pimodel(pd, TMin, TMax, 0, 0, 1);
-    model.SetResidues(false);
+    model.SetResidues(false, true);
     ASSERT_EQ(model.physicsResiduesTkc.size(), 1);
     ASSERT_DOUBLE_EQ(model.physicsResiduesTkc[0][0].Get(), 0.5);
     ASSERT_DOUBLE_EQ(model.physicsResiduesTkc[0][1].Get(), 0.5);
@@ -553,7 +553,7 @@ TEST_F(PimodelTest, nResiduesTest) {
     // Before calling AddResidues, the function returns 0
     ASSERT_EQ(model_.nResidues(), 0);
 
-    model_.SetResidues(false);
+    model_.SetResidues(true, true);
     // Residues:
     // Initial conditions:
     // KcDisc. = 1 -> residues will be evaluated for [k=0,k=1]X[c=0,c=1]
@@ -578,7 +578,10 @@ TEST_F(PimodelTest, nResiduesTest) {
     // -> 2*2*2*2 = 16 residues
     ASSERT_EQ(model_.nResidues(), 16 + 16);
 
-    model_.SetResidues(true);
+    model_.SetResidues(true, false);
+    ASSERT_EQ(model_.nResidues(), 16);
+
+    model_.SetResidues(false, true);
     ASSERT_EQ(model_.nResidues(), 16);
 }
 
@@ -737,6 +740,7 @@ class PimodelTrainTest : public testing::Test {
     int kcDiscretization;
     int order;
     double learningRate;
+    int batchSize;
     int maxSteps;
     bool log;
 
@@ -752,6 +756,7 @@ class PimodelTrainTest : public testing::Test {
         this->kcDiscretization = 1;
         this->order = 3;
         this->learningRate = 0.1;
+        this->batchSize = 1000;  // huge batch size -> single batch is used
         this->maxSteps = 100;
         this->log = true;
         this->pd.AddMass(mass, 0.0, 0.0);
@@ -765,10 +770,11 @@ class PimodelTrainTest : public testing::Test {
         this->model =
             Pimodel(this->pd, this->tMin, this->tMax, this->timeDiscretization,
                     this->kcDiscretization, this->order);
-        this->model.SetResidues(false);
+        this->model.SetResidues(true, true);
 
         double initialLoss = this->model.Loss();
-        this->model.Train(this->learningRate, this->maxSteps, this->log);
+        this->model.Train(this->learningRate, this->batchSize, this->maxSteps,
+                          this->log);
         ASSERT_TRUE(this->model.Loss() < initialLoss);
     }
 
@@ -1175,14 +1181,15 @@ TEST(PimodelsTrainingTest, TrainTest) {
     int timeDiscretization = 2;
     int kcDiscretization = 1;
     int order = 3;
-    double learningRate = 0.01;
-    int maxSteps = 500;
+    double learningRate = 1.0;
+    int batchSize = 1000;  // huge batch size -> single batch is used
+    int maxSteps = 300;
     bool log = false;
 
     // Train all models
     Pimodels models = Pimodels(pd, tMax, nModels, timeDiscretization,
                                kcDiscretization, order);
-    models.Train(learningRate, maxSteps, log);
+    models.Train(learningRate, batchSize, maxSteps, log);
 
     // Get problem using intermediate value for k and c, and integrate it.
     // Then, compare the model's prediction with the problem's result.
@@ -1216,5 +1223,79 @@ TEST(PimodelsTrainingTest, TrainTest) {
         std::cout << p.XHistory[i][3] << ",";   // x1Dot,
         std::cout << X.val[1] << ",";           // modelX1,
         std::cout << XDot.val[1] << std::endl;  // modelX1Dot
+    }
+}
+
+TEST(Debug, debugtest) {
+    ProblemDescription pd = ProblemDescription();
+    pd.AddMass(1.0, 0.0, 0.0);  // m0
+    pd.AddMass(300, 1.0, 1.0);  // m1
+    pd.AddMass(120, 1.0, 0.0);  // m2
+    pd.AddMass(150, 1.0, 3.0);  // m3
+    pd.AddMass(700, 2.0, 0.0);  // m4
+    pd.AddMass(80, 3.0, 0.0);   // m5
+
+    double min = 100.0;
+    double max = 100000;
+    pd.AddSpring(0, 1, min, max);  // k01
+    pd.AddSpring(1, 2, min, max);  // k12
+    pd.AddSpring(1, 3, min, max);  // k13
+    pd.AddSpring(1, 4, min, max);  // k14
+    pd.AddDamper(1, 4, min, max);  // c14
+    pd.AddSpring(0, 2, min, max);  // k02
+    pd.AddDamper(0, 2, min, max);  // c02
+    pd.AddSpring(2, 4, min, max);  // k24
+    pd.AddDamper(2, 4, min, max);  // c24
+    pd.AddSpring(0, 3, min, max);  // k03
+    pd.AddDamper(0, 3, min, max);  // c03
+    pd.AddSpring(3, 4, min, max);  // k34
+    pd.AddDamper(3, 4, min, max);  // c34
+    pd.AddSpring(4, 5, min, max);  // k45
+    pd.AddDamper(4, 5, min, max);  // c45
+    pd.SetFixedMass(0);
+    pd.AddInitialVel(200.0);  // initial speed
+    assert(pd.IsOk());
+
+    // Learning parameters
+    double finalT = 0.05;
+    int nModels = 3;
+    int timeDiscretization = 1;
+    int kcDiscretization = 0;
+    int order = 3;
+    double learningRate = 0.1;
+    int batchSize = 1000;
+    int maxSteps = 10;
+    bool log = true;
+
+    // Train all models
+    Pimodels models = Pimodels(pd, finalT, nModels, timeDiscretization,
+                               kcDiscretization, order);
+    assert(!models.Train(learningRate, batchSize, maxSteps, log).isError);
+
+    // Get problem using intermediate value for k and c, and integrate it.
+    double mean = (min + max) / 2;
+    Maybe<Problem> mP = pd.BuildFromVector(
+        std::vector<double>{mean, mean, mean, mean, mean, mean, mean, mean,
+                            mean, mean, mean, mean, mean, mean, mean});
+    assert(!mP.isError);
+    Problem p = mP.val;
+    assert(!p.Integrate(finalT).isError);
+
+    std::vector<double> tkc =
+        std::vector<double>{0.0,  mean, mean, mean, mean, mean, mean, mean,
+                            mean, mean, mean, mean, mean, mean, mean, mean};
+    Maybe<std::vector<double>> X;
+    Maybe<std::vector<double>> XDot;
+    std::cout << "t,x5,x5Dot,modelX5,modelX5Dot" << std::endl;
+    for (int i = 0; i < int(p.t.size()); i += 1) {
+        tkc[0] = p.t[i];
+        X = models(&tkc);
+        XDot = models.GetVelocities(&tkc);
+
+        std::cout << p.t[i] << ",";                                // t,
+        std::cout << p.XHistory[i][p.GetMassDispIndex(5)] << ",";  // x5,
+        std::cout << p.XHistory[i][p.GetMassVelIndex(5)] << ",";   // x5Dot,
+        std::cout << X.val[5] << ",";                              // modelX5,
+        std::cout << XDot.val[5] << std::endl;                     // modelX5Dot
     }
 }

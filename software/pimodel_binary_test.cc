@@ -37,13 +37,14 @@ int main(int argc, char *argv[]) {
     int kcDiscretization = 0;
     int order = 3;
     double learningRate = 0.1;
+    int batchSize = 1000;
     int maxSteps = 2000;
     bool log = false;
 
     // Train all models
     Pimodels models = Pimodels(pd, finalT, nModels, timeDiscretization,
                                kcDiscretization, order);
-    assert(!models.Train(learningRate, maxSteps, log).isError);
+    assert(!models.Train(learningRate, batchSize, maxSteps, log).isError);
 
     // Get problem using intermediate value for k and c, and integrate it.
     double mean = (min + max) / 2;
