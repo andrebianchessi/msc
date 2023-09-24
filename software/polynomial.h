@@ -55,6 +55,9 @@ class Poly {
     // Used to order polynomial coefficients when calculating gradient of
     // linear combination of Poly instances (see Polys class)
     int id;
+    // Used to identify the number of times this instance was differentiated,
+    // i.e. how many times Dxi was called. Mostly used for debugging.
+    int dxCount;
 
     // Number of variables
     // P = x^2 + xy + x + y^2 + y + 1 -> n = 2

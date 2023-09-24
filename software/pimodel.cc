@@ -37,8 +37,15 @@ Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
     int nDampers = p.dampers.size();
     Poly poly;
     Maybe<Void> r;
-    // Derivative of "t" (normalized time from [0,1]) w.r.t. T ("regular" time)
-    double dtDT = 1 / (finalT - initialT);
+
+    // T = T0 + (T1-T0)*t
+    // e.g.:
+    //      t = 0.0 -> T = T0
+    //      t = 1.0 -> T = T1
+    //      t = 0.5 -> T = (T1+T0)/2
+    this->dTdt = finalT - initialT;
+    this->dtdT = 1.0 / (finalT - initialT);
+
     for (int massId = 0; massId < p.NumberOfMasses(); massId++) {
         r = poly.Build(nSprings + nDampers + 1, this->order, true, massId);
         assert(!r.isError);
@@ -49,12 +56,10 @@ Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
         // Calculate first time derivative
         this->modelsD[massId] = poly;
         assert(!this->modelsD[massId].Dxi(0).isError);
-        this->modelsD[massId] *= dtDT;
 
         // Calculate second derivative
         this->modelsDD[massId] = this->modelsD[massId];
         assert(!this->modelsDD[massId].Dxi(0).isError);
-        this->modelsDD[massId] *= dtDT;
     }
 }
 
@@ -152,12 +157,14 @@ Maybe<std::vector<double>> Pimodel::GetVelocities(std::vector<double>* TKC) {
         return r;
     }
     std::vector<double> vels = std::vector<double>(this->p.NumberOfMasses());
-    Maybe<double> vel;
+    // d/dt(model)
+    Maybe<double> pDot;
     for (int massId = 0; massId < int(vels.size()); massId++) {
         this->modelsD[massId].SetX(this->normalizeTkc(TKC));
-        vel = this->modelsD[massId](this->modelsCoefficients[massId]);
-        assert(!vel.isError);
-        vels[massId] = vel.val;
+        pDot = this->modelsD[massId](this->modelsCoefficients[massId]);
+        assert(!pDot.isError);
+        // d/dt * dt/dT = d/dT
+        vels[massId] = pDot.val * this->dtdT;
     }
     r.val = vels;
     return r;
@@ -226,46 +233,26 @@ Problem Pimodel::problemFromTkc(std::vector<Bounded>* tkc) {
     return problem.val;
 }
 
-std::vector<double> Pimodel::getXModel(std::vector<Bounded>* tkc) {
-    // X: State vector. Displacements followed by velocities.
-    auto X = std::vector<double>(this->p.NumberOfMasses() * 2);
-
-    Maybe<Void> err;
-    Maybe<double> eval;
-    for (int massId = 0; massId < this->nMasses; massId++) {
-        // Fill displacements
-        this->models(massId, 0).SetX(Bounded::Get(*tkc));
-        eval = this->models(massId, 0)(this->modelsCoefficients[massId]);
-        assert(!eval.isError);
-        X[massId] = eval.val;
-
-        // Fill velocities
-        this->modelsD[massId].SetX(Bounded::Get(*tkc));
-        eval = this->modelsD[massId](this->modelsCoefficients[massId]);
-        assert(!eval.isError);
-        X[Problem::GetMassVelIndex(this->p.NumberOfMasses(), massId)] =
-            eval.val;
-    }
-    return X;
-}
-
 bst::matrix<Polys> Pimodel::getAccelsFromDiffEq(Problem* problem,
                                                 std::vector<Bounded>& tkc) {
     // List of displacements and velocities
-    bst::matrix<Poly> Disps = bst::matrix<Poly>(nMasses, 1);
-    bst::matrix<Poly> Vels = bst::matrix<Poly>(nMasses, 1);
+    bst::matrix<Poly> x = bst::matrix<Poly>(nMasses, 1);
+    bst::matrix<Poly> dxdT = bst::matrix<Poly>(nMasses, 1);
     for (int massId = 0; massId < nMasses; massId++) {
-        Disps(massId, 0) = this->models(massId, 0);
-        Disps(massId, 0).SetX(Bounded::Get(tkc));
+        x(massId, 0) = this->models(massId, 0);
+        x(massId, 0).SetX(Bounded::Get(tkc));
 
-        Vels(massId, 0) = this->modelsD[massId];
-        Vels(massId, 0).SetX(Bounded::Get(tkc));
+        // d/dT(x_i) = (dt/dT)*d/dt(model_i)
+        dxdT(massId, 0) = this->modelsD[massId];
+        dxdT(massId, 0) *= this->dtdT;
+        dxdT(massId, 0).SetX(Bounded::Get(tkc));
     }
 
-    matrix<Polys> kx = prod(problem->K, Disps);
-    matrix<Polys> cxDot = prod(problem->C, Vels);
-    matrix<Polys> Accels = prod(problem->MInv, kx + cxDot);
-    return Accels;
+    matrix<Polys> k_times_x = prod(problem->K, x);
+    matrix<Polys> c_times_dxdT = prod(problem->C, dxdT);
+    // d²/dT2²(x)
+    matrix<Polys> d2xdT2 = prod(problem->MInv, k_times_x + c_times_dxdT);
+    return d2xdT2;
 }
 
 std::vector<double> Pimodel::getInitialX() {
@@ -362,6 +349,7 @@ void Pimodel::AddInitialConditionsResidues() {
     auto initialX = this->getInitialX();
 
     Poly model;
+    Poly modelDot;
     for (int massId = 0; massId < this->nMasses; massId++) {
         for (auto tkc : this->initialConditionsResiduesTkc) {
             model = this->models(massId, 0);
@@ -370,72 +358,45 @@ void Pimodel::AddInitialConditionsResidues() {
                 model +
                 (-1) * initialX[Problem::GetMassDispIndex(nMasses, massId)]);
 
-            model = this->modelsD[massId];
-            model.SetX(Bounded::Get(tkc));
+            modelDot = this->modelsD[massId];
+            modelDot.SetX(Bounded::Get(tkc));
             this->initialVelResidues.push_back(
-                model +
-                (-1) * initialX[Problem::GetMassVelIndex(nMasses, massId)]);
+                modelDot +
+                (-this->dTdt) *
+                    initialX[Problem::GetMassVelIndex(nMasses, massId)]);
         }
     }
 }
 
 void Pimodel::AddPhysicsResidues() {
-    Poly modelXDotDot;
-    bst::matrix<Polys> AccelsFromDiffEq;
+    // d²/dt²(model)
+    Poly modelDotDot;
+    // d²/dT²(x)
+    bst::matrix<Polys> d2x_dT2;
     for (int m = 0; m < nMasses; m++) {
         for (auto tkc : this->physicsResiduesTkc) {
-            modelXDotDot = this->modelsDD[m];
-            modelXDotDot.SetX(Bounded::Get(tkc));
+            modelDotDot = this->modelsDD[m];
+            modelDotDot.SetX(Bounded::Get(tkc));
 
             Problem problem = this->problemFromTkc(&tkc);
             if (problem.massIsFixed(m)) {
-                this->physicsResidues.push_back(Polys(modelXDotDot));
+                this->physicsResidues.push_back(Polys(modelDotDot));
             } else {
-                AccelsFromDiffEq = getAccelsFromDiffEq(&problem, tkc);
-                this->physicsResidues.push_back(
-                    Polys(modelXDotDot) + (-1.0) * AccelsFromDiffEq(m, 0));
+                d2x_dT2 = getAccelsFromDiffEq(&problem, tkc);
+                this->physicsResidues.push_back(Polys(modelDotDot) +
+                                                (-(this->dTdt * this->dTdt)) *
+                                                    d2x_dT2(m, 0));
             }
         }
     }
 }
 
-#define LOSS_TERMS                                                            \
-    int nInitialConditionsLossTerms = int(this->initialDispResidues.size()) + \
-                                      int(this->initialVelResidues.size());   \
-    int nPhysicsLossTerms = int(this->physicsResidues.size());                \
-    double nTotalLossTerms = nInitialConditionsLossTerms + nPhysicsLossTerms;
-double Pimodel::InitialConditionsWeight() {
-    LOSS_TERMS
-    if (nPhysicsLossTerms == 0) {
-        return 1;
-    }
-    return nPhysicsLossTerms / nTotalLossTerms;
-};
-double Pimodel::PhysicsWeight() {
-    LOSS_TERMS
-    if (nInitialConditionsLossTerms == 0) {
-        return 1;
-    }
-    return nInitialConditionsLossTerms / nTotalLossTerms;
-};
-
-double Pimodel::residueWeight(int i) {
-    if (i < this->initialDispResidues.size()) {
-        return this->InitialConditionsWeight();
-    }
-    i -= this->initialDispResidues.size();
-    if (i < this->initialVelResidues.size()) {
-        return this->InitialConditionsWeight();
-    }
-    return this->PhysicsWeight();
-}
-
 Polys* Pimodel::residueById(int i) {
-    if (i < this->initialDispResidues.size()) {
+    if (i < int(this->initialDispResidues.size())) {
         return &(this->initialDispResidues[i]);
     }
     i -= this->initialDispResidues.size();
-    if (i < this->initialVelResidues.size()) {
+    if (i < int(this->initialVelResidues.size())) {
         return &(this->initialVelResidues[i]);
     }
     i -= this->initialVelResidues.size();
@@ -443,11 +404,11 @@ Polys* Pimodel::residueById(int i) {
 }
 
 std::map<std::tuple<int, int>, double>* Pimodel::residueDaById(int i) {
-    if (i < this->initialDispResidues.size()) {
+    if (i < int(this->initialDispResidues.size())) {
         return &(this->initialDispResiduesDa[i]);
     }
     i -= this->initialDispResidues.size();
-    if (i < this->initialVelResidues.size()) {
+    if (i < int(this->initialVelResidues.size())) {
         return &(this->initialVelResiduesDa[i]);
     }
     i -= this->initialVelResidues.size();
@@ -470,7 +431,7 @@ double Pimodel::Residue(int i) {
     if (!this->residueIsCached[i]) {
         this->setResidueCache(i);
     }
-    return this->residueWeight(i) * pow(this->residueCache[i], 2);
+    return this->residueCache[i];
 }
 
 void Pimodel::setResiduesDa() {
@@ -486,14 +447,10 @@ void Pimodel::setResiduesDa() {
     }
 }
 
-std::vector<double> Pimodel::ResidueGradient(int i) {
+std::vector<double> Pimodel::LossGradient(int i) {
     std::vector<double> grad = std::vector<double>(this->nParameters());
 
-    if (!this->residueIsCached[i]) {
-        this->setResidueCache(i);
-    }
-    double weight = this->residueWeight(i);
-    double residueVal = this->residueCache[i];
+    double residueVal = this->Residue(i);
     std::map<std::tuple<int, int>, double>* gradMap = this->residueDaById(i);
 
     std::tuple<int, int> gradMapKey;
@@ -502,7 +459,7 @@ std::vector<double> Pimodel::ResidueGradient(int i) {
         for (int mon = 0; mon < this->models(massId, 0).nMonomials(); mon++) {
             gradMapKey = {massId, mon};
             if (gradMap->find(gradMapKey) != gradMap->end()) {
-                grad[gradI] += weight * residueVal * ((*gradMap)[gradMapKey]);
+                grad[gradI] += residueVal * ((*gradMap)[gradMapKey]);
             }
             gradI += 1;
         }
@@ -605,21 +562,22 @@ void Pimodels::logComplexity() {
 
     // Initial displacement residues cost
     int n = 0;
-    for (int i = 0; i < this->pimodels[0].initialDispResidues.size(); i++) {
+    for (int i = 0; i < int(this->pimodels[0].initialDispResidues.size());
+         i++) {
         n += this->pimodels[0].initialDispResidues[i].nMonomials();
     }
     std::cout << "Total cost of calculating initial displacement residues:" << n
               << std::endl;
     // Initial velocities residues cost
     n = 0;
-    for (int i = 0; i < this->pimodels[0].initialVelResidues.size(); i++) {
+    for (int i = 0; i < int(this->pimodels[0].initialVelResidues.size()); i++) {
         n += this->pimodels[0].initialVelResidues[i].nMonomials();
     }
     std::cout << "Total cost of calculating initial velocity residues:" << n
               << std::endl;
     // Physics residues cost
     n = 0;
-    for (int i = 0; i < this->pimodels[0].physicsResidues.size(); i++) {
+    for (int i = 0; i < int(this->pimodels[0].physicsResidues.size()); i++) {
         n += this->pimodels[0].physicsResidues[i].nMonomials();
     }
     std::cout << "Total cost of calculating physics residues:" << n
@@ -639,7 +597,6 @@ void Pimodels::logComplexity() {
 
 Maybe<double> Pimodels::Train(double learningRate, int batchSize, int maxSteps,
                               bool log) {
-    double learningRate0 = learningRate;
     Maybe<double> r;
 
     this->logComplexity();
@@ -647,7 +604,6 @@ Maybe<double> Pimodels::Train(double learningRate, int batchSize, int maxSteps,
     std::vector<double> tkcCont = this->continuityTkc();
     int t = 0;
     while (t < int(this->pimodels.size())) {
-        learningRate = learningRate0;
         if (t > 0) {
             this->setContinuity(t, tkcCont);
         }
@@ -657,11 +613,11 @@ Maybe<double> Pimodels::Train(double learningRate, int batchSize, int maxSteps,
         r = this->pimodels[t].Train(learningRate, batchSize, maxSteps, log);
         std::cout << "## Training physics##" << std::endl;
         this->pimodels[t].SetResidues(false, true);
-        this->pimodels[t].Train(learningRate, batchSize, maxSteps, log);
+        this->pimodels[t].Train(learningRate / 100, batchSize, maxSteps, log);
         std::cout << "## Training physics and initial conditions ##"
                   << std::endl;
         this->pimodels[t].SetResidues(true, true);
-        this->pimodels[t].Train(learningRate, batchSize, maxSteps, log);
+        this->pimodels[t].Train(learningRate / 100, batchSize, maxSteps, log);
 
         t += 1;
     }

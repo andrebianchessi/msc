@@ -30,10 +30,12 @@ class Pimodel : public Model {
 
     // Returns the position of each mass.
     // The input should be an array with:
-    // The time
+    // The global time
     // The values of the springs
     // The values of the dampers
-    // U = [t, k1, k2, ... , kn, c1, c2, ... , cn]
+    // U = [T, K1, K2, ... , Kn, C1, C2, ... , Cn]
+    // All inputs are NOT normalized (i.e. they don't have to be in [0, 1]).
+    // E.g. of valid input: U = [100.0, 99.0, ...]
     Maybe<std::vector<double>> operator()(std::vector<double>* TKC);
     // Similar to operator(), but returns the velocity of each mass
     Maybe<std::vector<double>> GetVelocities(std::vector<double>* TKC);
@@ -59,9 +61,10 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, PhysicsResiduesTkcTest);
     FRIEND_TEST(PimodelTest, PhysicsResiduesTkcZeroDiscTest);
     FRIEND_TEST(PimodelTest, InitialConditionsResiduesTest);
+    FRIEND_TEST(PimodelTest, InitialConditionsResiduesNumericalTest);
     FRIEND_TEST(PimodelTest, PhysicsResiduesTest);
+    FRIEND_TEST(PimodelTest, PhysicsResiduesNumericalTest);
     FRIEND_TEST(PimodelTest, nResiduesTest);
-    FRIEND_TEST(PimodelTest, LossTest);
     FRIEND_TEST(PimodelTest, LossGradientTest);
     FRIEND_TEST(PimodelsTest, ConstructorTest);
     FRIEND_TEST(PimodelsTest, setContinuityTest);
@@ -80,9 +83,9 @@ class Pimodel : public Model {
     // masses.
     boost::numeric::ublas::matrix<Poly> models;
     std::vector<std::vector<double>> modelsCoefficients;
-    // Derivatives of each model with respect to time
+    // Derivatives of each model with respect to t (normalized time)
     std::vector<Poly> modelsD;
-    // Second derivatives of each model with respect to time
+    // Second derivatives of each model with respect to t (normalized time)
     std::vector<Poly> modelsDD;
 
     // Residues of initial displacement
@@ -117,6 +120,10 @@ class Pimodel : public Model {
     // This model describes the system from t = t0 to t = t1
     double t0;
     double t1;
+    // Derivative of t (normalized time from [0,1]) w.r.t. T (global time)
+    double dtdT;
+    // Derivative of T (global time) w.r.t. t (normalized time from [0,1])
+    double dTdt;
 
     // Parameter that describes in how many intervals we'll discretize time and
     // the springs/dampers values in our loss function
@@ -151,7 +158,7 @@ class Pimodel : public Model {
     double Residue(int i) override;
     // AddResidues must be called first for this to work properly
     int nResidues() override;
-    std::vector<double> ResidueGradient(int i) override;
+    std::vector<double> LossGradient(int i) override;
 
     // Auxiliary functions:
 
@@ -160,10 +167,6 @@ class Pimodel : public Model {
 
     // Return the state vector with the initial conditions set
     std::vector<double> getInitialX();
-
-    // Calculate the state vector for given tkc (time, springs and dampers)
-    // using the polynomials
-    std::vector<double> getXModel(std::vector<Bounded>* tkc);
 
     // Gets the polynomials that represent the acceleration of each mass
     // by using the differential equation from the discrete element method

@@ -1,4 +1,5 @@
 #include "pimodel.h"
+#include "utils.h"
 
 int main(int argc, char *argv[]) {
     ProblemDescription pd = ProblemDescription();
@@ -27,24 +28,26 @@ int main(int argc, char *argv[]) {
     pd.AddSpring(4, 5, min, max);  // k45
     pd.AddDamper(4, 5, min, max);  // c45
     pd.SetFixedMass(0);
-    pd.AddInitialVel(200.0);  // initial speed
+    pd.AddInitialVel(200.0);  // initial vel
     assert(pd.IsOk());
 
     // Learning parameters
     double finalT = 0.05;
-    int nModels = 3;
-    int timeDiscretization = 1;
+    int nModels = 20;
+    int timeDiscretization = 2;
     int kcDiscretization = 0;
     int order = 3;
-    double learningRate = 0.1;
-    int batchSize = 1000;
-    int maxSteps = 2000;
-    bool log = false;
+    double learningRate = 0.01;
+    int batchSize = 5;
+    int maxSteps = 500;
+    bool log = true;
 
     // Train all models
     Pimodels models = Pimodels(pd, finalT, nModels, timeDiscretization,
                                kcDiscretization, order);
+    auto start = Now();
     assert(!models.Train(learningRate, batchSize, maxSteps, log).isError);
+    std::cout << "Time to train model: " << TimeSince(start) << std::endl;
 
     // Get problem using intermediate value for k and c, and integrate it.
     double mean = (min + max) / 2;
@@ -53,11 +56,17 @@ int main(int argc, char *argv[]) {
                             mean, mean, mean, mean, mean, mean, mean});
     assert(!mP.isError);
     Problem p = mP.val;
+    start = Now();
     assert(!p.Integrate(finalT).isError);
+    std::cout << "Time to integrate: " << TimeSince(start) << std::endl;
 
     std::vector<double> tkc =
         std::vector<double>{0.0,  mean, mean, mean, mean, mean, mean, mean,
                             mean, mean, mean, mean, mean, mean, mean, mean};
+    start = Now();
+    models(&tkc);
+    std::cout << "Time to estimate with model: " << TimeSince(start)
+              << std::endl;
     Maybe<std::vector<double>> X;
     Maybe<std::vector<double>> XDot;
     std::cout << "t,x5,x5Dot,modelX5,modelX5Dot" << std::endl;
