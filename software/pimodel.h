@@ -213,5 +213,4 @@ class Pimodels {
     FRIEND_TEST(PimodelsTest, getContinuityTkcTest);
     FRIEND_TEST(PimodelsTest, setContinuityTest);
     FRIEND_TEST(PimodelsTest, OperatorTest);
-    FRIEND_TEST(PimodelTest, PhysicsLoss3MassesTest);
 };

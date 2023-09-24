@@ -788,19 +788,19 @@ TEST_F(PimodelTest, PhysicsResiduesNumericalTest) {
     // d²/dT²(x1)
     auto d2_x1_dT2 = [](double m1, double k1, double k2, double k3, double c1,
                         double c2, double c3, double x0, double x1, double x2,
-                        double x0Dot, double x1Dot, double x2Dot) {
+                        double dx0dT, double dx1dT, double dx2dT) {
         return 1.0 / m1 *
-               (k1 * (x0 - x1) + c1 * (x0Dot - x1Dot) + k3 * (x2 - x1) +
-                c3 * (x2Dot - x1Dot));
+               (k1 * (x0 - x1) + c1 * (dx0dT - dx1dT) + k3 * (x2 - x1) +
+                c3 * (dx2dT - dx1dT));
     };
 
     // d²/dT²(x2)
     auto d2_x2_dT2 = [](double m2, double k1, double k2, double k3, double c1,
                         double c2, double c3, double x0, double x1, double x2,
-                        double x0Dot, double x1Dot, double x2Dot) {
+                        double dx0dT, double dx1dT, double dx2dT) {
         return 1.0 / m2 *
-               (k2 * (x0 - x2) + c2 * (x0Dot - x2Dot) + k3 * (x1 - x2) +
-                c3 * (x1Dot - x2Dot));
+               (k2 * (x0 - x2) + c2 * (dx0dT - dx2dT) + k3 * (x1 - x2) +
+                c3 * (dx1dT - dx2dT));
     };
 
     // Residues:
@@ -905,8 +905,8 @@ TEST_F(PimodelTest, nResiduesTest) {
     //   for c in (0,1):
     //     x0Model(t=0,k,c) - x0_t=0
     //     x1Model(t=0,k,c) - x1_t=0
-    //     x0ModelDot(t=0,k,c) - x0Dot_t=0
-    //     x1ModelDot(t=0,k,c) - x1Dot_t=0
+    //     x0ModelDot(t=0,k,c) - dx0dT_t=0
+    //     x1ModelDot(t=0,k,c) - dx1dT_t=0
     // -> 2*2*4 = 16 residues
     //
     // TimeDiscretization = 1 -> residues will be evaluated for t = 0 and t=1
@@ -915,9 +915,9 @@ TEST_F(PimodelTest, nResiduesTest) {
     // for t in (0, 1):
     //   for k in (0, 1):
     //     for c in (0, 1):
-    //       x0ModelDotDot(t,k,c) - x0DotDot(x0Model(t,k,c),
+    //       x0ModelDotDot(t,k,c) - d²x0dT²(x0Model(t,k,c),
     //       x0ModelDot(t,k,c))
-    //       x1ModelDotDot(t,k,c) - x1DotDot(x1Model(t,k,c),
+    //       x1ModelDotDot(t,k,c) - d²x1dT²(x1Model(t,k,c),
     //       x1ModelDot(t,k,c))
     // -> 2*2*2*2 = 16 residues
     ASSERT_EQ(model_.nResidues(), 16 + 16);

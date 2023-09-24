@@ -53,11 +53,8 @@ class Model {
     // the gradient anyways during training.
     virtual std::vector<double> LossGradient(int i) = 0;
 
-    // Performs a step in gradient descent considering the i-th residue. If the
-    // value of the residue decreases, returns true and its value. Else, resets
-    // the parameters to what they previously were, and returns false and the
-    // residue's value before the step. The step parameter is what
-    // multiplies the gradient: Parameters_new = Parameters_old - step*grad
+    // Performs a step in gradient descent considering the i-th residue. Note:
+    // does not guarantee that the overall loss will decrease.
     void StochasticGradientDescentStep(int i, double stepSize);
 
     FRIEND_TEST(ModelTest, LossTest);
