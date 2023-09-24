@@ -32,15 +32,15 @@ int main(int argc, char *argv[]) {
     assert(pd.IsOk());
 
     // Learning parameters
-    double finalT = 0.04;
-    int nModels = 2;
-    int timeDiscretization = 1;
+    double finalT = 0.05;
+    int nModels = 20;
+    int timeDiscretization = 2;
     int kcDiscretization = 0;
     int order = 3;
-    double learningRate = 0.0001;
+    double learningRate = 0.01;
     int batchSize = 5;
-    int maxSteps = 5000;
-    bool log = false;
+    int maxSteps = 500;
+    bool log = true;
 
     // Train all models
     Pimodels models = Pimodels(pd, finalT, nModels, timeDiscretization,

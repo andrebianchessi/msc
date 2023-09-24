@@ -118,6 +118,8 @@ class Pimodel : public Model {
     // This model describes the system from t = t0 to t = t1
     double t0;
     double t1;
+    // Derivative of "t" (normalized time from [0,1]) w.r.t. T ("regular" time)
+    double dtdT;
 
     // Parameter that describes in how many intervals we'll discretize time and
     // the springs/dampers values in our loss function
