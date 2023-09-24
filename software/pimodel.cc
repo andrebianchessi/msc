@@ -233,29 +233,6 @@ Problem Pimodel::problemFromTkc(std::vector<Bounded>* tkc) {
     return problem.val;
 }
 
-std::vector<double> Pimodel::getXModel(std::vector<Bounded>* tkc) {
-    // X: State vector. Displacements followed by velocities.
-    auto X = std::vector<double>(this->p.NumberOfMasses() * 2);
-
-    Maybe<Void> err;
-    Maybe<double> eval;
-    for (int massId = 0; massId < this->nMasses; massId++) {
-        // Fill displacements
-        this->models(massId, 0).SetX(Bounded::Get(*tkc));
-        eval = this->models(massId, 0)(this->modelsCoefficients[massId]);
-        assert(!eval.isError);
-        X[massId] = eval.val;
-
-        // Fill velocities
-        this->modelsD[massId].SetX(Bounded::Get(*tkc));
-        eval = this->modelsD[massId](this->modelsCoefficients[massId]);
-        assert(!eval.isError);
-        X[Problem::GetMassVelIndex(this->p.NumberOfMasses(), massId)] =
-            eval.val;
-    }
-    return X;
-}
-
 bst::matrix<Polys> Pimodel::getAccelsFromDiffEq(Problem* problem,
                                                 std::vector<Bounded>& tkc) {
     // List of displacements and velocities
@@ -415,11 +392,11 @@ void Pimodel::AddPhysicsResidues() {
 }
 
 Polys* Pimodel::residueById(int i) {
-    if (i < this->initialDispResidues.size()) {
+    if (i < int(this->initialDispResidues.size())) {
         return &(this->initialDispResidues[i]);
     }
     i -= this->initialDispResidues.size();
-    if (i < this->initialVelResidues.size()) {
+    if (i < int(this->initialVelResidues.size())) {
         return &(this->initialVelResidues[i]);
     }
     i -= this->initialVelResidues.size();
@@ -427,11 +404,11 @@ Polys* Pimodel::residueById(int i) {
 }
 
 std::map<std::tuple<int, int>, double>* Pimodel::residueDaById(int i) {
-    if (i < this->initialDispResidues.size()) {
+    if (i < int(this->initialDispResidues.size())) {
         return &(this->initialDispResiduesDa[i]);
     }
     i -= this->initialDispResidues.size();
-    if (i < this->initialVelResidues.size()) {
+    if (i < int(this->initialVelResidues.size())) {
         return &(this->initialVelResiduesDa[i]);
     }
     i -= this->initialVelResidues.size();
@@ -585,21 +562,22 @@ void Pimodels::logComplexity() {
 
     // Initial displacement residues cost
     int n = 0;
-    for (int i = 0; i < this->pimodels[0].initialDispResidues.size(); i++) {
+    for (int i = 0; i < int(this->pimodels[0].initialDispResidues.size());
+         i++) {
         n += this->pimodels[0].initialDispResidues[i].nMonomials();
     }
     std::cout << "Total cost of calculating initial displacement residues:" << n
               << std::endl;
     // Initial velocities residues cost
     n = 0;
-    for (int i = 0; i < this->pimodels[0].initialVelResidues.size(); i++) {
+    for (int i = 0; i < int(this->pimodels[0].initialVelResidues.size()); i++) {
         n += this->pimodels[0].initialVelResidues[i].nMonomials();
     }
     std::cout << "Total cost of calculating initial velocity residues:" << n
               << std::endl;
     // Physics residues cost
     n = 0;
-    for (int i = 0; i < this->pimodels[0].physicsResidues.size(); i++) {
+    for (int i = 0; i < int(this->pimodels[0].physicsResidues.size()); i++) {
         n += this->pimodels[0].physicsResidues[i].nMonomials();
     }
     std::cout << "Total cost of calculating physics residues:" << n

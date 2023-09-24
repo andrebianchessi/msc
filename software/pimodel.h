@@ -61,10 +61,10 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, PhysicsResiduesTkcTest);
     FRIEND_TEST(PimodelTest, PhysicsResiduesTkcZeroDiscTest);
     FRIEND_TEST(PimodelTest, InitialConditionsResiduesTest);
+    FRIEND_TEST(PimodelTest, InitialConditionsResiduesNumericalTest);
     FRIEND_TEST(PimodelTest, PhysicsResiduesTest);
+    FRIEND_TEST(PimodelTest, PhysicsResiduesNumericalTest);
     FRIEND_TEST(PimodelTest, nResiduesTest);
-    FRIEND_TEST(PimodelTest, LossTest);
-    FRIEND_TEST(PimodelTest, PhysicsLoss3MassesTest);
     FRIEND_TEST(PimodelTest, LossGradientTest);
     FRIEND_TEST(PimodelsTest, ConstructorTest);
     FRIEND_TEST(PimodelsTest, setContinuityTest);
@@ -167,10 +167,6 @@ class Pimodel : public Model {
 
     // Return the state vector with the initial conditions set
     std::vector<double> getInitialX();
-
-    // Calculate the state vector for given tkc (time, springs and dampers)
-    // using the polynomials
-    std::vector<double> getXModel(std::vector<Bounded>* tkc);
 
     // Gets the polynomials that represent the acceleration of each mass
     // by using the differential equation from the discrete element method
