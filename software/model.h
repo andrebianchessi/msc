@@ -55,7 +55,7 @@ class Model {
     // the parameters to what they previously were, and returns false and the
     // residue's value before the step. The step parameter is what
     // multiplies the gradient: Parameters_new = Parameters_old - step*grad
-    void GradientDescentStep(int i, double stepSize);
+    void StochasticGradientDescentStep(int i, double stepSize);
 
     FRIEND_TEST(ModelTest, LossTest);
 };
