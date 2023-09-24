@@ -37,7 +37,15 @@ Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
     int nDampers = p.dampers.size();
     Poly poly;
     Maybe<Void> r;
-    this->dtdT = 1 / (finalT - initialT);
+
+    // T = T0 + (T1-T0)*t
+    // e.g.:
+    //      t = 0.0 -> T = T0
+    //      t = 1.0 -> T = T1
+    //      t = 0.5 -> T = (T1+T0)/2
+    this->dTdt = finalT - initialT;
+    this->dtdT = 1.0 / (finalT - initialT);
+
     for (int massId = 0; massId < p.NumberOfMasses(); massId++) {
         r = poly.Build(nSprings + nDampers + 1, this->order, true, massId);
         assert(!r.isError);
@@ -149,12 +157,14 @@ Maybe<std::vector<double>> Pimodel::GetVelocities(std::vector<double>* TKC) {
         return r;
     }
     std::vector<double> vels = std::vector<double>(this->p.NumberOfMasses());
-    Maybe<double> vel;
+    // d/dt(model)
+    Maybe<double> pDot;
     for (int massId = 0; massId < int(vels.size()); massId++) {
         this->modelsD[massId].SetX(this->normalizeTkc(TKC));
-        vel = this->modelsD[massId](this->modelsCoefficients[massId]);
-        assert(!vel.isError);
-        vels[massId] = vel.val * this->dtdT;
+        pDot = this->modelsD[massId](this->modelsCoefficients[massId]);
+        assert(!pDot.isError);
+        // d/dt * dt/dT = d/dT
+        vels[massId] = pDot.val * this->dtdT;
     }
     r.val = vels;
     return r;
@@ -249,21 +259,23 @@ std::vector<double> Pimodel::getXModel(std::vector<Bounded>* tkc) {
 bst::matrix<Polys> Pimodel::getAccelsFromDiffEq(Problem* problem,
                                                 std::vector<Bounded>& tkc) {
     // List of displacements and velocities
-    bst::matrix<Poly> Disps = bst::matrix<Poly>(nMasses, 1);
-    bst::matrix<Poly> Vels = bst::matrix<Poly>(nMasses, 1);
+    bst::matrix<Poly> x = bst::matrix<Poly>(nMasses, 1);
+    bst::matrix<Poly> dxdT = bst::matrix<Poly>(nMasses, 1);
     for (int massId = 0; massId < nMasses; massId++) {
-        Disps(massId, 0) = this->models(massId, 0);
-        Disps(massId, 0).SetX(Bounded::Get(tkc));
+        x(massId, 0) = this->models(massId, 0);
+        x(massId, 0).SetX(Bounded::Get(tkc));
 
-        Vels(massId, 0) = this->modelsD[massId];
-        Vels(massId, 0).SetX(Bounded::Get(tkc));
+        // d/dT(x_i) = (dt/dT)*d/dt(model_i)
+        dxdT(massId, 0) = this->modelsD[massId];
+        dxdT(massId, 0) *= this->dtdT;
+        dxdT(massId, 0).SetX(Bounded::Get(tkc));
     }
 
-    matrix<Polys> kx = prod(problem->K, Disps);
-    problem->C *= this->dtdT;
-    matrix<Polys> cxDot = prod(problem->C, Vels);
-    matrix<Polys> Accels = prod(problem->MInv, kx + cxDot);
-    return Accels;
+    matrix<Polys> k_times_x = prod(problem->K, x);
+    matrix<Polys> c_times_dxdT = prod(problem->C, dxdT);
+    // d²/dT2²(x)
+    matrix<Polys> d2xdT2 = prod(problem->MInv, k_times_x + c_times_dxdT);
+    return d2xdT2;
 }
 
 std::vector<double> Pimodel::getInitialX() {
@@ -360,6 +372,7 @@ void Pimodel::AddInitialConditionsResidues() {
     auto initialX = this->getInitialX();
 
     Poly model;
+    Poly modelDot;
     for (int massId = 0; massId < this->nMasses; massId++) {
         for (auto tkc : this->initialConditionsResiduesTkc) {
             model = this->models(massId, 0);
@@ -368,32 +381,34 @@ void Pimodel::AddInitialConditionsResidues() {
                 model +
                 (-1) * initialX[Problem::GetMassDispIndex(nMasses, massId)]);
 
-            model = this->modelsD[massId];
-            model.SetX(Bounded::Get(tkc));
+            modelDot = this->modelsD[massId];
+            modelDot.SetX(Bounded::Get(tkc));
             this->initialVelResidues.push_back(
-                model +
-                (-1 / this->dtdT) *
+                modelDot +
+                (-this->dTdt) *
                     initialX[Problem::GetMassVelIndex(nMasses, massId)]);
         }
     }
 }
 
 void Pimodel::AddPhysicsResidues() {
-    Poly modelXDotDot;
-    bst::matrix<Polys> AccelsFromDiffEq;
+    // d²/dt²(model)
+    Poly modelDotDot;
+    // d²/dT²(x)
+    bst::matrix<Polys> d2x_dT2;
     for (int m = 0; m < nMasses; m++) {
         for (auto tkc : this->physicsResiduesTkc) {
-            modelXDotDot = this->modelsDD[m];
-            modelXDotDot.SetX(Bounded::Get(tkc));
+            modelDotDot = this->modelsDD[m];
+            modelDotDot.SetX(Bounded::Get(tkc));
 
             Problem problem = this->problemFromTkc(&tkc);
             if (problem.massIsFixed(m)) {
-                this->physicsResidues.push_back(Polys(modelXDotDot));
+                this->physicsResidues.push_back(Polys(modelDotDot));
             } else {
-                AccelsFromDiffEq = getAccelsFromDiffEq(&problem, tkc);
-                this->physicsResidues.push_back(
-                    Polys(modelXDotDot) + (-1.0 / (this->dtdT * this->dtdT)) *
-                                              AccelsFromDiffEq(m, 0));
+                d2x_dT2 = getAccelsFromDiffEq(&problem, tkc);
+                this->physicsResidues.push_back(Polys(modelDotDot) +
+                                                (-(this->dTdt * this->dTdt)) *
+                                                    d2x_dT2(m, 0));
             }
         }
     }
