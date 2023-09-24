@@ -399,36 +399,36 @@ void Pimodel::AddPhysicsResidues() {
     }
 }
 
-#define LOSS_TERMS                                                            \
-    int nInitialConditionsLossTerms = int(this->initialDispResidues.size()) + \
-                                      int(this->initialVelResidues.size());   \
-    int nPhysicsLossTerms = int(this->physicsResidues.size());                \
-    double nTotalLossTerms = nInitialConditionsLossTerms + nPhysicsLossTerms;
-double Pimodel::InitialConditionsWeight() {
-    LOSS_TERMS
-    if (nPhysicsLossTerms == 0) {
-        return 1;
-    }
-    return nPhysicsLossTerms / nTotalLossTerms;
-};
-double Pimodel::PhysicsWeight() {
-    LOSS_TERMS
-    if (nInitialConditionsLossTerms == 0) {
-        return 1;
-    }
-    return nInitialConditionsLossTerms / nTotalLossTerms;
-};
+// #define LOSS_TERMS                                                            \
+//     int nInitialConditionsLossTerms = int(this->initialDispResidues.size()) + \
+//                                       int(this->initialVelResidues.size());   \
+//     int nPhysicsLossTerms = int(this->physicsResidues.size());                \
+//     double nTotalLossTerms = nInitialConditionsLossTerms + nPhysicsLossTerms;
+// double Pimodel::InitialConditionsWeight() {
+//     LOSS_TERMS
+//     if (nPhysicsLossTerms == 0) {
+//         return 1;
+//     }
+//     return nPhysicsLossTerms / nTotalLossTerms;
+// };
+// double Pimodel::PhysicsWeight() {
+//     LOSS_TERMS
+//     if (nInitialConditionsLossTerms == 0) {
+//         return 1;
+//     }
+//     return nInitialConditionsLossTerms / nTotalLossTerms;
+// };
 
-double Pimodel::residueWeight(int i) {
-    if (i < this->initialDispResidues.size()) {
-        return this->InitialConditionsWeight();
-    }
-    i -= this->initialDispResidues.size();
-    if (i < this->initialVelResidues.size()) {
-        return this->InitialConditionsWeight();
-    }
-    return this->PhysicsWeight();
-}
+// double Pimodel::residueWeight(int i) {
+//     if (i < this->initialDispResidues.size()) {
+//         return this->InitialConditionsWeight();
+//     }
+//     i -= this->initialDispResidues.size();
+//     if (i < this->initialVelResidues.size()) {
+//         return this->InitialConditionsWeight();
+//     }
+//     return this->PhysicsWeight();
+// }
 
 Polys* Pimodel::residueById(int i) {
     if (i < this->initialDispResidues.size()) {
@@ -470,7 +470,7 @@ double Pimodel::Residue(int i) {
     if (!this->residueIsCached[i]) {
         this->setResidueCache(i);
     }
-    return this->residueWeight(i) * pow(this->residueCache[i], 2);
+    return this->residueCache[i];
 }
 
 void Pimodel::setResiduesDa() {
@@ -486,14 +486,10 @@ void Pimodel::setResiduesDa() {
     }
 }
 
-std::vector<double> Pimodel::ResidueGradient(int i) {
+std::vector<double> Pimodel::LossGradient(int i) {
     std::vector<double> grad = std::vector<double>(this->nParameters());
 
-    if (!this->residueIsCached[i]) {
-        this->setResidueCache(i);
-    }
-    double weight = this->residueWeight(i);
-    double residueVal = this->residueCache[i];
+    double residueVal = this->Residue(i);
     std::map<std::tuple<int, int>, double>* gradMap = this->residueDaById(i);
 
     std::tuple<int, int> gradMapKey;
@@ -502,7 +498,7 @@ std::vector<double> Pimodel::ResidueGradient(int i) {
         for (int mon = 0; mon < this->models(massId, 0).nMonomials(); mon++) {
             gradMapKey = {massId, mon};
             if (gradMap->find(gradMapKey) != gradMap->end()) {
-                grad[gradI] += weight * residueVal * ((*gradMap)[gradMapKey]);
+                grad[gradI] += residueVal * ((*gradMap)[gradMapKey]);
             }
             gradI += 1;
         }
@@ -639,7 +635,6 @@ void Pimodels::logComplexity() {
 
 Maybe<double> Pimodels::Train(double learningRate, int batchSize, int maxSteps,
                               bool log) {
-    double learningRate0 = learningRate;
     Maybe<double> r;
 
     this->logComplexity();
@@ -647,7 +642,6 @@ Maybe<double> Pimodels::Train(double learningRate, int batchSize, int maxSteps,
     std::vector<double> tkcCont = this->continuityTkc();
     int t = 0;
     while (t < int(this->pimodels.size())) {
-        learningRate = learningRate0;
         if (t > 0) {
             this->setContinuity(t, tkcCont);
         }
@@ -657,11 +651,13 @@ Maybe<double> Pimodels::Train(double learningRate, int batchSize, int maxSteps,
         r = this->pimodels[t].Train(learningRate, batchSize, maxSteps, log);
         std::cout << "## Training physics##" << std::endl;
         this->pimodels[t].SetResidues(false, true);
-        this->pimodels[t].Train(learningRate, batchSize, maxSteps, log);
+        this->pimodels[t].Train(learningRate / 10000000, batchSize, maxSteps,
+                                log);
         std::cout << "## Training physics and initial conditions ##"
                   << std::endl;
         this->pimodels[t].SetResidues(true, true);
-        this->pimodels[t].Train(learningRate, batchSize, maxSteps, log);
+        this->pimodels[t].Train(learningRate / 10000000, batchSize, maxSteps,
+                                log);
 
         t += 1;
     }

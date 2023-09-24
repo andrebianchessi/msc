@@ -374,6 +374,7 @@ cc_binary(
     "pimodel_binary_test.cc"
   ],
   deps = [
-    ":pimodel"
+    ":pimodel",
+    ":utils"
   ]
 )

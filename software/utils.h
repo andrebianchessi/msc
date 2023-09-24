@@ -45,3 +45,9 @@ Maybe<double> NormalizeToDouble(double val, double min, double max);
 
 // "Unnormalizes" value to unbounded interval
 double Unnormalize(Bounded b, double min, double max);
+
+// Convenience function to get current time
+std::chrono::_V2::system_clock::time_point Now();
+
+// Convenient function to get readable time difference from t0 to now
+std::string TimeSince(std::chrono::_V2::system_clock::time_point t0);

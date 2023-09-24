@@ -122,6 +122,7 @@ Maybe<Void> Poly::Build(int n, int order, bool tiny, int id) {
     }
 
     this->id = id;
+    this->dxCount = 0;
     this->n = n;
     this->X = std::vector<double>(n);
 
@@ -362,7 +363,7 @@ Maybe<Void> Poly::Dxi(int i) {
             return r;
         }
     }
-
+    this->dxCount += 1;
     return r;
 }
 

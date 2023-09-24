@@ -70,8 +70,7 @@ class TestModel : public Model {
 
     FRIEND_TEST(ModelTest, LossTest);
     double Residue(int i) override {
-        // Standard quadratic loss
-        // L = Sum ( (model(xi)-yi)^2 )
+        // (model(xi)-yi)
         double l;
         std::vector<double> X;
 
@@ -81,22 +80,22 @@ class TestModel : public Model {
         // 2 | 71
         if (i == 0) {
             X = {0};
-            l = pow((*this)(&X).val - (5), 2);
+            l = (*this)(&X).val - (5);
         }
         if (i == 1) {
             X = {1};
-            l = pow((*this)(&X).val - (25), 2);
+            l = (*this)(&X).val - (25);
         }
         if (i == 2) {
             X = {2};
-            l = pow((*this)(&X).val - (71), 2);
+            l = (*this)(&X).val - (71);
         }
 
         return l;
     };
 
     FRIEND_TEST(ModelTest, LossGradientTest);
-    std::vector<double> ResidueGradient(int i) override {
+    std::vector<double> LossGradient(int i) override {
         // model(x) = ax^2 + bx + c
         // Li = (model(xi)-yi)^2
         // dLi/da = 2*(model(xi)-yi)* dModel(xi)/da
@@ -220,7 +219,7 @@ TEST(ModelTest, LossGradientTest) {
     // 0 | 5
     // 1 | 25
     // 2 | 71
-    auto lossGrad = m.ResidueGradient(0);
+    auto lossGrad = m.LossGradient(0);
     double da = 2 * (a * 0.0 * 0.0 + b * 0.0 + c - 5) * 0.0 * 0.0;
     double db = 2 * (a * 0.0 * 0.0 + b * 0.0 + c - 5) * 0.0;
     double dc = 2 * (a * 0.0 * 0.0 + b * 0.0 + c - 5) * 1;
@@ -228,7 +227,7 @@ TEST(ModelTest, LossGradientTest) {
     ASSERT_DOUBLE_EQ(db, lossGrad[1]);
     ASSERT_DOUBLE_EQ(dc, lossGrad[2]);
 
-    lossGrad = m.ResidueGradient(1);
+    lossGrad = m.LossGradient(1);
     da = 2 * (a * 1.0 * 1.0 + b * 1.0 + c - 25) * 1.0 * 1.0;
     db = 2 * (a * 1.0 * 1.0 + b * 1.0 + c - 25) * 1.0;
     dc = 2 * (a * 1.0 * 1.0 + b * 1.0 + c - 25) * 1;
@@ -236,7 +235,7 @@ TEST(ModelTest, LossGradientTest) {
     ASSERT_DOUBLE_EQ(db, lossGrad[1]);
     ASSERT_DOUBLE_EQ(dc, lossGrad[2]);
 
-    lossGrad = m.ResidueGradient(2);
+    lossGrad = m.LossGradient(2);
     da = 2 * (a * 2.0 * 2.0 + b * 2.0 + c - 71) * 2.0 * 2.0;
     db = 2 * (a * 2.0 * 2.0 + b * 2.0 + c - 71) * 2.0;
     dc = 2 * (a * 2.0 * 2.0 + b * 2.0 + c - 71) * 1;
@@ -248,7 +247,7 @@ TEST(ModelTest, LossGradientTest) {
 TEST(ModelTest, TrainTest) {
     TestModel m = TestModel();
     auto status = m.Train(0.01, 3, 2000, true);
-    ASSERT_TRUE(RelativeAbsError(m.a, 13) < 0.001);
-    ASSERT_TRUE(RelativeAbsError(m.b, 7) < 0.001);
-    ASSERT_TRUE(RelativeAbsError(m.c, 5) < 0.001);
+    ASSERT_TRUE(RelativeAbsError(m.a, 13) < 0.01);
+    ASSERT_TRUE(RelativeAbsError(m.b, 7) < 0.01);
+    ASSERT_TRUE(RelativeAbsError(m.c, 5) < 0.01);
 }

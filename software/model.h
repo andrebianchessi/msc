@@ -20,7 +20,7 @@ class Model {
     Maybe<double> Train(double learningRate, int batchSize, int maxSteps,
                         bool log);
 
-    // Returns the total loss, i.e. the mean squared error
+    // Returns the total loss, i.e. the sum of the squared residues
     double Loss();
 
    private:
@@ -34,21 +34,21 @@ class Model {
 
     // Returns the value of the i-th residue given the model's current
     // parameters.
-    // Ex: loss = 1/2*((model(x0)-y0)^2 + (model(x1)-y1)^2))
-    // Loss(0) -> (model(x0)-y0)^2
-    // Loss(1) -> (model(x1)-y1)^2)
+    // Ex: loss = ((model(x0)-y0)^2 + (model(x1)-y1)^2))
+    // Residue(0) -> model(x0)-y0
+    // Residue(1) -> model(x1)-y1
     virtual double Residue(int i) = 0;
 
     // Returns the number of residues in the loss
-    // Ex: loss = 1/2*(model(x0)-y0)^2 + (model(x1) - y1)^2 -> 2 residues
+    // Ex: loss = (model(x0)-y0)^2 + (model(x1) - y1)^2 -> 2 residues
     virtual int nResidues() = 0;
 
-    // Returns the gradient of the i-th residue with respect to the model's
+    // Returns the gradient of the i-th loss summand with respect to the model's
     // parameters i.e. if the model has 2 parameters, the returned vector will
-    // be the derivative of the loss function with respect to the first
-    // parameter followed by the derivative of the loss function with respect to
-    // the second parameter
-    virtual std::vector<double> ResidueGradient(int i) = 0;
+    // be the derivative of the i-th squared residue with respect to the first
+    // parameter followed by the derivative of the i-th
+    // squared residue with respect to the second parameter.
+    virtual std::vector<double> LossGradient(int i) = 0;
 
     // Performs a step in gradient descent considering the i-th residue. If the
     // value of the residue decreases, returns true and its value. Else, resets

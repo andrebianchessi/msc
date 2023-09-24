@@ -62,6 +62,7 @@ class Pimodel : public Model {
     FRIEND_TEST(PimodelTest, PhysicsResiduesTest);
     FRIEND_TEST(PimodelTest, nResiduesTest);
     FRIEND_TEST(PimodelTest, LossTest);
+    FRIEND_TEST(PimodelTest, PhysicsLoss3MassesTest);
     FRIEND_TEST(PimodelTest, LossGradientTest);
     FRIEND_TEST(PimodelsTest, ConstructorTest);
     FRIEND_TEST(PimodelsTest, setContinuityTest);
@@ -151,7 +152,7 @@ class Pimodel : public Model {
     double Residue(int i) override;
     // AddResidues must be called first for this to work properly
     int nResidues() override;
-    std::vector<double> ResidueGradient(int i) override;
+    std::vector<double> LossGradient(int i) override;
 
     // Auxiliary functions:
 
@@ -210,4 +211,5 @@ class Pimodels {
     FRIEND_TEST(PimodelsTest, getContinuityTkcTest);
     FRIEND_TEST(PimodelsTest, setContinuityTest);
     FRIEND_TEST(PimodelsTest, OperatorTest);
+    FRIEND_TEST(PimodelTest, PhysicsLoss3MassesTest);
 };

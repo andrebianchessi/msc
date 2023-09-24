@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <chrono>
 #include <iostream>
 #include <memory>
 #include <random>
@@ -82,3 +83,14 @@ Maybe<double> NormalizeToDouble(double val, double min, double max) {
 double Unnormalize(Bounded b, double min, double max) {
     return min + b.Get() * (max - min);
 };
+
+std::chrono::_V2::system_clock::time_point Now() {
+    return std::chrono::high_resolution_clock::now();
+}
+
+std::string TimeSince(std::chrono::_V2::system_clock::time_point start) {
+    auto ms =
+        std::chrono::duration_cast<std::chrono::microseconds>(Now() - start)
+            .count();
+    return std::to_string(ms) + " us";
+}
