@@ -47,7 +47,10 @@ class Model {
     // parameters i.e. if the model has 2 parameters, the returned vector will
     // be the derivative of the i-th squared residue with respect to the first
     // parameter followed by the derivative of the i-th
-    // squared residue with respect to the second parameter.
+    // squared residue with respect to the second parameter. It's fine if
+    // multiplicative constants are removed. I.e. returning [1,5] if the formal
+    // mathematical gradient is [2,10] is absolutely fine, because we scale
+    // the gradient anyways during training.
     virtual std::vector<double> LossGradient(int i) = 0;
 
     // Performs a step in gradient descent considering the i-th residue. If the
