@@ -164,11 +164,11 @@ TEST(EvolutionTest, getParentsTest) {
     // -> cost0Count/cost1Count = 2.0
     // -> cost0Count/cost2Count = 3.0
     // -> cost1Count/cost2Count = 1.5
-    ASSERT_TRUE(abs((float(cost0ParentCount) / cost1ParentCount - 2.0) / 2.0) <
+    ASSERT_TRUE(abs((double(cost0ParentCount) / cost1ParentCount - 2.0) / 2.0) <
                 0.05);
-    ASSERT_TRUE(abs((float(cost0ParentCount) / cost2ParentCount - 3.0) / 3.0) <
+    ASSERT_TRUE(abs((double(cost0ParentCount) / cost2ParentCount - 3.0) / 3.0) <
                 0.05);
-    ASSERT_TRUE(abs((float(cost1ParentCount) / cost2ParentCount - 1.5) / 1.5) <
+    ASSERT_TRUE(abs((double(cost1ParentCount) / cost2ParentCount - 1.5) / 1.5) <
                 0.05);
 }
 

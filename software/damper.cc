@@ -14,16 +14,16 @@ Damper::Damper(int id, const Mass* m0, const Mass* m1, double c) {
 };
 const Mass* Damper::GetM0() { return this->m0; };
 const Mass* Damper::GetM1() { return this->m1; };
-const bounded_matrix<float, 2, 2> Damper::GetM() {
-    bounded_matrix<float, 2, 2> m;
+const bounded_matrix<double, 2, 2> Damper::GetM() {
+    bounded_matrix<double, 2, 2> m;
     m(0, 0) = (this->m0)->m;
     m(0, 1) = 0.0;
     m(1, 0) = 0.0;
     m(1, 1) = (this->m1)->m;
     return m;
 };
-const bounded_matrix<float, 2, 2> Damper::GetC() {
-    bounded_matrix<float, 2, 2> m;
+const bounded_matrix<double, 2, 2> Damper::GetC() {
+    bounded_matrix<double, 2, 2> m;
     m(0, 0) = -this->c;
     m(0, 1) = this->c;
     m(1, 0) = this->c;

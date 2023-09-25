@@ -34,8 +34,8 @@ int main(int argc, char *argv[]) {
     // Learning parameters
     double finalT = 0.05;
     int nModels = 20;
-    int timeDiscretization = 2;
-    int kcDiscretization = 0;
+    int icPoints = 5;
+    int physPoints = 5;
     int order = 3;
     double learningRate = 0.01;
     int maxSteps = 500;
@@ -43,8 +43,8 @@ int main(int argc, char *argv[]) {
     bool logTraining = true;
 
     // Train all models
-    Pimodels models = Pimodels(pd, finalT, nModels, timeDiscretization,
-                               kcDiscretization, order);
+    Pimodels models =
+        Pimodels(pd, finalT, nModels, icPoints, physPoints, order);
     auto start = Now();
     assert(!models
                 .Train(learningRate, learningRate / 100, maxSteps,

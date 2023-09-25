@@ -12,16 +12,18 @@ class Pimodel : public Model {
     Pimodel() = default;
     // Parameters:
     // p: Description of this problem
-    // finalT: this model models the position of the mass for t in [0,finalT]
-    // nModels: the interval [0, finalT] will be divided into nTimeBuckets
-    // time buckets. For every mass, there'll be 1 model for each interval.
-    // timeDiscretization: How many intervals we'll discretize time in
-    // every bucket.
-    // kcDiscretization: How many intervals we'll discretize
-    // springs/dampers values in our loss function
+    // initialT,finalT: this model models the position of the mass for T in
+    //   [initialT,finalT]
+    // initialConditionTrainingPoints: the number of {t=0, K, C} points that are
+    //   considered in the initialCondition loss function of each mass. Needs
+    //   to be >=1.
+    // physicsTrainingPoints: the number of {t, K, C} points that are considered
+    //   in the physics loss function of each mass. Needs to be >=2 because t=0
+    //   and t=1 are always considered.
     // order: order of the multivariate polynomial used in the models
     Pimodel(ProblemDescription p, double initialT, double finalT,
-            int timeDiscretization, int kcDiscretization, int order);
+            int initialConditionTrainingPoints, int physicsTrainingPoints,
+            int order);
 
     // Must be called before Train()
     // Builds the residues based on problem description.
@@ -125,10 +127,11 @@ class Pimodel : public Model {
     // Derivative of T (global time) w.r.t. t (normalized time from [0,1])
     double dTdt;
 
-    // Parameter that describes in how many intervals we'll discretize time and
-    // the springs/dampers values in our loss function
-    int timeDiscretization;
-    int kcDiscretization;
+    // Defines how many points we'll use in the initialCondition loss function.
+    int initialConditionTrainingPoints;
+    // Defines how many points we'll use in the physics loss function. Note that
+    // t=0 and t=1 are always used, so this number must be >=2.
+    int physicsTrainingPoints;
 
     // Order of the polynomial models
     int order;
@@ -142,9 +145,8 @@ class Pimodel : public Model {
 
     Maybe<Void> SetParameters(std::vector<double>* parameters) override;
 
-    void AddInitialConditionsResiduesTkc(std::vector<Bounded>* tkc,
-                                         int tkcIndex);
-    void AddPhysicsResiduesTkc(std::vector<Bounded>* tkc, int tkcIndex);
+    void AddInitialConditionsResiduesTkc();
+    void AddPhysicsResiduesTkc();
     void AddResiduesTkc();
 
     void AddInitialConditionsResidues();
@@ -178,7 +180,8 @@ class Pimodels {
    public:
     Pimodels() = default;
     Pimodels(ProblemDescription p, double finalT, int nModels,
-             int timeDiscretization, int kcDiscretization, int order);
+             int initialConditionTrainingPoints, int physicsTrainingPoints,
+             int order);
 
     // initialConditionsLearningRate is the learning rate used to train only the
     // initial conditions, whereas physicsLearningRate is the learning rate used

@@ -15,9 +15,9 @@ class Spring {
     const Mass* GetM0();
     const Mass* GetM1();
     // Returns Mass Matrix
-    const bounded_matrix<float, 2, 2> GetM();
+    const bounded_matrix<double, 2, 2> GetM();
     // Returns Stiffness Matrix
-    const bounded_matrix<float, 2, 2> GetK();
+    const bounded_matrix<double, 2, 2> GetK();
 
     double Get_k() { return this->k; };
 

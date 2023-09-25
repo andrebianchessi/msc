@@ -87,7 +87,7 @@ TEST(ProblemCreatureTest, EvolutionTest) {
 }
 
 TEST(ProblemCreatureTest, EvolutionUntilConvergenceTest) {
-    // Similar to EvolutionTest but using Evolve(float, true)
+    // Similar to EvolutionTest but using Evolve(double, true)
     ProblemDescription pd = ProblemDescription();
     pd.AddMass(1.0, 0.0, 0.0);  // m0
     pd.AddMass(300, 1.0, 1.0);  // m1

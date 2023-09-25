@@ -15,18 +15,19 @@
 namespace bst = boost::numeric::ublas;
 
 Pimodel::Pimodel(ProblemDescription p, double initialT, double finalT,
-                 int timeDiscretization, int kcDiscretization, int order) {
+                 int initialConditionTrainingPoints, int physicsTrainingPoints,
+                 int order) {
     assert(p.IsOk());
-    assert(timeDiscretization >= 0);
-    assert(kcDiscretization >= 0);
+    assert(initialConditionTrainingPoints >= 1);
+    assert(physicsTrainingPoints >= 2);
     assert(initialT <= finalT);
     this->p = p;
     this->nMasses = p.masses.size();
     this->order = order;
     this->t0 = initialT;
     this->t1 = finalT;
-    this->timeDiscretization = timeDiscretization;
-    this->kcDiscretization = kcDiscretization;
+    this->initialConditionTrainingPoints = initialConditionTrainingPoints;
+    this->physicsTrainingPoints = physicsTrainingPoints;
     this->models = bst::matrix<Poly>(p.NumberOfMasses(), 1);
     this->modelsD = std::vector<Poly>(p.NumberOfMasses(), 1);
     this->modelsDD = std::vector<Poly>(p.NumberOfMasses(), 1);
@@ -286,63 +287,39 @@ std::vector<double> Pimodel::getInitialX() {
     return initialX;
 }
 
-void Pimodel::AddInitialConditionsResiduesTkc(std::vector<Bounded>* tkc,
-                                              int tkcIndex) {
-    if (tkcIndex == int(tkc->size())) {
-        this->initialConditionsResiduesTkc.push_back(*tkc);
-        return;
-    }
-
-    double min = 0.0;
-    double max = 1.0;
-    if (this->kcDiscretization == 0) {
-        tkc->at(tkcIndex) = Bounded();
-        assert(!tkc->at(tkcIndex).Set(0.5).isError);
-        this->AddInitialConditionsResiduesTkc(tkc, tkcIndex + 1);
-        return;
-    }
-    for (int i = 0; i <= this->kcDiscretization; i++) {
-        tkc->at(tkcIndex) = Bounded();
-        assert(!tkc->at(tkcIndex)
-                    .Set((max - min) / this->kcDiscretization * i)
-                    .isError);
-        this->AddInitialConditionsResiduesTkc(tkc, tkcIndex + 1);
+void Pimodel::AddInitialConditionsResiduesTkc() {
+    while (int(this->initialConditionsResiduesTkc.size()) <
+           this->initialConditionTrainingPoints) {
+        std::vector<Bounded> tkc = std::vector<Bounded>(this->inputSize());
+        assert(!tkc[0].Set(0.0).isError);
+        for (int i = 1; i < int(tkc.size()); i++) {
+            assert(!tkc[i].Set(Random()).isError);
+        }
+        this->initialConditionsResiduesTkc.push_back(tkc);
     }
 }
-void Pimodel::AddPhysicsResiduesTkc(std::vector<Bounded>* tkc, int tkcIndex) {
-    if (tkcIndex == int(tkc->size())) {
-        this->physicsResiduesTkc.push_back(*tkc);
-        return;
-    }
+void Pimodel::AddPhysicsResiduesTkc() {
+    while (int(this->physicsResiduesTkc.size()) < this->physicsTrainingPoints) {
+        std::vector<Bounded> tkc = std::vector<Bounded>(this->inputSize());
 
-    double min = 0.0;
-    double max = 1.0;
-    int discretization;
-    if (tkcIndex == 0) {
-        discretization = this->timeDiscretization;
-    } else {
-        discretization = this->kcDiscretization;
-    }
-    if (discretization == 0) {
-        tkc->at(tkcIndex) = Bounded();
-        assert(!tkc->at(tkcIndex).Set(0.5).isError);
-        this->AddPhysicsResiduesTkc(tkc, tkcIndex + 1);
-        return;
-    }
-    for (int i = 0; i <= discretization; i++) {
-        tkc->at(tkcIndex) = Bounded();
-        assert(
-            !tkc->at(tkcIndex).Set((max - min) / discretization * i).isError);
-        this->AddPhysicsResiduesTkc(tkc, tkcIndex + 1);
+        // First we set t = 0 and t = 1. Then, t is random
+        if (int(this->physicsResiduesTkc.size()) == 0) {
+            assert(!tkc[0].Set(0.0).isError);
+        } else if (int(this->physicsResiduesTkc.size()) == 1) {
+            assert(!tkc[0].Set(1.0).isError);
+        } else if (int(this->physicsResiduesTkc.size()) >= 1) {
+            assert(!tkc[0].Set(Random()).isError);
+        }
+
+        for (int i = 1; i < int(tkc.size()); i++) {
+            assert(!tkc[i].Set(Random()).isError);
+        }
+        this->physicsResiduesTkc.push_back(tkc);
     }
 }
 void Pimodel::AddResiduesTkc() {
-    std::vector<Bounded> tkc = std::vector<Bounded>(this->inputSize());
-
-    tkc[0].Set(0.0);
-    this->AddInitialConditionsResiduesTkc(&tkc, 1);
-
-    this->AddPhysicsResiduesTkc(&tkc, 0);
+    this->AddInitialConditionsResiduesTkc();
+    this->AddPhysicsResiduesTkc();
 }
 
 void Pimodel::AddInitialConditionsResidues() {
@@ -384,7 +361,7 @@ void Pimodel::AddPhysicsResidues() {
             } else {
                 d2x_dT2 = getAccelsFromDiffEq(&problem, tkc);
                 this->physicsResidues.push_back(Polys(modelDotDot) +
-                                                (-(this->dTdt * this->dTdt)) *
+                                                (-this->dTdt * this->dTdt) *
                                                     d2x_dT2(m, 0));
             }
         }
@@ -469,11 +446,12 @@ std::vector<double> Pimodel::LossGradient(int i) {
 }
 
 Pimodels::Pimodels(ProblemDescription p, double finalT, int nModels,
-                   int timeDiscretization, int kcDiscretization, int order) {
+                   int initialConditionTrainingPoints,
+                   int physicsTrainingPoints, int order) {
     assert(finalT > 0);
     assert(nModels >= 1);
-    assert(timeDiscretization >= 0);
-    assert(kcDiscretization >= 0);
+    assert(initialConditionTrainingPoints >= 1);
+    assert(physicsTrainingPoints >= 2);
     assert(order >= 0);
 
     this->timeBuckets = std::vector<double>(nModels + 1);
@@ -486,9 +464,9 @@ Pimodels::Pimodels(ProblemDescription p, double finalT, int nModels,
     double t0 = 0;
     this->pimodels = std::vector<Pimodel>(nModels);
     for (int b = 0; b < nModels; b++) {
-        this->pimodels[b] =
-            Pimodel(p, t0, t0 + timePerTimeBucket, timeDiscretization,
-                    kcDiscretization, order);
+        this->pimodels[b] = Pimodel(p, t0, t0 + timePerTimeBucket,
+                                    initialConditionTrainingPoints,
+                                    physicsTrainingPoints, order);
         t0 += timePerTimeBucket;
     }
 }
