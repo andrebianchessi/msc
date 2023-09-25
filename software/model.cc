@@ -14,8 +14,7 @@
 
 auto rng = std::default_random_engine{};
 
-const double MIN_STEP_IMPROVEMENT =
-    0.0;  // min relative improvement to early stop
+const double MIN_LOSS = 0.0000001;  // Training stops after Loss <= this value
 
 void Model::StochasticGradientDescentStep(int i, double stepSize) {
     std::vector<double> oldParameters =
@@ -42,8 +41,7 @@ double Model::Loss() {
     return l;
 }
 
-Maybe<double> Model::Train(double learningRate, int batchSize, int maxSteps,
-                           bool log) {
+Maybe<double> Model::Train(double learningRate, int maxSteps, bool log) {
     Maybe<double> r;
     if (learningRate <= 0) {
         r.isError = true;
@@ -66,7 +64,7 @@ Maybe<double> Model::Train(double learningRate, int batchSize, int maxSteps,
             if (log) {
                 std::cout << "Loss: " << this->Loss() << std::endl;
             }
-            if (this->Loss() <= 0.000001) {
+            if (this->Loss() <= MIN_LOSS) {
                 break;
             }
         }

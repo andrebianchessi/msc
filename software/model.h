@@ -12,13 +12,9 @@ class Model {
 
     // Train the model, i.e. set the parameters to the values that minimize
     // the Loss function. This is performed using stochastic gradient descent.
-    // The learning rate is automatically reduced by half when needed, until
-    // it reaches a value lower than minLearningRate. Set log to true to log
-    // the learning. Function returns the latest loss function value.
-    // Note: its ok if batchSize>nResidues (the method then sets it to
-    // nResidues)
-    Maybe<double> Train(double learningRate, int batchSize, int maxSteps,
-                        bool log);
+    // Set log to true to log the learning.
+    // Function returns the last loss function value.
+    Maybe<double> Train(double learningRate, int maxSteps, bool log);
 
     // Returns the total loss, i.e. the sum of the squared residues
     double Loss();

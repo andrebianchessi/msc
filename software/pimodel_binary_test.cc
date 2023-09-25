@@ -38,15 +38,18 @@ int main(int argc, char *argv[]) {
     int kcDiscretization = 0;
     int order = 3;
     double learningRate = 0.01;
-    int batchSize = 5;
     int maxSteps = 500;
-    bool log = true;
+    bool logComplexity = true;
+    bool logTraining = true;
 
     // Train all models
     Pimodels models = Pimodels(pd, finalT, nModels, timeDiscretization,
                                kcDiscretization, order);
     auto start = Now();
-    assert(!models.Train(learningRate, batchSize, maxSteps, log).isError);
+    assert(!models
+                .Train(learningRate, learningRate / 100, maxSteps,
+                       logComplexity, logTraining)
+                .isError);
     std::cout << "Time to train model: " << TimeSince(start) << std::endl;
 
     // Get problem using intermediate value for k and c, and integrate it.
@@ -65,7 +68,7 @@ int main(int argc, char *argv[]) {
                             mean, mean, mean, mean, mean, mean, mean, mean};
     start = Now();
     models(&tkc);
-    std::cout << "Time to estimate with model: " << TimeSince(start)
+    std::cout << "Time to make inference with model: " << TimeSince(start)
               << std::endl;
     Maybe<std::vector<double>> X;
     Maybe<std::vector<double>> XDot;

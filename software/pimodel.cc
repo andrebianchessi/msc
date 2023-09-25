@@ -544,8 +544,8 @@ void Pimodels::setContinuity(int timeBucket, std::vector<double>& TKC) {
 
 void Pimodels::logComplexity() {
     // Set all the residues just so that we can print the complexity stats
+    std::cout << "## Complexity stats for each time bucket ##" << std::endl;
     this->pimodels[0].SetResidues(true, true);
-    std::cout << "## Complexity Stats ##" << std::endl;
     std::cout << "Number of models (1 per mass): "
               << this->pimodels[0].models.size1() << std::endl;
     std::cout << "Number of parameters per model: "
@@ -583,43 +583,50 @@ void Pimodels::logComplexity() {
     std::cout << "Total cost of calculating physics residues:" << n
               << std::endl;
 
-    std::cout << "Note: for every step of the SGD we pick a random residue and "
-                 "update all the parameters using the gradient of that "
-                 "residue. The cost of computing the gradient of each residue "
-                 "is proportional to the cost of calculating the residue. The "
-                 "cost of updating the parameters is proportional to the "
-                 "number of parameters."
-              << std::endl;
+    // std::cout << "Note: The cost of computing the gradient of each residue "
+    //              "is proportional to the cost of calculating the residue. The
+    //              " "cost of updating the parameters is proportional to the "
+    //              "number of parameters."
+    //           << std::endl;
 
-    std::cout << "######################" << std::endl;
+    std::cout << "###########################################" << std::endl;
     std::cout << std::endl;
 }
 
-Maybe<double> Pimodels::Train(double learningRate, int batchSize, int maxSteps,
-                              bool log) {
+Maybe<double> Pimodels::Train(double initialConditionsLearningRate,
+                              double physicsLearningRate, int maxSteps,
+                              bool logComplexity, bool logTraining) {
     Maybe<double> r;
-
-    this->logComplexity();
+    if (logComplexity) {
+        this->logComplexity();
+    }
 
     std::vector<double> tkcCont = this->continuityTkc();
-    int t = 0;
-    while (t < int(this->pimodels.size())) {
-        if (t > 0) {
-            this->setContinuity(t, tkcCont);
+    int tBucket = 0;
+    while (tBucket < int(this->pimodels.size())) {
+        std::cout << "## Training model from " << this->timeBuckets[tBucket]
+                  << " to " << this->timeBuckets[tBucket + 1] << " ##"
+                  << std::endl;
+        if (tBucket > 0) {
+            this->setContinuity(tBucket, tkcCont);
         }
 
         std::cout << "## Training initial conditions ##" << std::endl;
-        this->pimodels[t].SetResidues(true, false);
-        r = this->pimodels[t].Train(learningRate, batchSize, maxSteps, log);
-        std::cout << "## Training physics##" << std::endl;
-        this->pimodels[t].SetResidues(false, true);
-        this->pimodels[t].Train(learningRate / 100, batchSize, maxSteps, log);
+        this->pimodels[tBucket].SetResidues(true, false);
+        r = this->pimodels[tBucket].Train(initialConditionsLearningRate,
+                                          maxSteps, logTraining);
+        std::cout << "## Training physics ##" << std::endl;
+        this->pimodels[tBucket].SetResidues(false, true);
+        this->pimodels[tBucket].Train(physicsLearningRate, maxSteps,
+                                      logTraining);
         std::cout << "## Training physics and initial conditions ##"
                   << std::endl;
-        this->pimodels[t].SetResidues(true, true);
-        this->pimodels[t].Train(learningRate / 100, batchSize, maxSteps, log);
+        this->pimodels[tBucket].SetResidues(true, true);
+        this->pimodels[tBucket].Train(physicsLearningRate, maxSteps,
+                                      logTraining);
 
-        t += 1;
+        tBucket += 1;
+        std::cout << std::endl;
     }
     return r;
 };

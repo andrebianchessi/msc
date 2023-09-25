@@ -246,7 +246,7 @@ TEST(ModelTest, LossGradientTest) {
 
 TEST(ModelTest, TrainTest) {
     TestModel m = TestModel();
-    auto status = m.Train(0.01, 3, 2000, true);
+    auto status = m.Train(0.01, 2000, true);
     ASSERT_TRUE(RelativeAbsError(m.a, 13) < 0.01);
     ASSERT_TRUE(RelativeAbsError(m.b, 7) < 0.01);
     ASSERT_TRUE(RelativeAbsError(m.c, 5) < 0.01);

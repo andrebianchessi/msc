@@ -180,8 +180,13 @@ class Pimodels {
     Pimodels(ProblemDescription p, double finalT, int nModels,
              int timeDiscretization, int kcDiscretization, int order);
 
-    Maybe<double> Train(double learningRate, int batchSize, int maxSteps,
-                        bool log);
+    // initialConditionsLearningRate is the learning rate used to train only the
+    // initial conditions, whereas physicsLearningRate is the learning rate used
+    // when initial Conditions and physics is considered. In my experience,
+    // initialConditionsLR can be much larger (100x) than physicsLR.
+    Maybe<double> Train(double initialConditionsLearningRate,
+                        double physicsLearningRate, int maxSteps,
+                        bool logComplexity, bool logTraining);
 
     Maybe<std::vector<double>> operator()(std::vector<double>* TKC);
     Maybe<std::vector<double>> GetVelocities(std::vector<double>* TKC);

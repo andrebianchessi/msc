@@ -437,11 +437,8 @@ TEST_F(PimodelTest, InitialConditionsResiduesNumericalTest) {
     pd.AddInitialVel(200.0);  // initial vel
     pd.AddInitialDisp(75.0);  // initial disp
     assert(pd.IsOk());
-    // unnormalized value of K and C for normalized_value=0.5
-    double KC_05 = min + 0.5 * (max - min);
 
     double finalT = 0.02;
-    double dtdT = 1 / 0.02;
     double dTdt = 0.02;
     int timeDiscretization = 1;
     int kcDiscretization = 0;
@@ -947,7 +944,6 @@ class PimodelTrainTest : public testing::Test {
     int kcDiscretization;
     int order;
     double learningRate;
-    int batchSize;
     int maxSteps;
     bool log;
 
@@ -963,7 +959,6 @@ class PimodelTrainTest : public testing::Test {
         this->kcDiscretization = 1;
         this->order = 3;
         this->learningRate = 0.001;
-        this->batchSize = 1000;  // huge batch size -> single batch is used
         this->maxSteps = 1000;
         this->log = true;
         this->pd.AddMass(mass, 0.0, 0.0);
@@ -980,8 +975,7 @@ class PimodelTrainTest : public testing::Test {
         this->model.SetResidues(true, true);
 
         double initialLoss = this->model.Loss();
-        this->model.Train(this->learningRate, this->batchSize, this->maxSteps,
-                          this->log);
+        this->model.Train(this->learningRate, this->maxSteps, this->log);
         ASSERT_TRUE(this->model.Loss() < initialLoss);
     }
 
@@ -1389,14 +1383,15 @@ TEST(PimodelsTrainingTest, TrainTest) {
     int kcDiscretization = 1;
     int order = 3;
     double learningRate = 1.0;
-    int batchSize = 1000;  // huge batch size -> single batch is used
     int maxSteps = 300;
-    bool log = false;
+    bool logComplexity = false;
+    bool logTraining = false;
 
     // Train all models
     Pimodels models = Pimodels(pd, tMax, nModels, timeDiscretization,
                                kcDiscretization, order);
-    models.Train(learningRate, batchSize, maxSteps, log);
+    models.Train(learningRate, learningRate / 100, maxSteps, logComplexity,
+                 logTraining);
 
     // Get problem using intermediate value for k and c, and integrate it.
     // Then, compare the model's prediction with the problem's result.
