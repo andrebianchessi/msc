@@ -260,6 +260,7 @@ cc_library(
     ":problem_description",
     ":bounded",
     ":utils",
+    ":pimodel",
   ]
 )
 cc_test(

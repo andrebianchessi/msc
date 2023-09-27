@@ -454,6 +454,8 @@ Pimodels::Pimodels(ProblemDescription p, double finalT, int nModels,
     assert(physicsTrainingPoints >= 2);
     assert(order >= 0);
 
+    this->finalT = finalT;
+
     this->timeBuckets = std::vector<double>(nModels + 1);
     double timePerTimeBucket = (finalT - 0) / nModels;
     for (int b = 0; b < nModels; b++) {
@@ -634,4 +636,37 @@ Maybe<std::vector<double>> Pimodels::GetVelocities(std::vector<double>* TKC) {
     assert(TKC->size() > 0);
     int b = this->getTimeBucket(TKC->at(0));
     return this->pimodels[b].GetVelocities(TKC);
+}
+
+double Pimodels::GetMaxAbsAccel(int massId, int timesChecked,
+                                std::vector<Bounded>& kc) {
+    assert(this->pimodels.size() > 0);
+    assert(int(kc.size()) + 1 == this->pimodels[0].inputSize());
+    assert(massId < this->pimodels[0].p.NumberOfMasses());
+    assert(timesChecked >= 2);
+
+    double timeStep = 1.0 / (timesChecked - 1);
+
+    std::vector<Bounded> tkc = std::vector<Bounded>(kc.size() + 1);
+    for (int i = 1; i < int(tkc.size()); i++) {
+        tkc[i] = kc[i - 1];
+    }
+
+    double maxA = 0;
+    for (int b = 0; b < int(this->pimodels.size()); b++) {
+        Pimodel& model = this->pimodels[b];
+        double t = 0;
+        while (t <= 1.0 + 1e-14) {
+            assert(!tkc[0].Set(t).isError);
+            model.modelsDD[massId].SetX(Bounded::Get(tkc));
+            Maybe<double> modelDotDot =
+                model.modelsDD[massId](model.modelsCoefficients[massId]);
+            assert(!modelDotDot.isError);
+            maxA =
+                std::max(maxA, abs(modelDotDot.val * model.dtdT * model.dtdT));
+            t += timeStep;
+        }
+    }
+
+    return maxA;
 }

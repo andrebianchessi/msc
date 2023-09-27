@@ -194,7 +194,17 @@ class Pimodels {
     Maybe<std::vector<double>> operator()(std::vector<double>* TKC);
     Maybe<std::vector<double>> GetVelocities(std::vector<double>* TKC);
 
+    // Returns the max absolute acceleration of mass i from T=0 to T=finalT.
+    // For every pimodel, timesChecked time instants
+    // will be checked (timesChecked>=2).
+    // kc is a vector containing the normalized values of the springs followed
+    // by the dampers.
+    // This function is primarily used for genetic optimization.
+    double GetMaxAbsAccel(int massId, int timesChecked,
+                          std::vector<Bounded>& kc);
+
    private:
+    double finalT;
     int getTimeBucket(double t) const;
     std::vector<double> timeBuckets;
     std::vector<Pimodel> pimodels;
