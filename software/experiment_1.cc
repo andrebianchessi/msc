@@ -7,7 +7,6 @@
 #include "utils.h"
 
 int main(int argc, char *argv[]) {
-    srand(time(NULL));
     ProblemDescription pd = ProblemDescription();
     pd.AddMass(1.0, 0.0, 0.0);  // m0
     pd.AddMass(300, 1.0, 1.0);  // m1
@@ -75,7 +74,6 @@ int main(int argc, char *argv[]) {
         Evolution<ProblemCreature>(&piPopulation);
     Problem nonOptimized = pd.BuildFromDNA(evolution.GetCreature(0)->dna).val;
     start = Now();
-    srand(time(NULL));
     evolution.Evolve(geneticAlgoErrorStop, true);
     std::cout << "Time to G.A. optimization using Pimodels: "
               << TimeSince(start) << std::endl;
@@ -84,7 +82,6 @@ int main(int argc, char *argv[]) {
     // Explicit-integration based optimization
     evolution = Evolution<ProblemCreature>(&integrationPopulation);
     start = Now();
-    srand(time(NULL));
     evolution.Evolve(geneticAlgoErrorStop, true);
     std::cout << "Time to G.A. optimization using Explicit integration: "
               << TimeSince(start) << std::endl;
