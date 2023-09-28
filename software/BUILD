@@ -379,3 +379,16 @@ cc_binary(
     ":utils"
   ]
 )
+
+cc_binary(
+  name = "experiment_1",
+  srcs = [
+    "experiment_1.cc"
+  ],
+  deps = [
+    ":bounded",
+    ":evolution",
+    ":utils",
+    ":problem_creature"
+  ]
+)

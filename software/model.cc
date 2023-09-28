@@ -14,7 +14,7 @@
 
 auto rng = std::default_random_engine{};
 
-const double MIN_LOSS = 0.0000001;  // Training stops after Loss <= this value
+const double MIN_LOSS = 0.01;  // Training stops after Loss <= this value
 
 void Model::StochasticGradientDescentStep(int i, double stepSize) {
     std::vector<double> oldParameters =
@@ -60,7 +60,7 @@ Maybe<double> Model::Train(double learningRate, int maxSteps, bool log) {
         step++;
         // Compute loss only every now and then to improve efficiency because
         // computing the whole loss can be expensive.
-        if (step % 50 == 0) {
+        if (step % 100 == 0) {
             if (log) {
                 std::cout << "Loss: " << this->Loss() << std::endl;
             }
