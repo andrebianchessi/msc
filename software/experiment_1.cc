@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     int physPoints = 5;
     int order = 3;
     double learningRate = 0.01;
-    int maxSteps = 5000;
+    int maxSteps = 2000;
     bool logComplexity = false;
     bool logTraining = true;
     int timeDiscretization = 20;  // used to look for max accel
