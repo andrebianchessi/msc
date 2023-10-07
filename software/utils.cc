@@ -11,9 +11,15 @@
 #include "maybe.h"
 
 const double PRECISION = 1e-5;
+const int RANDOM_SEED = 19950602;
 
 // Returns a random number in interval [0.0, 1.0]
 double Random() {
+    static bool setupDone = false;
+    if (!setupDone) {
+        srand(RANDOM_SEED);
+        setupDone = true;
+    }
     return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
 }
 Bounded RandomB() {
@@ -30,9 +36,9 @@ double Random(double x0, double x1) {
 
 // Returns a random integer in interval [x0, x1]
 int RandomInt(int x0, int x1) {
-    std::random_device rd;   // obtain a random number from hardware
-    std::mt19937 gen(rd());  // seed the generator
-    std::uniform_int_distribution<> distr(x0, x1);  // define the range
+    // making the random generator static will make the tests deterministic
+    static std::mt19937 gen(RANDOM_SEED);
+    std::uniform_int_distribution<> distr(x0, x1);
     return distr(gen);
 };
 
