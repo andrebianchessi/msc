@@ -292,9 +292,22 @@ void Pimodel::AddInitialConditionsResiduesTkc() {
            this->initialConditionTrainingPoints) {
         std::vector<Bounded> tkc = std::vector<Bounded>(this->inputSize());
         assert(!tkc[0].Set(0.0).isError);
-        for (int i = 1; i < int(tkc.size()); i++) {
-            assert(!tkc[i].Set(Random()).isError);
+
+        // First we set 0.0 and 1.0. Then, random
+        if (int(this->initialConditionsResiduesTkc.size()) == 0) {
+            for (int i = 1; i < int(tkc.size()); i++) {
+                assert(!tkc[i].Set(0.0).isError);
+            }
+        } else if (int(this->initialConditionsResiduesTkc.size()) == 1) {
+            for (int i = 1; i < int(tkc.size()); i++) {
+                assert(!tkc[i].Set(1.0).isError);
+            }
+        } else if (int(this->initialConditionsResiduesTkc.size()) >= 1) {
+            for (int i = 1; i < int(tkc.size()); i++) {
+                assert(!tkc[i].Set(Random()).isError);
+            }
         }
+
         this->initialConditionsResiduesTkc.push_back(tkc);
     }
 }
@@ -302,18 +315,21 @@ void Pimodel::AddPhysicsResiduesTkc() {
     while (int(this->physicsResiduesTkc.size()) < this->physicsTrainingPoints) {
         std::vector<Bounded> tkc = std::vector<Bounded>(this->inputSize());
 
-        // First we set t = 0 and t = 1. Then, t is random
+        // First we set 0.0 and 1.0. Then, random
         if (int(this->physicsResiduesTkc.size()) == 0) {
-            assert(!tkc[0].Set(0.0).isError);
+            for (int i = 0; i < int(tkc.size()); i++) {
+                assert(!tkc[i].Set(0.0).isError);
+            }
         } else if (int(this->physicsResiduesTkc.size()) == 1) {
-            assert(!tkc[0].Set(1.0).isError);
+            for (int i = 0; i < int(tkc.size()); i++) {
+                assert(!tkc[i].Set(1.0).isError);
+            }
         } else if (int(this->physicsResiduesTkc.size()) >= 1) {
-            assert(!tkc[0].Set(Random()).isError);
+            for (int i = 0; i < int(tkc.size()); i++) {
+                assert(!tkc[i].Set(Random()).isError);
+            }
         }
 
-        for (int i = 1; i < int(tkc.size()); i++) {
-            assert(!tkc[i].Set(Random()).isError);
-        }
         this->physicsResiduesTkc.push_back(tkc);
     }
 }

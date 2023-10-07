@@ -31,14 +31,14 @@ int main(int argc, char *argv[]) {
     // Common parameters
     double finalT = 0.1;
     int popSize = 200;
-    double geneticAlgoErrorStop = 0.05;
+    double geneticAlgoErrorStop = 1.0 / 100.0;
     int massId = 5;
 
     // Pimodel based optimization
-    int nModels = 4;
+    int nModels = 5;
     int icPoints = 5;
     int physPoints = 5;
-    int order = 3;
+    int order = 4;
     double learningRate = 0.01;
     int maxSteps = 2000;
     bool logComplexity = false;
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
         Pimodels(pd, finalT, nModels, icPoints, physPoints, order);
     auto start = Now();
     assert(!models
-                .Train(learningRate, learningRate / 1000, maxSteps,
+                .Train(learningRate, learningRate / 50000, maxSteps,
                        logComplexity, logTraining)
                 .isError);
     std::cout << "Time to train models: " << TimeSince(start) << std::endl;
