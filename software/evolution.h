@@ -19,6 +19,10 @@ class Evolution {
     // Get creature by index
     creature* GetCreature(int i);
 
+    // Sort population vector by increasing cost;
+    // population[0] has the minimum cost after calling this method
+    void SortPopulation();
+
     // Performs Genetic Algorithm optimization until the FittestCost
     // difference is smaller than 'stop', i.e. until
     // RelAbsError(FittestCost_1,FittestCost_0)<stop
@@ -54,11 +58,6 @@ class Evolution {
     double mutationRate = 0.05;
     FRIEND_TEST(EvolutionTest, TotalCostCount);
 
-    // Sort population vector by increasing cost;
-    // population[0] has the minimum cost after calling this method
-    void sortPopulation();
-    FRIEND_TEST(EvolutionTest, SimpleTest);
-
     // Returns the fitness vector;
     // WARNING: Assumes population vector is sorted.
     // This vector is made up of strictly positive numbers, and the sum
@@ -70,7 +69,7 @@ class Evolution {
 
     // Get creatures from the population that will mate
     // A.K.A. "Select Mates" in the literature.
-    // This function assumes the population is sorted, i.e. sortPopulation
+    // This function assumes the population is sorted, i.e. SortPopulation
     // must be called before calling this method;
     std::tuple<creature*, creature*> getParents();
     FRIEND_TEST(EvolutionTest, getParentsTest);
@@ -95,6 +94,8 @@ class Evolution {
     // WARNING: Assumes population is already sorted.
     void step();
     FRIEND_TEST(EvolutionTest, StepTest);
+
+    FRIEND_TEST(EvolutionTest, SimpleTest);
 };
 
 #include "evolution.tcc"

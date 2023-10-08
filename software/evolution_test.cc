@@ -16,7 +16,7 @@ TEST(EvolutionTest, SimpleTest) {
     ASSERT_EQ(ev.PopSize(), 10);
 
     // Sort
-    ev.sortPopulation();
+    ev.SortPopulation();
     for (int i = 0; i < int(ev.PopSize()) - 1; i++) {
         ASSERT_TRUE(ev.population->at(i).GetCost() <=
                     ev.population->at(i + 1).GetCost());
@@ -81,7 +81,7 @@ TEST(EvolutionTest, fitnessTest) {
     // f(x,y) = x^2 + y^2 + 2x + y
     // cost = [|1-2|, 5, 0, 0]
     // cost = [1, 5, 0, 0]
-    ev.sortPopulation();
+    ev.SortPopulation();
     // cost = [0, 0, 1, 5]
     ASSERT_DOUBLE_EQ(ev.GetCreature(0)->GetCost(), 0.0);
     ASSERT_DOUBLE_EQ(ev.GetCreature(1)->GetCost(), 0.0);
@@ -122,7 +122,7 @@ TEST(EvolutionTest, getParentsTest) {
 
     Evolution<C> ev = Evolution<C>(&pop);
     ev.survival = 3 / 4.0;
-    ev.sortPopulation();
+    ev.SortPopulation();
 
     ASSERT_DOUBLE_EQ(ev.GetCreature(0)->GetCost(), 0.0);
     ASSERT_DOUBLE_EQ(ev.GetCreature(1)->GetCost(), 1.0);
