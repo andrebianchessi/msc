@@ -52,6 +52,7 @@ Maybe<double> Model::Train(double learningRate, double earlyStopLoss,
         std::vector<double>(this->nParameters());
     int step = 0;
     double loss = 0.0;
+    double newLoss = 0.0;
     while (step < maxSteps) {
         this->GetParameters(&parametersBeforeStep);
 
@@ -61,13 +62,14 @@ Maybe<double> Model::Train(double learningRate, double earlyStopLoss,
         // Compute loss only every now and then to improve efficiency because
         // computing the whole loss can be expensive.
         if (step % 500 == 0) {
-            loss = this->Loss();
+            newLoss = this->Loss();
             if (log) {
-                std::cout << "Loss: " << loss << std::endl;
+                std::cout << "Loss: " << newLoss << std::endl;
             }
-            if (loss <= earlyStopLoss) {
+            if (loss != 0 && abs((newLoss - loss) / loss) <= earlyStopLoss) {
                 break;
             }
+            loss = newLoss;
         }
     }
     r.val = loss;

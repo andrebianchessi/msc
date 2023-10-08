@@ -7,51 +7,53 @@
 #include "utils.h"
 
 int main(int argc, char *argv[]) {
-    int massId = 5;
+    int massId = 4;
     ProblemDescription pd = ProblemDescription();
+
     pd.AddMass(1.0, 0.0, 0.0);  // m0
-    pd.AddMass(300, 1.0, 1.0);  // m1
-    pd.AddMass(120, 2.0, 2.0);  // m2
-    pd.AddMass(150, 3.0, 3.0);  // m3
-    pd.AddMass(700, 4.0, 4.0);  // m4
-    pd.AddMass(90, 5.0, 5.0);   // m5
+    for (int i = 1; i <= massId; i++) {
+        pd.AddMass(Random(100, 300), i, 0);
+    }
 
     double min = 100000.0;
     double max = 200000.0;
     for (int i = 0; i < massId; i++) {
         for (int j = i + 1; j <= massId; j++) {
             pd.AddSpring(i, j, min, max);
-            pd.AddDamper(i, j, min / 2, max / 2);
+            pd.AddDamper(i, j, min, max);
         }
     }
 
     pd.SetFixedMass(0);
-    pd.AddInitialVel(200.0);
+    for (int i = 1; i <= massId; i++) {
+        pd.AddInitialVel(i, Random(0.0, 200.0));
+        pd.AddInitialDisp(i, Random(0.0, 200.0));
+    }
     assert(pd.IsOk());
 
     // Common parameters
     double finalT = 0.01;
-    int popSize = 400;
-    double geneticAlgoErrorStop = 0.5 / 100.0;  // 0.5%
+    int popSize = 50;
+    double geneticAlgoErrorStop = 0.001 / 100.0;  // 0.001%
 
     // Pimodel based optimization
-    int nModels = 5;
+    int nModels = 18;
     int icPoints = 10;
     int physPoints = 10;
-    int order = 3;
-    double learningRate = 0.005;
-    double earlyStopLoss = 1.0;
-    int maxSteps = 20000;
+    int order = 4;
+    double learningRate = 0.01;
+    double earlyStopLoss = 0.1;
+    int maxSteps = 10000;
     bool logComplexity = false;
     bool logTraining = true;
-    int timeDiscretization = 10;  // used to look for max accel
+    int timeDiscretization = 5;  // used to look for max accel
 
     // Train models
     Pimodels models =
         Pimodels(pd, finalT, nModels, icPoints, physPoints, order);
     auto start = Now();
     assert(!models
-                .Train(learningRate, learningRate / 1000, earlyStopLoss,
+                .Train(learningRate, learningRate / 100, earlyStopLoss,
                        maxSteps, logComplexity, logTraining)
                 .isError);
     std::cout << "Time to train models: " << TimeSince(start) << std::endl;
@@ -63,25 +65,28 @@ int main(int argc, char *argv[]) {
     std::vector<ProblemCreature> piPopulation = std::vector<ProblemCreature>();
     std::vector<ProblemCreature> integrationPopulation =
         std::vector<ProblemCreature>();
+    std::vector<ProblemCreature> randomPopulation =
+        std::vector<ProblemCreature>();
     for (int i = 0; i < popSize; i++) {
         piPopulation.push_back(
             ProblemCreature(&pd, massId, &models, timeDiscretization));
         integrationPopulation.push_back(ProblemCreature(&pd, massId, finalT));
+        randomPopulation.push_back(ProblemCreature(&pd, massId, finalT));
     }
     for (int i = 0; i < popSize; i++) {
         for (int j = 0; j < integrationPopulation[i].dna.size(); j++) {
-            piPopulation[i].dna[j].Set(1.0);
-            integrationPopulation[i].dna[j].Set(1.0);
+            integrationPopulation[i].dna[j].Set(piPopulation[i].dna[j].Get());
+            randomPopulation[i].dna[j].Set(piPopulation[i].dna[j].Get());
         }
     }
 
     // Sort once using explicit integration to find out what the initial guess
     // best solution is, so that we can compare;
     Evolution<ProblemCreature> evolution =
-        Evolution<ProblemCreature>(&integrationPopulation);
+        Evolution<ProblemCreature>(&randomPopulation);
     evolution.SortPopulation();
-    auto initialBadGuessDna = evolution.GetCreature(0)->dna;
-    Problem initialBadGuess = pd.BuildFromDNA(initialBadGuessDna).val;
+    auto randomGuessDna = evolution.GetCreature(0)->dna;
+    Problem randomGuess = pd.BuildFromDNA(randomGuessDna).val;
 
     // Pimodel-based optimization
     evolution = Evolution<ProblemCreature>(&piPopulation);
@@ -101,9 +106,9 @@ int main(int argc, char *argv[]) {
     auto explicitBestDna = evolution.GetCreature(0)->dna;
     Problem explicitBest = pd.BuildFromDNA(explicitBestDna).val;
 
-    std::cout << "Initial bad guess solution:" << std::endl;
-    for (int i = 0; i < initialBadGuessDna.size(); i++) {
-        std::cout << initialBadGuessDna[i].Get() << std::endl;
+    std::cout << "Random guess best solution:" << std::endl;
+    for (int i = 0; i < randomGuessDna.size(); i++) {
+        std::cout << randomGuessDna[i].Get() << std::endl;
     }
     std::cout << "Pimodel-based best solution:" << std::endl;
     for (int i = 0; i < pimodelBestDna.size(); i++) {
@@ -114,11 +119,11 @@ int main(int argc, char *argv[]) {
         std::cout << explicitBestDna[i].Get() << std::endl;
     }
 
-    assert(!initialBadGuess.Integrate(finalT).isError);
+    assert(!randomGuess.Integrate(finalT).isError);
     assert(!pimodelBest.Integrate(finalT).isError);
     assert(!explicitBest.Integrate(finalT).isError);
-    std::cout << "Initial bad guess: " << std::endl;
-    initialBadGuess.PrintMassTimeHistory(massId);
+    std::cout << "Random guess best: " << std::endl;
+    randomGuess.PrintMassTimeHistory(massId);
     std::cout << "Pimodel-based best: " << std::endl;
     pimodelBest.PrintMassTimeHistory(massId);
     std::cout << "Explicit-based best: " << std::endl;
