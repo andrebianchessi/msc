@@ -13,6 +13,7 @@
 #include "utils.h"
 
 auto rng = std::default_random_engine{};
+const double MIN_LOSS = 0.01;
 
 void Model::StochasticGradientDescentStep(int i, double stepSize) {
     std::vector<double> oldParameters =
@@ -69,6 +70,9 @@ Maybe<double> Model::Train(double learningRate,
             }
             if (loss != 0 &&
                 abs((newLoss - loss) / loss) <= minImprovementToEarlyStop) {
+                break;
+            }
+            if (newLoss < MIN_LOSS) {
                 break;
             }
             loss = newLoss;

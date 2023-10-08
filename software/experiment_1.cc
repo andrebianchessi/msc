@@ -7,7 +7,7 @@
 #include "utils.h"
 
 int main(int argc, char *argv[]) {
-    int massId = 4;
+    int massId = 6;
     ProblemDescription pd = ProblemDescription();
 
     pd.AddMass(1.0, 0.0, 0.0);  // m0
@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     }
 
     double min = 100000.0;
-    double max = 200000.0;
+    double max = 300000.0;
     for (int i = 0; i < massId; i++) {
         for (int j = i + 1; j <= massId; j++) {
             pd.AddSpring(i, j, min, max);
@@ -37,11 +37,11 @@ int main(int argc, char *argv[]) {
     double geneticAlgoErrorStop = 0.001 / 100.0;  // 0.001%
 
     // Pimodel based optimization
-    int nModels = 18;
-    int icPoints = 10;
-    int physPoints = 10;
-    int order = 4;
-    double learningRate = 0.01;
+    int nModels = 25;
+    int icPoints = 8;
+    int physPoints = 8;
+    int order = 3;
+    double learningRate = 0.05;
     double minImprovementToEarlyStop = 0.1;
     int maxSteps = 10000;
     bool logComplexity = false;
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
         Pimodels(pd, finalT, nModels, icPoints, physPoints, order);
     auto start = Now();
     assert(!models
-                .Train(learningRate, learningRate / 100,
+                .Train(learningRate, learningRate / 200,
                        minImprovementToEarlyStop, maxSteps, logComplexity,
                        logTraining)
                 .isError);
