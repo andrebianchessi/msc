@@ -30,9 +30,9 @@ int main(int argc, char *argv[]) {
     assert(pd.IsOk());
 
     // Common parameters
-    double finalT = 0.1;
-    int popSize = 200;
-    double geneticAlgoErrorStop = 1.0 / 100.0;
+    double finalT = 0.01;
+    int popSize = 400;
+    double geneticAlgoErrorStop = 0.5 / 100.0;  // 0.5%
 
     // Pimodel based optimization
     int nModels = 5;
@@ -40,15 +40,15 @@ int main(int argc, char *argv[]) {
     int physPoints = 10;
     int order = 3;
     double learningRate = 0.005;
-    double earlyStopLoss = 0.1;
+    double earlyStopLoss = 1.0;
     int maxSteps = 20000;
     bool logComplexity = false;
     bool logTraining = true;
-    int timeDiscretization = 20;  // used to look for max accel
+    int timeDiscretization = 10;  // used to look for max accel
 
     // Train models
     Pimodels models =
-        Pimodels(pd, finalT / 10, nModels, icPoints, physPoints, order);
+        Pimodels(pd, finalT, nModels, icPoints, physPoints, order);
     auto start = Now();
     assert(!models
                 .Train(learningRate, learningRate / 1000, earlyStopLoss,
