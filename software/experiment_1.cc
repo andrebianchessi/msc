@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     int physPoints = 10;
     int order = 4;
     double learningRate = 0.01;
-    double earlyStopLoss = 0.1;
+    double minImprovementToEarlyStop = 0.1;
     int maxSteps = 10000;
     bool logComplexity = false;
     bool logTraining = true;
@@ -53,8 +53,9 @@ int main(int argc, char *argv[]) {
         Pimodels(pd, finalT, nModels, icPoints, physPoints, order);
     auto start = Now();
     assert(!models
-                .Train(learningRate, learningRate / 100, earlyStopLoss,
-                       maxSteps, logComplexity, logTraining)
+                .Train(learningRate, learningRate / 100,
+                       minImprovementToEarlyStop, maxSteps, logComplexity,
+                       logTraining)
                 .isError);
     std::cout << "Time to train models: " << TimeSince(start) << std::endl;
 

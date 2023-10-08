@@ -188,7 +188,7 @@ class Pimodels {
     // when initial Conditions and physics is considered. In my experience,
     // initialConditionsLR can be much larger (100x) than physicsLR.
     Maybe<double> Train(double initialConditionsLearningRate,
-                        double physicsLearningRate, double earlyStopLoss,
+                        double physicsLearningRate, double minImprovementToEarlyStop,
                         int maxSteps, bool logComplexity, bool logTraining);
 
     Maybe<std::vector<double>> operator()(std::vector<double>* TKC);

@@ -590,9 +590,9 @@ void Pimodels::logComplexity() {
 }
 
 Maybe<double> Pimodels::Train(double initialConditionsLearningRate,
-                              double physicsLearningRate, double earlyStopLoss,
-                              int maxSteps, bool logComplexity,
-                              bool logTraining) {
+                              double physicsLearningRate,
+                              double minImprovementToEarlyStop, int maxSteps,
+                              bool logComplexity, bool logTraining) {
     Maybe<double> r;
     if (logComplexity) {
         this->logComplexity();
@@ -611,16 +611,18 @@ Maybe<double> Pimodels::Train(double initialConditionsLearningRate,
         std::cout << "## Training initial conditions ##" << std::endl;
         this->pimodels[tBucket].SetResidues(true, false);
         r = this->pimodels[tBucket].Train(initialConditionsLearningRate,
-                                          earlyStopLoss, maxSteps, logTraining);
+                                          minImprovementToEarlyStop, maxSteps,
+                                          logTraining);
         std::cout << "## Training physics ##" << std::endl;
         this->pimodels[tBucket].SetResidues(false, true);
-        this->pimodels[tBucket].Train(physicsLearningRate, earlyStopLoss,
-                                      maxSteps, logTraining);
+        this->pimodels[tBucket].Train(physicsLearningRate,
+                                      minImprovementToEarlyStop, maxSteps,
+                                      logTraining);
         // std::cout << "## Training physics and initial conditions ##"
         //           << std::endl;
         // this->pimodels[tBucket].SetResidues(true, true);
-        // this->pimodels[tBucket].Train(physicsLearningRate, earlyStopLoss,
-        // maxSteps,
+        // this->pimodels[tBucket].Train(physicsLearningRate,
+        // minImprovementToEarlyStop, maxSteps,
         //                               logTraining);
 
         tBucket += 1;

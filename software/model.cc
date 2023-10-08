@@ -39,8 +39,9 @@ double Model::Loss() {
     return l;
 }
 
-Maybe<double> Model::Train(double learningRate, double earlyStopLoss,
-                           int maxSteps, bool log) {
+Maybe<double> Model::Train(double learningRate,
+                           double minImprovementToEarlyStop, int maxSteps,
+                           bool log) {
     Maybe<double> r;
     if (learningRate <= 0) {
         r.isError = true;
@@ -66,11 +67,15 @@ Maybe<double> Model::Train(double learningRate, double earlyStopLoss,
             if (log) {
                 std::cout << "Loss: " << newLoss << std::endl;
             }
-            if (loss != 0 && abs((newLoss - loss) / loss) <= earlyStopLoss) {
+            if (loss != 0 &&
+                abs((newLoss - loss) / loss) <= minImprovementToEarlyStop) {
                 break;
             }
             loss = newLoss;
         }
+    }
+    if (step == maxSteps && log) {
+        std::cout << "Max steps reached." << std::endl;
     }
     r.val = loss;
     return r;
