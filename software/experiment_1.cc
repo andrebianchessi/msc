@@ -7,6 +7,7 @@
 #include "utils.h"
 
 int main(int argc, char *argv[]) {
+    int massId = 5;
     ProblemDescription pd = ProblemDescription();
     pd.AddMass(1.0, 0.0, 0.0);  // m0
     pd.AddMass(300, 1.0, 1.0);  // m1
@@ -15,10 +16,10 @@ int main(int argc, char *argv[]) {
     pd.AddMass(700, 4.0, 4.0);  // m4
     pd.AddMass(90, 5.0, 5.0);   // m5
 
-    double min = 10000.0;
-    double max = 100000.0;
-    for (int i = 0; i < 5; i++) {
-        for (int j = i + 1; j <= 5; j++) {
+    double min = 100000.0;
+    double max = 200000.0;
+    for (int i = 0; i < massId; i++) {
+        for (int j = i + 1; j <= massId; j++) {
             pd.AddSpring(i, j, min, max);
             pd.AddDamper(i, j, min / 2, max / 2);
         }
@@ -32,26 +33,26 @@ int main(int argc, char *argv[]) {
     double finalT = 0.1;
     int popSize = 200;
     double geneticAlgoErrorStop = 1.0 / 100.0;
-    int massId = 5;
 
     // Pimodel based optimization
     int nModels = 5;
-    int icPoints = 5;
-    int physPoints = 5;
-    int order = 4;
-    double learningRate = 0.01;
-    int maxSteps = 2000;
+    int icPoints = 10;
+    int physPoints = 10;
+    int order = 3;
+    double learningRate = 0.005;
+    double earlyStopLoss = 5.0;
+    int maxSteps = 20000;
     bool logComplexity = false;
     bool logTraining = true;
     int timeDiscretization = 20;  // used to look for max accel
 
     // Train models
     Pimodels models =
-        Pimodels(pd, finalT, nModels, icPoints, physPoints, order);
+        Pimodels(pd, finalT / 10, nModels, icPoints, physPoints, order);
     auto start = Now();
     assert(!models
-                .Train(learningRate, learningRate / 50000, maxSteps,
-                       logComplexity, logTraining)
+                .Train(learningRate, learningRate / 1000, earlyStopLoss,
+                       maxSteps, logComplexity, logTraining)
                 .isError);
     std::cout << "Time to train models: " << TimeSince(start) << std::endl;
 
@@ -64,15 +65,24 @@ int main(int argc, char *argv[]) {
         piPopulation.push_back(
             ProblemCreature(&pd, massId, &models, timeDiscretization));
         integrationPopulation.push_back(ProblemCreature(&pd, massId, finalT));
+    }
+    for (int i = 0; i < popSize; i++) {
         for (int j = 0; j < integrationPopulation[i].dna.size(); j++) {
-            integrationPopulation[i].dna[j].Set(piPopulation[i].dna[j].Get());
+            piPopulation[i].dna[j].Set(1.0);
+            integrationPopulation[i].dna[j].Set(1.0);
         }
     }
 
-    // Pimodel-based optimization
+    // Sort once using explicit integration to find out what the initial guess
+    // best solution is, so that we can compare;
     Evolution<ProblemCreature> evolution =
-        Evolution<ProblemCreature>(&piPopulation);
-    Problem nonOptimized = pd.BuildFromDNA(evolution.GetCreature(0)->dna).val;
+        Evolution<ProblemCreature>(&integrationPopulation);
+    evolution.SortPopulation();
+    Problem initialBadGuess =
+        pd.BuildFromDNA(evolution.GetCreature(0)->dna).val;
+
+    // Pimodel-based optimization
+    evolution = Evolution<ProblemCreature>(&piPopulation);
     start = Now();
     evolution.Evolve(geneticAlgoErrorStop, true);
     std::cout << "Time to G.A. optimization using Pimodels: "
@@ -87,11 +97,11 @@ int main(int argc, char *argv[]) {
               << TimeSince(start) << std::endl;
     Problem explicitBest = pd.BuildFromDNA(evolution.GetCreature(0)->dna).val;
 
-    assert(!nonOptimized.Integrate(finalT).isError);
+    assert(!initialBadGuess.Integrate(finalT).isError);
     assert(!pimodelBest.Integrate(finalT).isError);
     assert(!explicitBest.Integrate(finalT).isError);
     std::cout << "Random solution: " << std::endl;
-    nonOptimized.PrintMassTimeHistory(massId);
+    initialBadGuess.PrintMassTimeHistory(massId);
     std::cout << "Pimodel-based best: " << std::endl;
     pimodelBest.PrintMassTimeHistory(massId);
     std::cout << "Explicit-based best: " << std::endl;

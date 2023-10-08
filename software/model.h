@@ -15,6 +15,8 @@ class Model {
     // Set log to true to log the learning.
     // Function returns the last loss function value.
     Maybe<double> Train(double learningRate, int maxSteps, bool log);
+    Maybe<double> Train(double learningRate, double earlyStopLoss, int maxSteps,
+                        bool log);
 
     // Returns the total loss, i.e. the sum of the squared residues
     double Loss();
