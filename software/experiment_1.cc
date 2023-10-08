@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
     int physPoints = 10;
     int order = 3;
     double learningRate = 0.005;
-    double earlyStopLoss = 5.0;
+    double earlyStopLoss = 0.1;
     int maxSteps = 20000;
     bool logComplexity = false;
     bool logTraining = true;
@@ -56,8 +56,10 @@ int main(int argc, char *argv[]) {
                 .isError);
     std::cout << "Time to train models: " << TimeSince(start) << std::endl;
 
-    // Create initial populations with the same dna values, so that we can
-    // compare the results of each optimization.
+    // Set all the initial populations to have the max value for springs and
+    // dampers. This is a bad solution. We're doing this so that "being lucky"
+    // in our initial guess doesn't affect the quality of the optimization
+    // algorithm.
     std::vector<ProblemCreature> piPopulation = std::vector<ProblemCreature>();
     std::vector<ProblemCreature> integrationPopulation =
         std::vector<ProblemCreature>();
@@ -78,8 +80,8 @@ int main(int argc, char *argv[]) {
     Evolution<ProblemCreature> evolution =
         Evolution<ProblemCreature>(&integrationPopulation);
     evolution.SortPopulation();
-    Problem initialBadGuess =
-        pd.BuildFromDNA(evolution.GetCreature(0)->dna).val;
+    auto initialBadGuessDna = evolution.GetCreature(0)->dna;
+    Problem initialBadGuess = pd.BuildFromDNA(initialBadGuessDna).val;
 
     // Pimodel-based optimization
     evolution = Evolution<ProblemCreature>(&piPopulation);
@@ -87,7 +89,8 @@ int main(int argc, char *argv[]) {
     evolution.Evolve(geneticAlgoErrorStop, true);
     std::cout << "Time to G.A. optimization using Pimodels: "
               << TimeSince(start) << std::endl;
-    Problem pimodelBest = pd.BuildFromDNA(evolution.GetCreature(0)->dna).val;
+    auto pimodelBestDna = evolution.GetCreature(0)->dna;
+    Problem pimodelBest = pd.BuildFromDNA(pimodelBestDna).val;
 
     // Explicit-integration based optimization
     evolution = Evolution<ProblemCreature>(&integrationPopulation);
@@ -95,12 +98,26 @@ int main(int argc, char *argv[]) {
     evolution.Evolve(geneticAlgoErrorStop, true);
     std::cout << "Time to G.A. optimization using Explicit integration: "
               << TimeSince(start) << std::endl;
-    Problem explicitBest = pd.BuildFromDNA(evolution.GetCreature(0)->dna).val;
+    auto explicitBestDna = evolution.GetCreature(0)->dna;
+    Problem explicitBest = pd.BuildFromDNA(explicitBestDna).val;
+
+    std::cout << "Initial bad guess solution:" << std::endl;
+    for (int i = 0; i < initialBadGuessDna.size(); i++) {
+        std::cout << initialBadGuessDna[i].Get() << std::endl;
+    }
+    std::cout << "Pimodel-based best solution:" << std::endl;
+    for (int i = 0; i < pimodelBestDna.size(); i++) {
+        std::cout << pimodelBestDna[i].Get() << std::endl;
+    }
+    std::cout << "Explicit-based best solution:" << std::endl;
+    for (int i = 0; i < explicitBestDna.size(); i++) {
+        std::cout << explicitBestDna[i].Get() << std::endl;
+    }
 
     assert(!initialBadGuess.Integrate(finalT).isError);
     assert(!pimodelBest.Integrate(finalT).isError);
     assert(!explicitBest.Integrate(finalT).isError);
-    std::cout << "Random solution: " << std::endl;
+    std::cout << "Initial bad guess: " << std::endl;
     initialBadGuess.PrintMassTimeHistory(massId);
     std::cout << "Pimodel-based best: " << std::endl;
     pimodelBest.PrintMassTimeHistory(massId);
