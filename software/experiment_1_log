@@ -61,7 +61,7 @@ Loss: 0.934683
 ## Training physics ##
 Loss: 0.279939
 
-Time to train models: 18503813 us
+Time to train models: 17516786 us
 generation,cost
 0,7.72299e+06
 1,7.57999e+06
@@ -120,7 +120,7 @@ generation,cost
 54,3.37189e+06
 55,3.35107e+06
 56,3.33523e+06
-Time to G.A. optimization using Pimodels: 26290752 us
+Time to G.A. optimization using Pimodels: 24879966 us
 generation,cost
 0,4.44444e+07
 1,4.38925e+07
@@ -136,7 +136,7 @@ generation,cost
 11,2.30156e+07
 12,2.28579e+07
 13,2.27662e+07
-Time to G.A. optimization using Explicit integration: 65452762 us
+Time to G.A. optimization using Explicit integration: 60710905 us
 Initial bad guess solution:
 1
 1
