@@ -246,6 +246,10 @@ TEST(ModelTest, LossGradientTest) {
 
 TEST(ModelTest, TrainTest) {
     TestModel m = TestModel();
+    extern double MIN_LOSS;
+    // training stops when loss < MIN_LOSS. We overwrite it here to prevent
+    // early stopping for this test.
+    MIN_LOSS = 0.0;
     auto status = m.Train(0.01, 2000, true);
     ASSERT_TRUE(RelativeAbsError(m.a, 13) < 0.01);
     ASSERT_TRUE(RelativeAbsError(m.b, 7) < 0.01);
