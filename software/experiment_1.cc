@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
     // Common parameters
     double finalT = 0.01;
-    int popSize = 50;
+    int popSize = 100;
     double geneticAlgoErrorStop = 0.001 / 100.0;  // 0.001%
 
     // Pimodel based optimization
@@ -49,6 +49,8 @@ int main(int argc, char *argv[]) {
     int timeDiscretization = 5;  // used to look for max accel
 
     // Train models
+    extern double MIN_LOSS;
+    MIN_LOSS = 0.01;
     Pimodels models =
         Pimodels(pd, finalT, nModels, icPoints, physPoints, order);
     auto start = Now();

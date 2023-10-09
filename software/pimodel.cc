@@ -613,17 +613,17 @@ Maybe<double> Pimodels::Train(double initialConditionsLearningRate,
         r = this->pimodels[tBucket].Train(initialConditionsLearningRate,
                                           minImprovementToEarlyStop, maxSteps,
                                           logTraining);
-        std::cout << "## Training physics ##" << std::endl;
-        this->pimodels[tBucket].SetResidues(false, true);
+        // std::cout << "## Training physics ##" << std::endl;
+        // this->pimodels[tBucket].SetResidues(false, true);
+        // this->pimodels[tBucket].Train(physicsLearningRate,
+        //                               minImprovementToEarlyStop, maxSteps,
+        //                               logTraining);
+        std::cout << "## Training physics and initial conditions ##"
+                  << std::endl;
+        this->pimodels[tBucket].SetResidues(true, true);
         this->pimodels[tBucket].Train(physicsLearningRate,
                                       minImprovementToEarlyStop, maxSteps,
                                       logTraining);
-        // std::cout << "## Training physics and initial conditions ##"
-        //           << std::endl;
-        // this->pimodels[tBucket].SetResidues(true, true);
-        // this->pimodels[tBucket].Train(physicsLearningRate,
-        // minImprovementToEarlyStop, maxSteps,
-        //                               logTraining);
 
         tBucket += 1;
         std::cout << std::endl;
