@@ -334,7 +334,7 @@ Loss: 0.0037249
 Loss: 0.00353784
 Loss: 0.00338365
 
-Time to train models: 70530534 us
+Time to train models: 70710330 us
 generation,cost
 0,3.4338e+06
 1,3.30791e+06
@@ -799,7 +799,7 @@ generation,cost
 460,1.62479e+06
 461,1.62449e+06
 462,1.62449e+06
-Time to G.A. optimization using Pimodels: 44044993 us
+Time to G.A. optimization using Pimodels: 44191955 us
 generation,cost
 0,1.21448e+07
 1,1.13823e+07
@@ -1073,7 +1073,7 @@ generation,cost
 269,4.67701e+06
 270,4.67687e+06
 271,4.67683e+06
-Time to G.A. optimization using Explicit integration: 274252026 us
+Time to G.A. optimization using Explicit integration: 265593886 us
 Random guess best solution:
 0.365807
 0.176545
