@@ -13,8 +13,10 @@
 #include "utils.h"
 
 auto rng = std::default_random_engine{};
-
-const double MIN_LOSS = 0.0000001;  // Training stops after Loss <= this value
+// Training stops if loss is < than MIN_LOSS
+// TODO: this should be an input variable to the Train function, not an ugly
+// global constant like this one.
+double MIN_LOSS = 0.00000000000001;
 
 void Model::StochasticGradientDescentStep(int i, double stepSize) {
     std::vector<double> oldParameters =
@@ -41,7 +43,9 @@ double Model::Loss() {
     return l;
 }
 
-Maybe<double> Model::Train(double learningRate, int maxSteps, bool log) {
+Maybe<double> Model::Train(double learningRate,
+                           double minImprovementToEarlyStop, int maxSteps,
+                           bool log) {
     Maybe<double> r;
     if (learningRate <= 0) {
         r.isError = true;
@@ -52,6 +56,8 @@ Maybe<double> Model::Train(double learningRate, int maxSteps, bool log) {
     std::vector<double> parametersBeforeStep =
         std::vector<double>(this->nParameters());
     int step = 0;
+    double loss = 0.0;
+    double newLoss = 0.0;
     while (step < maxSteps) {
         this->GetParameters(&parametersBeforeStep);
 
@@ -60,15 +66,31 @@ Maybe<double> Model::Train(double learningRate, int maxSteps, bool log) {
         step++;
         // Compute loss only every now and then to improve efficiency because
         // computing the whole loss can be expensive.
-        if (step % 50 == 0) {
+        if (step % 500 == 0) {
+            newLoss = this->Loss();
             if (log) {
-                std::cout << "Loss: " << this->Loss() << std::endl;
+                std::cout << "Loss: " << newLoss << std::endl;
             }
-            if (this->Loss() <= MIN_LOSS) {
+            if (loss != 0 &&
+                abs((newLoss - loss) / loss) <= minImprovementToEarlyStop) {
                 break;
             }
+            if (newLoss < MIN_LOSS) {
+                if (log) {
+                    std::cout << "Loss < MIN_LOSS" << std::endl;
+                }
+                break;
+            }
+            loss = newLoss;
         }
     }
-    r.val = this->Loss();
+    if (step == maxSteps && log) {
+        std::cout << "Max steps reached." << std::endl;
+    }
+    r.val = loss;
     return r;
+}
+
+Maybe<double> Model::Train(double learningRate, int maxSteps, bool log) {
+    return this->Train(learningRate, 0.0, maxSteps, log);
 }

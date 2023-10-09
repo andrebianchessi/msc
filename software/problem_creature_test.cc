@@ -138,4 +138,6 @@ TEST(ProblemCreatureTest, EvolutionUntilConvergenceTest) {
     print("c4: ", best.dampers[0].Get_c());
     print("k5: ", best.springs[4].Get_k());
     print("c5: ", best.dampers[1].Get_c());
+    assert(!best.Integrate(0.15).isError);
+    best.PrintMassTimeHistory(5);
 }

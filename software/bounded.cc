@@ -25,8 +25,9 @@ std::vector<double> Bounded::Get(std::vector<Bounded>& v) {
 }
 
 Maybe<Void> Bounded::Set(double val) {
+    double precision = 0.00000000000001;
     Maybe<Void> r;
-    if (!(Bounded::min <= val && val <= Bounded::max)) {
+    if (!(Bounded::min <= val + precision && val <= Bounded::max + precision)) {
         r.isError = true;
         r.errMsg = "Tried to set Bounded with value outside [min,max] range";
         return r;

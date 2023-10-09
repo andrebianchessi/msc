@@ -292,9 +292,22 @@ void Pimodel::AddInitialConditionsResiduesTkc() {
            this->initialConditionTrainingPoints) {
         std::vector<Bounded> tkc = std::vector<Bounded>(this->inputSize());
         assert(!tkc[0].Set(0.0).isError);
-        for (int i = 1; i < int(tkc.size()); i++) {
-            assert(!tkc[i].Set(Random()).isError);
+
+        // First we set 0.0 and 1.0. Then, random
+        if (int(this->initialConditionsResiduesTkc.size()) == 0) {
+            for (int i = 1; i < int(tkc.size()); i++) {
+                assert(!tkc[i].Set(0.0).isError);
+            }
+        } else if (int(this->initialConditionsResiduesTkc.size()) == 1) {
+            for (int i = 1; i < int(tkc.size()); i++) {
+                assert(!tkc[i].Set(1.0).isError);
+            }
+        } else if (int(this->initialConditionsResiduesTkc.size()) >= 1) {
+            for (int i = 1; i < int(tkc.size()); i++) {
+                assert(!tkc[i].Set(Random()).isError);
+            }
         }
+
         this->initialConditionsResiduesTkc.push_back(tkc);
     }
 }
@@ -302,18 +315,21 @@ void Pimodel::AddPhysicsResiduesTkc() {
     while (int(this->physicsResiduesTkc.size()) < this->physicsTrainingPoints) {
         std::vector<Bounded> tkc = std::vector<Bounded>(this->inputSize());
 
-        // First we set t = 0 and t = 1. Then, t is random
+        // First we set 0.0 and 1.0. Then, random
         if (int(this->physicsResiduesTkc.size()) == 0) {
-            assert(!tkc[0].Set(0.0).isError);
+            for (int i = 0; i < int(tkc.size()); i++) {
+                assert(!tkc[i].Set(0.0).isError);
+            }
         } else if (int(this->physicsResiduesTkc.size()) == 1) {
-            assert(!tkc[0].Set(1.0).isError);
+            for (int i = 0; i < int(tkc.size()); i++) {
+                assert(!tkc[i].Set(1.0).isError);
+            }
         } else if (int(this->physicsResiduesTkc.size()) >= 1) {
-            assert(!tkc[0].Set(Random()).isError);
+            for (int i = 0; i < int(tkc.size()); i++) {
+                assert(!tkc[i].Set(Random()).isError);
+            }
         }
 
-        for (int i = 1; i < int(tkc.size()); i++) {
-            assert(!tkc[i].Set(Random()).isError);
-        }
         this->physicsResiduesTkc.push_back(tkc);
     }
 }
@@ -454,6 +470,8 @@ Pimodels::Pimodels(ProblemDescription p, double finalT, int nModels,
     assert(physicsTrainingPoints >= 2);
     assert(order >= 0);
 
+    this->finalT = finalT;
+
     this->timeBuckets = std::vector<double>(nModels + 1);
     double timePerTimeBucket = (finalT - 0) / nModels;
     for (int b = 0; b < nModels; b++) {
@@ -572,7 +590,8 @@ void Pimodels::logComplexity() {
 }
 
 Maybe<double> Pimodels::Train(double initialConditionsLearningRate,
-                              double physicsLearningRate, int maxSteps,
+                              double physicsLearningRate,
+                              double minImprovementToEarlyStop, int maxSteps,
                               bool logComplexity, bool logTraining) {
     Maybe<double> r;
     if (logComplexity) {
@@ -592,15 +611,18 @@ Maybe<double> Pimodels::Train(double initialConditionsLearningRate,
         std::cout << "## Training initial conditions ##" << std::endl;
         this->pimodels[tBucket].SetResidues(true, false);
         r = this->pimodels[tBucket].Train(initialConditionsLearningRate,
-                                          maxSteps, logTraining);
-        std::cout << "## Training physics ##" << std::endl;
-        this->pimodels[tBucket].SetResidues(false, true);
-        this->pimodels[tBucket].Train(physicsLearningRate, maxSteps,
-                                      logTraining);
+                                          minImprovementToEarlyStop, maxSteps,
+                                          logTraining);
+        // std::cout << "## Training physics ##" << std::endl;
+        // this->pimodels[tBucket].SetResidues(false, true);
+        // this->pimodels[tBucket].Train(physicsLearningRate,
+        //                               minImprovementToEarlyStop, maxSteps,
+        //                               logTraining);
         std::cout << "## Training physics and initial conditions ##"
                   << std::endl;
         this->pimodels[tBucket].SetResidues(true, true);
-        this->pimodels[tBucket].Train(physicsLearningRate, maxSteps,
+        this->pimodels[tBucket].Train(physicsLearningRate,
+                                      minImprovementToEarlyStop, maxSteps,
                                       logTraining);
 
         tBucket += 1;
@@ -634,4 +656,37 @@ Maybe<std::vector<double>> Pimodels::GetVelocities(std::vector<double>* TKC) {
     assert(TKC->size() > 0);
     int b = this->getTimeBucket(TKC->at(0));
     return this->pimodels[b].GetVelocities(TKC);
+}
+
+double Pimodels::GetMaxAbsAccel(int massId, int timesChecked,
+                                std::vector<Bounded>& kc) {
+    assert(this->pimodels.size() > 0);
+    assert(int(kc.size()) + 1 == this->pimodels[0].inputSize());
+    assert(massId < this->pimodels[0].p.NumberOfMasses());
+    assert(timesChecked >= 2);
+
+    double timeStep = 1.0 / (timesChecked - 1);
+
+    std::vector<Bounded> tkc = std::vector<Bounded>(kc.size() + 1);
+    for (int i = 1; i < int(tkc.size()); i++) {
+        tkc[i] = kc[i - 1];
+    }
+
+    double maxA = 0;
+    for (int b = 0; b < int(this->pimodels.size()); b++) {
+        Pimodel& model = this->pimodels[b];
+        double t = 0;
+        while (t <= 1.0 + 1e-14) {
+            assert(!tkc[0].Set(t).isError);
+            model.modelsDD[massId].SetX(Bounded::Get(tkc));
+            Maybe<double> modelDotDot =
+                model.modelsDD[massId](model.modelsCoefficients[massId]);
+            assert(!modelDotDot.isError);
+            maxA =
+                std::max(maxA, abs(modelDotDot.val * model.dtdT * model.dtdT));
+            t += timeStep;
+        }
+    }
+
+    return maxA;
 }

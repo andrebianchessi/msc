@@ -19,7 +19,7 @@ Evolution<creature>::Evolution(std::vector<creature>* population) {
 }
 
 template <typename creature>
-void Evolution<creature>::sortPopulation() {
+void Evolution<creature>::SortPopulation() {
     auto comparator = [](creature& left, creature& right) {
         return left.GetCost() < right.GetCost();
     };
@@ -176,7 +176,7 @@ void Evolution<creature>::mutate() {
 
 template <typename creature>
 void Evolution<creature>::step() {
-    // Replace less fit of the population (assuming sortPopulation was already
+    // Replace less fit of the population (assuming SortPopulation was already
     // called)
     for (int i = this->endFittest() + 1; i < this->PopSize(); i++) {
         auto parents = this->getParents();
@@ -199,7 +199,7 @@ void Evolution<creature>::step() {
 
     this->mutate();
 
-    this->sortPopulation();
+    this->SortPopulation();
 }
 
 template <typename creature>
@@ -212,8 +212,8 @@ Maybe<creature*> Evolution<creature>::Evolve(double stop,
         return r;
     }
 
-    // step() requires sortPopulation() to be called first
-    this->sortPopulation();
+    // step() requires SortPopulation() to be called first
+    this->SortPopulation();
     double pastCost = -1.0;
     double currentCost = this->FittestCost();
 
@@ -256,8 +256,8 @@ Maybe<creature*> Evolution<creature>::Evolve(int generations,
         return r;
     }
 
-    // step() requires sortPopulation() to be called first
-    this->sortPopulation();
+    // step() requires SortPopulation() to be called first
+    this->SortPopulation();
     int i = 0;
     if (printProgression) {
         std::cout << "generation,cost" << std::endl;

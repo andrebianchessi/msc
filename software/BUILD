@@ -260,6 +260,7 @@ cc_library(
     ":problem_description",
     ":bounded",
     ":utils",
+    ":pimodel",
   ]
 )
 cc_test(
@@ -376,5 +377,18 @@ cc_binary(
   deps = [
     ":pimodel",
     ":utils"
+  ]
+)
+
+cc_binary(
+  name = "experiment_1",
+  srcs = [
+    "experiment_1.cc"
+  ],
+  deps = [
+    ":bounded",
+    ":evolution",
+    ":utils",
+    ":problem_creature"
   ]
 )

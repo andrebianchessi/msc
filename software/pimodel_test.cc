@@ -920,6 +920,8 @@ class PimodelTrainTest : public testing::Test {
     bool log;
 
     void SetUp() {
+        extern double MIN_LOSS;
+        MIN_LOSS = 0.0;  // prevent early stopping
         this->mass = 1;
         this->kMin = 0.8;
         this->kMax = 1.0;
@@ -931,7 +933,7 @@ class PimodelTrainTest : public testing::Test {
         this->physPoints = 2;
         this->order = 3;
         this->learningRate = 0.001;
-        this->maxSteps = 1000;
+        this->maxSteps = 10000;
         this->log = true;
         this->pd.AddMass(mass, 0.0, 0.0);
         this->pd.AddMass(mass, 1.0, 0.0);
@@ -1354,14 +1356,21 @@ TEST(PimodelsTrainingTest, TrainTest) {
     int physPoints = 2;
     int order = 3;
     double learningRate = 1.0;
-    int maxSteps = 300;
+    // Will stop training only if improvement is 100% (i.e. if loss reaches 0)
+    double minImprovementToEarlyStop = 1.0;
+    int maxSteps = 5000;
     bool logComplexity = false;
     bool logTraining = false;
 
+    extern double MIN_LOSS;
+    // training stops when loss < MIN_LOSS. We overwrite it here to prevent
+    // early stopping for this test.
+    MIN_LOSS = 0.0;
+
     // Train all models
     Pimodels models = Pimodels(pd, tMax, nModels, icPoints, physPoints, order);
-    models.Train(learningRate, learningRate / 100, maxSteps, logComplexity,
-                 logTraining);
+    models.Train(learningRate, learningRate / 100, minImprovementToEarlyStop,
+                 maxSteps, logComplexity, logTraining);
 
     // Get problem using intermediate value for k and c, and integrate it.
     // Then, compare the model's prediction with the problem's result.
