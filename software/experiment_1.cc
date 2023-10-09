@@ -7,7 +7,7 @@
 #include "utils.h"
 
 int main(int argc, char *argv[]) {
-    int massId = 6;
+    int massId = 5;
     ProblemDescription pd = ProblemDescription();
 
     pd.AddMass(1.0, 0.0, 0.0);  // m0
@@ -32,20 +32,18 @@ int main(int argc, char *argv[]) {
     assert(pd.IsOk());
 
     // Common parameters
-    double finalT = 0.01;
-    int popSize = 100;
-    double geneticAlgoErrorStop = 0.05 / 100.0;  // 0.05%
+    double finalT = 0.005;
+    int popSize = 70;
+    double geneticAlgoErrorStop = 0.001 / 100.0;  // 0.001%
 
     // Pimodel based optimization
-    int nModels = 25;
+    int nModels = 12;
     int icPoints = 8;
     int physPoints = 8;
     int order = 3;
-    double learningRate = 0.08;
+    double learningRate = 0.045;
     double minImprovementToEarlyStop = 0.05;  // 5%
-    extern double MIN_LOSS;
-    MIN_LOSS = 0.002;
-    int maxSteps = 20000;
+    int maxSteps = 10000;
     bool logComplexity = false;
     bool logTraining = true;
     int timeDiscretization = 5;  // used to look for max accel
