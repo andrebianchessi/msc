@@ -14,6 +14,8 @@
 
 auto rng = std::default_random_engine{};
 // Training stops if loss is < than MIN_LOSS
+// TODO: this should be an input variable to the Train function, not an ugly
+// global constant like this one.
 double MIN_LOSS = 0.00000000000001;
 
 void Model::StochasticGradientDescentStep(int i, double stepSize) {

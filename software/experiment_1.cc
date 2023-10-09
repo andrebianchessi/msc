@@ -34,28 +34,28 @@ int main(int argc, char *argv[]) {
     // Common parameters
     double finalT = 0.01;
     int popSize = 100;
-    double geneticAlgoErrorStop = 0.001 / 100.0;  // 0.001%
+    double geneticAlgoErrorStop = 0.05 / 100.0;  // 0.05%
 
     // Pimodel based optimization
     int nModels = 25;
     int icPoints = 8;
     int physPoints = 8;
     int order = 3;
-    double learningRate = 0.05;
-    double minImprovementToEarlyStop = 0.1;
-    int maxSteps = 10000;
+    double learningRate = 0.08;
+    double minImprovementToEarlyStop = 0.05;  // 5%
+    extern double MIN_LOSS;
+    MIN_LOSS = 0.002;
+    int maxSteps = 20000;
     bool logComplexity = false;
     bool logTraining = true;
     int timeDiscretization = 5;  // used to look for max accel
 
     // Train models
-    extern double MIN_LOSS;
-    MIN_LOSS = 0.01;
     Pimodels models =
         Pimodels(pd, finalT, nModels, icPoints, physPoints, order);
     auto start = Now();
     assert(!models
-                .Train(learningRate, learningRate / 200,
+                .Train(learningRate, learningRate / 500,
                        minImprovementToEarlyStop, maxSteps, logComplexity,
                        logTraining)
                 .isError);
