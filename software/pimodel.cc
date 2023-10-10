@@ -343,8 +343,8 @@ void Pimodel::AddInitialConditionsResidues() {
 
     Poly model;
     Poly modelDot;
-    for (int massId = 0; massId < this->nMasses; massId++) {
-        for (auto tkc : this->initialConditionsResiduesTkc) {
+    for (auto tkc : this->initialConditionsResiduesTkc) {
+        for (int massId = 0; massId < this->nMasses; massId++) {
             model = this->models(massId, 0);
             model.SetX(Bounded::Get(tkc));
             this->initialDispResidues.push_back(
@@ -366,16 +366,16 @@ void Pimodel::AddPhysicsResidues() {
     Poly modelDotDot;
     // d²/dT²(x)
     bst::matrix<Polys> d2x_dT2;
-    for (int m = 0; m < nMasses; m++) {
-        for (auto tkc : this->physicsResiduesTkc) {
+    for (auto tkc : this->physicsResiduesTkc) {
+        Problem problem = this->problemFromTkc(&tkc);
+        d2x_dT2 = getAccelsFromDiffEq(&problem, tkc);
+        for (int m = 0; m < nMasses; m++) {
             modelDotDot = this->modelsDD[m];
             modelDotDot.SetX(Bounded::Get(tkc));
 
-            Problem problem = this->problemFromTkc(&tkc);
             if (problem.massIsFixed(m)) {
                 this->physicsResidues.push_back(Polys(modelDotDot));
             } else {
-                d2x_dT2 = getAccelsFromDiffEq(&problem, tkc);
                 this->physicsResidues.push_back(Polys(modelDotDot) +
                                                 (-this->dTdt * this->dTdt) *
                                                     d2x_dT2(m, 0));

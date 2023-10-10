@@ -290,58 +290,25 @@ TEST_F(PimodelTest, InitialConditionsResiduesTest) {
     // kcDiscretization = 0
     // -> tkc values = [0,0.5,0.5], [1,0.5,0.5]
     // initialDisplacementResidues:
-    //  x0Model(t = 0, k = 0.5, c = 0.5) - x0
-    //  x0Model(t = 1, k = 0.5, c = 0.5) - x0
-    //  x1Model(t = 0, k = 0.5, c = 0.5) - x1
-    //  x1Model(t = 1, k = 0.5, c = 0.5) - x1
+    //  x0Model(t = 0, k = 0.0, c = 0.0) - x0
+    //  x1Model(t = 0, k = 0.0, c = 0.0) - x1
+    //  x0Model(t = 1, k = 1.0, c = 1.0) - x0
+    //  x1Model(t = 1, k = 1.0, c = 1.0) - x1
     // initialVelocityResidues:
-    //  x0ModelDot(t = 0, k = 0.5, c = 0.5) - dx0/dT*(dT/dt)
-    //  x0ModelDot(t = 1, k = 0.5, c = 0.5) - dx0/dT*(dT/dt)
-    //  x1ModelDot(t = 0, k = 0.5, c = 0.5) - dx1/dT*(dT/dt)
-    //  x1ModelDot(t = 1, k = 0.5, c = 0.5) - dx1/dT*(dT/dt)
+    //  x0ModelDot(t = 0, k = 0.0, c = 0.0) - dx0/dT*(dT/dt)
+    //  x1ModelDot(t = 0, k = 0.0, c = 0.0) - dx1/dT*(dT/dt)
+    //  x0ModelDot(t = 1, k = 1.0, c = 1.0) - dx0/dT*(dT/dt)
+    //  x1ModelDot(t = 1, k = 1.0, c = 1.0) - dx1/dT*(dT/dt)
     ASSERT_EQ(piModel.initialDispResidues.size(),
               piModel.initialConditionsResiduesTkc.size() * 2);  // 2 masses
     ASSERT_EQ(piModel.initialVelResidues.size(),
               piModel.initialConditionsResiduesTkc.size() * 2);  // 2 masses
 
-    // Verify all the X values are set correctly in the models
-    for (int resId = 0;
-         resId < int(piModel.initialConditionsResiduesTkc.size()); resId++) {
-        for (int massId = 0; massId < 2; massId++) {
-            for (int p = 0;
-                 p < int(piModel.initialDispResidues[resId].polys.size());
-                 p++) {
-                auto tkc = piModel.initialDispResidues[resId].polys[p].GetX();
-                ASSERT_DOUBLE_EQ(
-                    tkc[0],  // t
-                    piModel.initialConditionsResiduesTkc[resId][0].Get());
-                ASSERT_DOUBLE_EQ(
-                    tkc[1],  // k
-                    piModel.initialConditionsResiduesTkc[resId][1].Get());
-                ASSERT_DOUBLE_EQ(
-                    tkc[2],  // c
-                    piModel.initialConditionsResiduesTkc[resId][2].Get());
-
-                tkc = piModel.initialVelResidues[resId].polys[p].GetX();
-                ASSERT_DOUBLE_EQ(
-                    tkc[0],  // t
-                    piModel.initialConditionsResiduesTkc[resId][0].Get());
-                ASSERT_DOUBLE_EQ(
-                    tkc[1],  // k
-                    piModel.initialConditionsResiduesTkc[resId][1].Get());
-                ASSERT_DOUBLE_EQ(
-                    tkc[2],  // c
-                    piModel.initialConditionsResiduesTkc[resId][2].Get());
-            }
-        }
-    }
-
     // Check initial displacement residues
     std::vector<Polys> residues = std::vector<Polys>();
     std::vector<double> initial = std::vector<double>{0.0, initialDisplacement};
-    for (int massId = 0; massId < 2; massId++) {
-        for (int i = 0; i < int(piModel.initialConditionsResiduesTkc.size());
-             i++) {
+    for (int i = 0; i < int(piModel.initialConditionsResiduesTkc.size()); i++) {
+        for (int massId = 0; massId < 2; massId++) {
             Poly p = piModel.models(massId, 0);
             p.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
 
@@ -357,9 +324,8 @@ TEST_F(PimodelTest, InitialConditionsResiduesTest) {
     residues = std::vector<Polys>();
     initial = std::vector<double>{0.0, initialVelocity};
     double dTdt = (TMax - TMin);
-    for (int massId = 0; massId < 2; massId++) {
-        for (int i = 0; i < int(piModel.initialConditionsResiduesTkc.size());
-             i++) {
+    for (int i = 0; i < int(piModel.initialConditionsResiduesTkc.size()); i++) {
+        for (int massId = 0; massId < 2; massId++) {
             Poly p = piModel.models(massId, 0);
             p.SetX(Bounded::Get(piModel.initialConditionsResiduesTkc[i]));
 
@@ -551,14 +517,12 @@ TEST_F(PimodelTest, InitialConditionsResiduesNumericalTest) {
 TEST_F(PimodelTest, PhysicsResiduesTest) {
     // For each mass, one residue for each tkc value
     // physicsResidues:
-    //  (x0ModelDotDot-(dT/dt)²*d²x0/dT²(x0Model(t = 0),
-    //                          x0ModelDot(t = 0))
-    //
-    //  (x0ModelDotDot-(dT/dt)²*d²x0/dT²(x0Model(t = 1),
-    //                          x0ModelDot(t = 1))
+    //  (x0ModelDotDot-0) -> mass is fixed
     //
     //  (x1ModelDotDot-(dT/dt)²*d²x1/dT²(x1Model(t = 0),
     //                          x1ModelDot(t = 0))
+    //
+    //  (x0ModelDotDot-0) -> mass is fixed
     //
     //  (x1ModelDotDot-(dT/dt)²*d²x1/dT²(x1Model(t = 1),
     //                          x1ModelDot(t = 1))
@@ -570,6 +534,10 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
     double dtdT = 1 / (TMax - TMin);
     std::vector<Polys> residues = std::vector<Polys>();
 
+    Bounded k;  // normalized k (from 0 to 1)
+    Bounded c;  // normalized c (from 0 to 1)
+    double K;   // actual value of K
+    double C;   // actual value of C
     for (int i = 0; i < int(piModel.physicsResiduesTkc.size()); i++) {
         Poly x0Model = piModel.models(0, 0);
 
@@ -584,21 +552,7 @@ TEST_F(PimodelTest, PhysicsResiduesTest) {
         x0ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
         x0ModelDotDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
 
-        residues.push_back(x0ModelDotDot + (-0));  // Initial mass is fixed
-    }
-
-    Bounded k;  // normalized k (from 0 to 1)
-    Bounded c;  // normalized c (from 0 to 1)
-    double K;   // actual value of K
-    double C;   // actual value of C
-    for (int i = 0; i < int(piModel.physicsResiduesTkc.size()); i++) {
-        Poly x0Model = piModel.models(0, 0);
-
-        Poly x0ModelDot = piModel.models(0, 0);
-        ASSERT_FALSE(x0ModelDot.Dxi(0).isError);
-
-        x0Model.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
-        x0ModelDot.SetX(Bounded::Get(piModel.physicsResiduesTkc[i]));
+        residues.push_back(x0ModelDotDot + (-0));  // Initial mass is fixe
 
         Poly x1Model = piModel.models(1, 0);
 
@@ -656,8 +610,6 @@ TEST_F(PimodelTest, PhysicsResiduesNumericalTest) {
     pd.SetFixedMass(0);
     pd.AddInitialVel(200.0);  // initial vel
     assert(pd.IsOk());
-    // unnormalized value of K and C for normalized_value=0.5
-    double KC_05 = min + 0.5 * (max - min);
 
     double finalT = 0.02;
     double dtdT = 1 / 0.02;
@@ -778,16 +730,18 @@ TEST_F(PimodelTest, PhysicsResiduesNumericalTest) {
     //   P = p0(t, K, C), p1(t, K, C), ...
     //   dP = p0Dot(t, K, C), p1Dot(t, K, C), ...
     //   ddP = p0DotDot(t, K, C), p1DotDot(t, K, C), ...
-    // Residue 0: (p0_dotdot(t,K,C)-0) for t = 0
-    // Residue 1: (p0_dotdot(t,K,C)-0) for t = 1
+    // Residue 0:
+    //   (p0_dotdot(t,K,C)-0) for t = 0
+    // Residue 1:
+    //   (p1DotDot(t, K, C)-x1dotdot(t,K,C,P,dP)) for t = 0
     // Residue 2:
-    //   (p1DotDot(t, K, C)-x1dotdot(t,K,C,P,dP)) for t = 0
+    //   (p2DotDot(t, K, C)-x2dotdot(t,K,C,P,dP)) for t = 0
     // Residue 3:
-    //   (p1DotDot(t, K, C)-x1dotdot(t,K,C,P,dP)) for t = 0
+    //   (p0_dotdot(t,K,C)-0) for t = 1
     // Residue 4:
-    //   (p2DotDot(t, K, C)-x2dotdot(t,K,C,P,dP)) for t = 0
+    //   (p1DotDot(t, K, C)-x1dotdot(t,K,C,P,dP)) for t = 1
     // Residue 5:
-    //   (p2DotDot(t, K, C)-x2dotdot(t,K,C,P,dP)) for t = 0
+    //   (p2DotDot(t, K, C)-x2dotdot(t,K,C,P,dP)) for t = 1
     ASSERT_EQ(pimodel.nResidues(), 6);
 
     // Residue 0
@@ -801,75 +755,64 @@ TEST_F(PimodelTest, PhysicsResiduesNumericalTest) {
                      0.0;
     EXPECT_DOUBLE_EQ(pimodel.Residue(0), residue);
     // Residue 1
-    residue = modelDotDot(pimodel.physicsResiduesTkc[1][1].Get(),
-                          pimodel.physicsResiduesTkc[1][1].Get(),
-                          pimodel.physicsResiduesTkc[1][2].Get(),
-                          pimodel.physicsResiduesTkc[1][3].Get(),
-                          pimodel.physicsResiduesTkc[1][4].Get(),
-                          pimodel.physicsResiduesTkc[1][5].Get(),
-                          pimodel.physicsResiduesTkc[1][6].Get(), A0) -
-              0.0;
+    double p0 = model(pimodel.physicsResiduesTkc[0][0].Get(),
+                      pimodel.physicsResiduesTkc[0][1].Get(),
+                      pimodel.physicsResiduesTkc[0][2].Get(),
+                      pimodel.physicsResiduesTkc[0][3].Get(),
+                      pimodel.physicsResiduesTkc[0][4].Get(),
+                      pimodel.physicsResiduesTkc[0][5].Get(),
+                      pimodel.physicsResiduesTkc[0][6].Get(), A0);
+    double p0Dot = modelDot(pimodel.physicsResiduesTkc[0][0].Get(),
+                            pimodel.physicsResiduesTkc[0][1].Get(),
+                            pimodel.physicsResiduesTkc[0][2].Get(),
+                            pimodel.physicsResiduesTkc[0][3].Get(),
+                            pimodel.physicsResiduesTkc[0][4].Get(),
+                            pimodel.physicsResiduesTkc[0][5].Get(),
+                            pimodel.physicsResiduesTkc[0][6].Get(), A0);
+    double p1 = model(pimodel.physicsResiduesTkc[0][0].Get(),
+                      pimodel.physicsResiduesTkc[0][1].Get(),
+                      pimodel.physicsResiduesTkc[0][2].Get(),
+                      pimodel.physicsResiduesTkc[0][3].Get(),
+                      pimodel.physicsResiduesTkc[0][4].Get(),
+                      pimodel.physicsResiduesTkc[0][5].Get(),
+                      pimodel.physicsResiduesTkc[0][6].Get(), A1);
+    double p1Dot = modelDot(pimodel.physicsResiduesTkc[0][0].Get(),
+                            pimodel.physicsResiduesTkc[0][1].Get(),
+                            pimodel.physicsResiduesTkc[0][2].Get(),
+                            pimodel.physicsResiduesTkc[0][3].Get(),
+                            pimodel.physicsResiduesTkc[0][4].Get(),
+                            pimodel.physicsResiduesTkc[0][5].Get(),
+                            pimodel.physicsResiduesTkc[0][6].Get(), A1);
+    double p1DotDot = modelDotDot(pimodel.physicsResiduesTkc[0][0].Get(),
+                                  pimodel.physicsResiduesTkc[0][1].Get(),
+                                  pimodel.physicsResiduesTkc[0][2].Get(),
+                                  pimodel.physicsResiduesTkc[0][3].Get(),
+                                  pimodel.physicsResiduesTkc[0][4].Get(),
+                                  pimodel.physicsResiduesTkc[0][5].Get(),
+                                  pimodel.physicsResiduesTkc[0][6].Get(), A1);
+    double p2 = model(pimodel.physicsResiduesTkc[0][0].Get(),
+                      pimodel.physicsResiduesTkc[0][1].Get(),
+                      pimodel.physicsResiduesTkc[0][2].Get(),
+                      pimodel.physicsResiduesTkc[0][3].Get(),
+                      pimodel.physicsResiduesTkc[0][4].Get(),
+                      pimodel.physicsResiduesTkc[0][5].Get(),
+                      pimodel.physicsResiduesTkc[0][6].Get(), A2);
+    double p2Dot = modelDot(pimodel.physicsResiduesTkc[0][0].Get(),
+                            pimodel.physicsResiduesTkc[0][1].Get(),
+                            pimodel.physicsResiduesTkc[0][2].Get(),
+                            pimodel.physicsResiduesTkc[0][3].Get(),
+                            pimodel.physicsResiduesTkc[0][4].Get(),
+                            pimodel.physicsResiduesTkc[0][5].Get(),
+                            pimodel.physicsResiduesTkc[0][6].Get(), A2);
+
+    double KC = min + 0.5 * (pimodel.physicsResiduesTkc[0][1].Get());
+    residue =
+        p1DotDot - dTdt * dTdt *
+                       d2_x1_dT2(300.0, KC, KC, KC, KC, KC, KC, p0, p1, p2,
+                                 p0Dot * dtdT, p1Dot * dtdT, p2Dot * dtdT);
     EXPECT_DOUBLE_EQ(pimodel.Residue(1), residue);
 
-    // // Residue 2
-    // double p0 = model(0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A0);
-    // double p0Dot = modelDot(0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A0);
-    // double p1 = model(0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A1);
-    // double p1Dot = modelDot(0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A1);
-    // double p1DotDot = modelDotDot(0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A1);
-    // double p2 = model(0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A2);
-    // double p2Dot = modelDot(0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A2);
-    // residue = p1DotDot - dTdt * dTdt *
-    //                          d2_x1_dT2(300.0, KC_05, KC_05, KC_05, KC_05,
-    //                          KC_05,
-    //                                    KC_05, p0, p1, p2, p0Dot * dtdT,
-    //                                    p1Dot * dtdT, p2Dot * dtdT);
-    // EXPECT_DOUBLE_EQ(pimodel.Residue(2), residue);
-
-    // // Residue 3
-    // p0 = model(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A0);
-    // p0Dot = modelDot(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A0);
-    // p1 = model(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A1);
-    // p1Dot = modelDot(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A1);
-    // p1DotDot = modelDotDot(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A1);
-    // p2 = model(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A2);
-    // p2Dot = modelDot(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A2);
-    // residue = p1DotDot - dTdt * dTdt *
-    //                          d2_x1_dT2(300.0, KC_05, KC_05, KC_05, KC_05,
-    //                          KC_05,
-    //                                    KC_05, p0, p1, p2, p0Dot * dtdT,
-    //                                    p1Dot * dtdT, p2Dot * dtdT);
-    // EXPECT_DOUBLE_EQ(pimodel.Residue(3), residue);
-
-    // // Residue 4
-    // p0 = model(0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A0);
-    // p0Dot = modelDot(0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A0);
-    // p1 = model(0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A1);
-    // p1Dot = modelDot(0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A1);
-    // p2 = model(0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A2);
-    // p2Dot = modelDot(0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A2);
-    // auto p2DotDot = modelDotDot(0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A2);
-    // residue = p2DotDot - dTdt * dTdt *
-    //                          d2_x2_dT2(120.0, KC_05, KC_05, KC_05, KC_05,
-    //                          KC_05,
-    //                                    KC_05, p0, p1, p2, p0Dot * dtdT,
-    //                                    p1Dot * dtdT, p2Dot * dtdT);
-    // EXPECT_DOUBLE_EQ(pimodel.Residue(4), residue);
-
-    // // Residue 5
-    // p0 = model(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A0);
-    // p0Dot = modelDot(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A0);
-    // p1 = model(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A1);
-    // p1Dot = modelDot(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A1);
-    // p2 = model(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A2);
-    // p2Dot = modelDot(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A2);
-    // p2DotDot = modelDotDot(1.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, A2);
-    // residue = p2DotDot - dTdt * dTdt *
-    //                          d2_x2_dT2(120.0, KC_05, KC_05, KC_05, KC_05,
-    //                          KC_05,
-    //                                    KC_05, p0, p1, p2, p0Dot * dtdT,
-    //                                    p1Dot * dtdT, p2Dot * dtdT);
-    // EXPECT_DOUBLE_EQ(pimodel.Residue(5), residue);
+    // TODO: Add other residues
 }
 
 TEST_F(PimodelTest, nResiduesTest) {
