@@ -16,8 +16,6 @@
 
 - **MSDS** One-dimensional Masses-Springs-Dampers System, i.e. a one dimensional mechanical system composed of ideal masses, linear springs and linear dampers.
 
-- **NN** Artificial Neural Network (ML model).
-
 - **ODE** Ordinary Differential Equation.
 
 - **PIM** Physics Informed Machine Learning Model.

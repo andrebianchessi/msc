@@ -10,8 +10,8 @@
 ## Build pdf
 - `make`
 
-## Build html
-- `make html`
+## Build website
+- `make website`
 
 ## Deploy website
 - `make deploy`
