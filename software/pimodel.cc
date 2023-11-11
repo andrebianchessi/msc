@@ -601,14 +601,18 @@ Maybe<double> Pimodels::Train(double initialConditionsLearningRate,
     std::vector<double> tkcCont = this->continuityTkc();
     int tBucket = 0;
     while (tBucket < int(this->pimodels.size())) {
-        std::cout << "## Training model from " << this->timeBuckets[tBucket]
-                  << " to " << this->timeBuckets[tBucket + 1] << " ##"
-                  << std::endl;
+        if (logTraining) {
+            std::cout << "## Training model from " << this->timeBuckets[tBucket]
+                      << " to " << this->timeBuckets[tBucket + 1] << " ##"
+                      << std::endl;
+        }
         if (tBucket > 0) {
             this->setContinuity(tBucket, tkcCont);
         }
 
-        std::cout << "## Training initial conditions ##" << std::endl;
+        if (logTraining) {
+            std::cout << "## Training initial conditions ##" << std::endl;
+        }
         this->pimodels[tBucket].SetResidues(true, false);
         r = this->pimodels[tBucket].Train(initialConditionsLearningRate,
                                           minImprovementToEarlyStop, maxSteps,
@@ -618,15 +622,19 @@ Maybe<double> Pimodels::Train(double initialConditionsLearningRate,
         // this->pimodels[tBucket].Train(physicsLearningRate,
         //                               minImprovementToEarlyStop, maxSteps,
         //                               logTraining);
-        std::cout << "## Training physics and initial conditions ##"
-                  << std::endl;
+        if (logTraining) {
+            std::cout << "## Training physics and initial conditions ##"
+                      << std::endl;
+        }
         this->pimodels[tBucket].SetResidues(true, true);
         this->pimodels[tBucket].Train(physicsLearningRate,
                                       minImprovementToEarlyStop, maxSteps,
                                       logTraining);
 
         tBucket += 1;
-        std::cout << std::endl;
+        if (logTraining) {
+            std::cout << std::endl;
+        }
     }
     return r;
 };

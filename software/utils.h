@@ -51,3 +51,4 @@ std::chrono::_V2::system_clock::time_point Now();
 
 // Convenient function to get readable time difference from t0 to now
 std::string TimeSince(std::chrono::_V2::system_clock::time_point t0);
+int TimeUsecSince(std::chrono::_V2::system_clock::time_point start);

@@ -100,3 +100,8 @@ std::string TimeSince(std::chrono::_V2::system_clock::time_point start) {
             .count();
     return std::to_string(ms) + " us";
 }
+
+int TimeUsecSince(std::chrono::_V2::system_clock::time_point start) {
+    return std::chrono::duration_cast<std::chrono::microseconds>(Now() - start)
+        .count();
+}
