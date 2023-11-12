@@ -1299,11 +1299,11 @@ TEST(PimodelsTrainingTest, TrainTest) {
     int physPoints = 2;
     int order = 3;
     double learningRate = 1.0;
-    // Will stop training only if improvement is 100% (i.e. if loss reaches 0)
-    double minImprovementToEarlyStop = 1.0;
-    int maxSteps = 5000;
+    // Will stop training only if improvement is <0.1%
+    double minImprovementToEarlyStop = 0.001;
+    int maxSteps = 10000;
     bool logComplexity = false;
-    bool logTraining = false;
+    bool logTraining = true;
 
     extern double MIN_LOSS;
     // training stops when loss < MIN_LOSS. We overwrite it here to prevent

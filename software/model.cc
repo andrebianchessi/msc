@@ -71,6 +71,9 @@ Maybe<double> Model::Train(double learningRate,
             if (log) {
                 std::cout << "Loss: " << newLoss << std::endl;
             }
+            if (newLoss == 0) {
+                break;
+            }
             if (loss != 0 &&
                 abs((newLoss - loss) / loss) <= minImprovementToEarlyStop) {
                 break;
