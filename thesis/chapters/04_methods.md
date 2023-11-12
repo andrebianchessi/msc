@@ -31,15 +31,13 @@ solution found by the algorithm.
 ## E-GA {#sec:methods_ega}
 
 
-## Software
+## Explicit Time Integration Software {#sec:software_eti}
 
-### Explicit Time Integration (ETI) {#sec:software_eti}
-
-#### Implementation {.unnumbered}
+### Implementation {.unnumbered}
 
 The [Problem (~/software/problem.h)](https://github.com/andrebianchessi/msc/blob/7cf80c4f85161acef1c2946262259ad1c3e8f4af/software/problem.h#L17) class, together with other classes it references, encapsulates all the logic related to the dynamic simulation of [CMs](#sec:cms) using ETI.
 
-#### Usage {.unnumbered}
+### Usage {.unnumbered}
 
 [~/software/problem_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/problem_test.cc) contains many examples of how the software we
 implemented can be used. @Mostafa2011-kc was extensively used as reference for
@@ -61,7 +59,7 @@ Some post processing methods available are:
 
 For more details, see [~/software/problem.h](https://github.com/andrebianchessi/msc/blob/main/software/problem.h).
 
-#### Example {.unnumbered}
+### Example {.unnumbered}
 [DampedOscillatorPlotTest (~/software/problem_test.cc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/problem_test.cc#L684)
 
 ```{.cpp caption="Example of using Problem class to perform dynamic simulation."}
@@ -83,15 +81,15 @@ For more details, see [~/software/problem.h](https://github.com/andrebianchessi/
 
 ![Plot of output of damped oscillator simulation example. Created with gnuplot](figs/dampedOsc.png){#fig:dampedOsc width=100% style="scale:1;"}
 
-### Genetic Algorithm {#sec:software_ga}
+## Genetic Algorithm Software {#sec:software_ga}
 
-#### Implementation {.unnumbered}
+### Implementation {.unnumbered}
 
 [Evolution (~/software/evolution.h)](https://github.com/andrebianchessi/msc/blob/main/software/evolution.h) is a template class that encapsulates the logic related to GA. Note that this template must be of a class that is a child of the [Creature (~/software/creature.h)](https://github.com/andrebianchessi/msc/blob/main/software/creature.h) abstract class (interface).
 
-#### Usage {.unnumbered}
+### Usage {.unnumbered}
 
-##### Arbitrary problem {.unnumbered}
+#### Arbitrary problem {.unnumbered}
 To perform an optimization using GA, the first step is to define a child class of
 [Creature (~/software/creature.h)](https://github.com/andrebianchessi/msc/blob/main/software/creature.h).
 The only definitions required are the ```dna``` attribute and the ```GetCost``` function.
@@ -99,7 +97,7 @@ The only definitions required are the ```dna``` attribute and the ```GetCost``` 
 
 Once the *child creature* class is defined, an `Evolution` object can be instantiated and used to search for optimal solutions. [EvolveTest (~/software/evolution_test.cc)](https://github.com/andrebianchessi/msc/blob/3820ac9bd39e60e2aed403fba2227cd116772228/software/evolution_test.cc#L326) contains an example of how that's done.
 
-##### COP {.unnumbered}
+#### COP {.unnumbered}
 
 The *child class* for [CMs](#sec:cms) is already defined at [ProblemCreature (~/software/problem_creature.h)](https://github.com/andrebianchessi/msc/blob/main/software/problem_creature.h). Its constructor uses an auxiliary class [ProblemDescription (~/software/problem_description.h)](https://github.com/andrebianchessi/msc/blob/main/software/problem_description.h), which allows us to easily describe a COP as described in @sec:cop. The extra two parameters from its constructor specify the mass whose maximum acceleration we want to minimize and the length of the simulation we'll perform. The creature's loss function is the maximum absolute acceleration that mass will suffer during the dynamic simulation.
 
