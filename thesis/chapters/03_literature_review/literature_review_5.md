@@ -1,4 +1,4 @@
-## Physics-Informed Machine Learning
+## Physics-Informed Machine Learning {#sec:pim}
 
 We start by explaining the basic concepts of Machine Learning, and then show how
 the same ideas, with some small modifications, are applied to solve problems

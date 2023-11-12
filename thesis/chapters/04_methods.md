@@ -5,34 +5,39 @@
 The method used to achieve the objectives listed at @sec:objectives was to
 implement a library that is capable of:
 
-1. Defining arbitrary MSDSs, i.e. systems with arbitrary masses/springs/dampers
-and also arbitrary initial/boundary conditions
+1. Defining arbitrary COPs.
 
-2. Finding values of springs/dampers that minimize the maximum acceleration
-that an arbitrary mass of an MSDS experiences after impact. The library must
-implement two "flavors" of GA for this optimization: P-GA and E-GA.
-- E-GA evaluates candidate solutions by explicitly integrating the MSDS in time.
+2. Solving COPs with either P-GA or E-GA:
+- E-GA evaluates candidate solutions using explicit time integration (see @sec:eti).
 - P-GA evaluates candidate solutions using PIMs which describe the position of
 each mass as a function of *time* and of the *values of the masses and springs
-of the system*
+of the system*.
 
-Using this library, we performed a few case studies in which we optimized MSDSs
-using both P-GA and E-GA. The performance and the result of each algorithm were
+Using this library, we performed a few COP case studies using both
+P-GA and E-GA. The performance and the result of each algorithm were
 then compared. *Performance* of each algorithm was measured by the total
-processing time needed for the optimization to finish. The goal of the
-optimization algorithms in this case is to find the constants of the springs
-and dampers that minimize the maximum acceleration the "last mass" (the one)
-furthest away from impact, will experience. Thus, we compared the *results* by
+processing time needed for the optimization to finish. We compared the *results* by
 comparing the maximum acceleration the mass would experience with the optimal
 solution found by the algorithm.
 
+## Polynomial Models {#sec:polynomials}
+
+## Physics-Informed Machine Learning Models (PIMs) {#sec:methods_pim}
+
+### Formulation
+
+## P-GA {#sec:methods_pga}
+
+## E-GA {#sec:methods_ega}
+
+
 ## Software
 
-### Explicit Time Integration (ETE) {#sec:software_ete}
+### Explicit Time Integration (ETI) {#sec:software_eti}
 
 #### Implementation {.unnumbered}
 
-The [Problem (~/software/problem.h)](https://github.com/andrebianchessi/msc/blob/7cf80c4f85161acef1c2946262259ad1c3e8f4af/software/problem.h#L17) class, together with other classes it references, encapsulates all the logic related to the dynamic simulation of MSDSs using ETE.
+The [Problem (~/software/problem.h)](https://github.com/andrebianchessi/msc/blob/7cf80c4f85161acef1c2946262259ad1c3e8f4af/software/problem.h#L17) class, together with other classes it references, encapsulates all the logic related to the dynamic simulation of [CMs](#sec:cms) using ETI.
 
 #### Usage {.unnumbered}
 
@@ -78,12 +83,6 @@ For more details, see [~/software/problem.h](https://github.com/andrebianchessi/
 
 ![Plot of output of damped oscillator simulation example. Created with gnuplot](figs/dampedOsc.png){#fig:dampedOsc width=100% style="scale:1;"}
 
-### PIM {#sec:software_pim}
-
-TODO
-
-#### Formulation
-
 ### Genetic Algorithm {#sec:software_ga}
 
 #### Implementation {.unnumbered}
@@ -100,15 +99,15 @@ The only definitions required are the ```dna``` attribute and the ```GetCost``` 
 
 Once the *child creature* class is defined, an `Evolution` object can be instantiated and used to search for optimal solutions. [EvolveTest (~/software/evolution_test.cc)](https://github.com/andrebianchessi/msc/blob/3820ac9bd39e60e2aed403fba2227cd116772228/software/evolution_test.cc#L326) contains an example of how that's done.
 
-##### MSDS optimization {.unnumbered}
+##### COP {.unnumbered}
 
-The *child class* for MSDSs is already defined at [ProblemCreature (~/software/problem_creature.h)](https://github.com/andrebianchessi/msc/blob/main/software/problem_creature.h). Its constructor uses an auxiliary class [ProblemDescription (~/software/problem_description.h)](https://github.com/andrebianchessi/msc/blob/main/software/problem_description.h), which allows us to easily describe an MSDS optimization problem as described in @sec:problemsWeSolved. The extra two parameter from its constructor specify the mass whose maximum acceleration we want to minimize and the length of the simulation we'll perform. The creature's loss function is the maximum absolute acceleration that mass will suffer during the dynamic simulation.
+The *child class* for [CMs](#sec:cms) is already defined at [ProblemCreature (~/software/problem_creature.h)](https://github.com/andrebianchessi/msc/blob/main/software/problem_creature.h). Its constructor uses an auxiliary class [ProblemDescription (~/software/problem_description.h)](https://github.com/andrebianchessi/msc/blob/main/software/problem_description.h), which allows us to easily describe a COP as described in @sec:cop. The extra two parameters from its constructor specify the mass whose maximum acceleration we want to minimize and the length of the simulation we'll perform. The creature's loss function is the maximum absolute acceleration that mass will suffer during the dynamic simulation.
 
 #### Example {.unnumbered}
 
 [EvolutionUntilConvergenceTest (~/software/problem_creature_test.cc)](https://github.com/andrebianchessi/msc/blob/d69d36a973dce9807674b023ad8bfd05b2b7a612/software/problem_creature_test.cc#L89) contains an example in which we find values for the springs and dampers of system at @fig:crashworthiness that minimize the maximum acceleration that $m_5$ would suffer if the system was moving with a constant speed from right to left and hit an immovable wall on the left. A simplified version of the code is listed below. Note that the parameters we pass to the ```Evolve``` method determine our stop condition and if the results should be printed to ```stdout```. Some values of the best solution found are listed after it, and @fig:msdsGa shows how the sum of the loss of the fittest population progresses with the generations.
 
-```{.cpp caption="Example of how to use the code we wrote to optimize MSDS from @fig:crashworthiness"}
+```{.cpp caption="Example of how to use the code we wrote to solve COPs from @fig:crashworthiness"}
 ProblemDescription pd = ProblemDescription();
 pd.AddMass(1.0, 0.0, 0.0);  // m0
 pd.AddMass(300, 1.0, 1.0);  // m1
@@ -172,4 +171,4 @@ Some of the values of springs and dampers of the optimal solution we found are:
 |        k5|   21287.2|
 |        c5|    4957.4|
 
-![Example optimization of MSDS: Sum of loss function of fittest population vs Generation](figs/msdsGa.png){#fig:msdsGa width=80% style="scale:1;"}
+![Example solution of COP: Sum of loss function of fittest population vs Generation](figs/msdsGa.png){#fig:msdsGa width=80% style="scale:1;"}

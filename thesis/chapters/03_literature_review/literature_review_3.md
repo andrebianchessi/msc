@@ -231,4 +231,4 @@ $$
 
 ### Software
 
-See @sec:software_ga for how we implemented GA optimization of MSDSs.
+See @sec:software_ga for how we implemented GA optimization of [CMs](#sec:cms) to solve [COPs](#sec:cop).

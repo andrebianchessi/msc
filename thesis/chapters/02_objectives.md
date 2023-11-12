@@ -1,26 +1,20 @@
 # Objectives {#sec:objectives}
 This work sets out to:
 
-1. Define a few mechanical systems with different complexities that are
-comprized of ideal masses, linear springs and linear dampers.
-2. For each one of the mechanical systems, find the parameters (constants of
-springs and dampers) that minimize the maximum acceleration that one of the
-masses - the one farthest from impact - experiences on an impact with a given
-speed. The optimization is done twice for each system using Genetic Algorithms:
-first by performing Explicit Time Integration (ETE) of equations found with a
-Discrete Element Method (DEM) and, secondly, by using a PIM (Physics-Informed
-Machine Learning Model) metamodel that approximates the system's dynamic
-response. The first optimization method is referred to as *P-GA*, and the second
-one is referred to as *E-GA*. 
-3. Analyze and compare the results obtained.
+1. Perform case studies of *dynamic mechanical system optimization* using
+two approaches: *P-GA* and *E-GA*. Both are genetic algorithms, but while *E-GA*
+evaluates the fitness of the solutions using explicit time integration ([ETI](#sec:eti)),
+*P-GA* does so by using PIMs (Physics Informed Machine Learning Models) that
+describe the time response of the system as a function of *time* and of the
+system's properties. 
+2. Compare the performance and the results obtained by each method.
 
 Some of the questions we want to answer are:
 
-- How big was the added cost of training the metamodels? Was it *worth it*, in
-  all cases, to use the metamodels; or did the training overhead was greater
-  than the efficiency gains for some cases?
-- How well did the metamodels perform, i.e. how close to the ETE results were
-  their predictions, for the impacts with the speed they were trained on? How
-  about for the impacts with different speeds?
+- How well do the PIMs perform when compared to ETI (Explicit time integration)?
+Are they good approximators of the system's time response?
+- How big was the added cost of training the models for P-GA? Is the added cost
+of training the models worth the faster evaluation time that they provide?
+- How good are the solutions found with P-GA when compared to E-GA?
 - How does the system complexity impact the efficiency of using PIMs? I.e. do
   they provide a bigger efficiency gain when the system complexity is larger?

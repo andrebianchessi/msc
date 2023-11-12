@@ -1,10 +1,10 @@
-## Discrete element method solution to MSDSs
+## Discrete element method solution to CMs {#sec:dem}
 
 ### Local Matrices
 @Fig:discreteElementSimple shows the simplest system that contains ideal masses,
 springs and dampers. The spring has its natural/relaxed length when $x_0=x_1=0$.
 
-![MSDS of 2 masses, 1 spring and 1 damper. Source: Author](figs/discreteElementSimple.png){#fig:discreteElementSimple width=80% style="scale:1;"}
+![CM of 2 masses, 1 spring and 1 damper. Source: Author](figs/discreteElementSimple.png){#fig:discreteElementSimple width=80% style="scale:1;"}
 
 From Newton's second law, we obtain @eq:demLocalEq, in which $\dot{x_i}$ and $\ddot{x_i}$
 represent $x_i$'s first and second time derivative - speed and acceleration - respectively.
@@ -67,7 +67,7 @@ The matrices $K_{l}$, $C_{l}$ and $M_{l}$ are termed, respectively, **local stif
 
 By adding another mass, spring and damper to @fig:discreteElementSimple, we can obtain the system at @fig:discreteElementSimple2.
 
-![MSDS of 2 masses, 2 spring and 2 dampers. Source: Author](figs/discreteElementSimple2.png){#fig:discreteElementSimple2 width=80% style="scale:1;"}
+![CM of 2 masses, 2 spring and 2 dampers. Source: Author](figs/discreteElementSimple2.png){#fig:discreteElementSimple2 width=80% style="scale:1;"}
 
 Equations of motion of system illustrated at @fig:discreteElementSimple2, also obtained by Neuton's second law, are:
 
@@ -113,7 +113,7 @@ $$
 
 By adding another mass, spring and damper connected to $m_1$, we get the system at @fig:discreteElementSimple3.
 
-![MSDS of 3 masses, 3 spring and 3 dampers. Source: Author](figs/discreteElementSimple3.png){#fig:discreteElementSimple3 width=80% style="scale:1;"}
+![CM of 3 masses, 3 spring and 3 dampers. Source: Author](figs/discreteElementSimple3.png){#fig:discreteElementSimple3 width=80% style="scale:1;"}
 
 The equations of motion of the system illustrated at @fig:discreteElementSimple3 are:
 
@@ -164,7 +164,7 @@ $$
 
 By adding just an extra spring and a damper connecting $m_0$ and $m_3$, we get the system at @fig:discreteElementSimple4.
 
-![MSDS of 3 masses, 4 spring and 4 dampers. Source: Author](figs/discreteElementSimple4.png){#fig:discreteElementSimple4 width=80% style="scale:1;"}
+![CM of 3 masses, 4 spring and 4 dampers. Source: Author](figs/discreteElementSimple4.png){#fig:discreteElementSimple4 width=80% style="scale:1;"}
 
 The equations of motion of the system illustrated at @fig:discreteElementSimple4 are:
 

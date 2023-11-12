@@ -1,18 +1,20 @@
 # Acronyms
 
-- **DEM** Discrete Element Method, i.e. a dynamic simulation of a system comprized of ideal masses, linear springs and linear dampers in which the equations of motion have been determined simply with Newton's second law.
+- **CMs** Crashworthiness models. See @sec:cms.
+
+- **COP** Crashworthiness Optimization Problem. See @sec:cop.
+
+- **DEM** Discrete Element Method, i.e. a dynamic simulation of a system comprized of ideal masses, linear springs and linear dampers in which the equations of motion have been determined simply with Newton's second law. See @sec:dem.
 
 - **E-GA** Genetic Algorithm which calculates the loss function by explicitly integrating the ODE in time.
 
-- **ETE** Explicit Time Integration, i.e. numerical method for obtaining approximate solution to time-dependent ordinary differential equation.
+- **ETI** Explicit Time Integration, i.e. numerical method for obtaining approximate solution to time-dependent ordinary differential equation. See @sec:eti.
 
 - **FEM** Finite Element Method.
 
 - **GA** Genetic Algorithm.
 
 - **ML** Machine Learning.
-
-- **MSDS** One-dimensional Masses-Springs-Dampers System, i.e. a one dimensional mechanical system composed of ideal masses, linear springs and linear dampers.
 
 - **ODE** Ordinary Differential Equation.
 

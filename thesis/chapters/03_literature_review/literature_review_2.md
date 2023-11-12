@@ -1,6 +1,6 @@
-## Explicit Time Integration (ETE)
+## Explicit Time Integration (ETI) {#sec:eti}
 
-One way to find the dynamic response of as MSDS is to find the its Ordinary Differential Equation (ODE), i.e. a system's state vector $X$ and an expression $\dot{X}(X)$ that calculates the state vector's time derivative based on the current state, and then integrate it with an explicit method such as Forward Euler. Starting from the initial conditions, which must be pre-defined, these methods calculate the state of a system at a later time based on its state at a current time.
+One way to find the dynamic response of as [CM](#sec:cms) is to find its Ordinary Differential Equation (ODE), i.e. a system's state vector $X$ and an expression $\dot{X}(X)$ that calculates the state vector's time derivative based on the current state, and then integrate it with an explicit method such as Forward Euler. Starting from the initial conditions, which must be pre-defined, these methods calculate the state of a system at a later time based on its state at a current time.
 
 We can represent the state of the system with the state vector $X$:
 $$
@@ -324,4 +324,5 @@ $$
 
 ### Software
 
-See @sec:software_ete for how we implemented explicit time integration of MSDSs.
+See @sec:software_eti for how we implemented explicit
+time integration of [CMs](#sec:cms).

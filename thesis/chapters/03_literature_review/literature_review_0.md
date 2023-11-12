@@ -1,12 +1,12 @@
 # Literature Review
 
-## Problems we optimized: Crashworthiness models {#sec:problemsWeSolved}
+## Crashworthiness models (CMs) {#sec:cms}
 
-Crashworthiness models are models of vehicles used to analyze the safety of
+Crashworthiness models (CMs) are models of vehicles used to analyze the safety of
 their occupants in a crash. @Fig:crashworthiness shows an example. They can be
 very elaborate, but very simple ones are also used on initial phases of vehicle
-design. These simple ones are one-dimensional Masses-Springs-Dampers Systems
-(MSDSs), i.e. they're one-dimensional and are comprised of only ideal masses,
+design. These simple ones are one-dimensional Masses-Springs-Dampers Systems,
+i.e. they're one-dimensional and are comprised of only ideal masses,
 springs and dampers. They can be used to estimate the maximum acceleration a
 driver would suffer in a crash. Alternatively, we can look for values of the
 springs and dampers that would minimize the maximum acceleration the drive would
@@ -24,35 +24,29 @@ suffer in a crash.
 |          5|                               Occupant|
 : Legend of @Fig:crashworthiness. Source: [@Mostafa2011-kc] {#tbl:crashworthiness}
 
-In this work, we set out to analyze the cost/benefits of using *P-GAs* vs *E-GAs* (see @sec:objectives) for
-optimization of mechanical systems, and how that changes with respect to the
-system's complexity. In order to perform this analysis, we chose to optimize
-systems of different complexities using both algorithms to then analyze the
-performance of each algorithm.
-To summarize, the following pseudo-code illustrates our basic workflow:
-```{.python caption="Illustration of how we generated the data to compare P-GA and E-GA"}
-for complexity in [1,2,3 ... ]:
-  for algorithm in ["P-GA", "E-GA"]:
-    problem = NewRandomProblem(complexity)
-    results = Optimize(problem, algorithm)
-    SaveResultsToAnalyzeLater(complexity, algorithm, results)
-```
+## Crashworthiness optimization problem (COP) {#sec:cop}
 
-Inspired by crashworthiness models, we chose that **the problems we would
-optimize were those of finding values of springs and dampers from MSDSs that
-minimize the maximum acceleration that a mass - the one farthest away from
-impact - would experience with an impact**. For example, for the system of
-@Fig:crashworthiness, the optimization problem is: given the values of the
-masses and an initial speed of the system, find the values of $k_i$ and $c_i$
-that minimize the maximum acceleration $m_5$ will experience with the impact of
-the system with the fixed wall on the left.
+A *Crashworthiness optimization problem* (COP) is the optimization problem of a
+[CM](#sec:cms).
 
-We chose to optimize only these kind of problems because:
+The main objective of this study was to analyze the cost/benefits of
+using *P-GAs* vs *E-GAs* (see @sec:objectives) for optimization
+of mechanical systems. To achieve this objective, we analyzed multiple
+COPs using each algorithm and compared
+the results. The following section defines the problem statement of a COP:
 
-- As explained in @sec:motivation, our focus is not to study the algorithms applied to a specific problem, but to study the algorithms themselves.
-- Implementing a solver to this kind of problem is much simpler than, for example, a FEM solver.
-- The physics equations which describe these systems, which were used in the PIM metamodels, are relatively simple.
-- It's easy to create a problem with arbitrary complexity. @Fig:MsdsExamples shows examples of why that is true: to increase a system's complexity, we can always add more masses/springs/dampers.
-- By creating a problem with enough complexity, we can have systems which are highly non-linear with respect to time.
+### Problem Statement {.unnumbered}
 
-![Examples of MSDSs of increasing complexity (from top to bottom). Source: Author](figs/MsdsExamples.png){#fig:MsdsExamples width=80% style="scale:1;"}
+Consider a mechanical system comprized of ideal masses,
+ideal linear springs and ideal linear dampers, such as from @fig:copSystem.
+($m_0$, $m_1$, ...,$m_n$) represent the masses,
+($k_0$, $k_1$, ...,$k_i$) represent the elastic constants of the springs and
+($c_0$, $c_1$, ...,$c_j$) represent the damping coefficient of the dampers.
+Note that $m_0$ is fixed, but all the others have **arbitrary initial displacement
+and velocities**.
+
+The optimization problem is stated as:
+**Given the masses, the initial conditions ($x_1(t=0)$, ...,$x_n(t=0)$, $\dot{x_1}(t=0)$, ...,$\dot{x_n}(t=0)$)
+and an impact duration $T$, find ($k_0$, ...,$k_i$, $c_0$, ...,$c_j$) that minimize the maximum $\ddot{x_n}$ that will occur from $t=0$ to $t=T$.**
+
+![Arbitrary COP system. Source: Author](figs/copDrawio.png){#fig:copSystem width=70% style="scale:1;"}

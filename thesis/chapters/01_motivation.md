@@ -31,11 +31,9 @@ and use it to calculate the loss in the GA, instead of the original loss
 function. We call these ML models *metamodels* because they are used as
 approximations to another model, such as a FEM simulation. There are many very
 successful cases in the literature [@Lee2022-uz; @Gu2012-ru; @Gu2018-uk;
-@Gu2018-tf; @Driemeier_undated-za]. In this text, we use MMGA to refer to GAs
-which use metamodels to calculate the loss function, and NMMGAs to refer to GAs
-which don't.
+@Gu2018-tf; @Driemeier_undated-za].
 
-The challenge of MMGAs is that although metamodels can be used for cheaper
+The challenge of metamodel-based-GAs is that although metamodels can be used for cheaper
 evaluation of the loss function, using them isn't free because there's also a
 cost associated with training them; especially when they're trained with
 synthetic data generated through numerical simulations, which can be very costly
@@ -44,13 +42,13 @@ faster evaluation of the loss function that they provide might not be worth the
 added cost that they bring.
 
 Physics-Based Machine Learning is a promising field of research that has been
-quickly growing, and has already shown great results when used in MMGA
+quickly growing, and has already shown great results when used in conjunction with GAs
 [@Zhang2021-vj; @Zhang2022-jp]. Physics-Informed Machine Learning Models (PIMs)
 are Machine Learning models which are trained with physics knowledge embedded
 into the loss function. This allows them to be trained without labeled data.
 Thus, it's possible to train, for example, a metamodel to a physical problem
 without needing to run a numerical simulation multiple times beforehand to
-obtain training data. This way, PIMs might be good candidates to MMGA applied to
+obtain training data. This way, PIMs might be good candidates to GAs applied to
 problems which have expensive loss functions. Also, given that they're trained
 without labeled data, PIMs might have good extrapolation capabilities. This
 characteristic might make then perform well even on a very large domain of
@@ -63,7 +61,7 @@ and how that varies with respect to the system's and metamodel's complexity.
 Note that our end goal is not to assess the applicability of this technique to a
 specific problem, but to further investigate the technique itself to understand
 its potentials and limitations. For this reason, we only analyze
-Mass-Spring-Damper Systems (MSDSs). Solvers for these systems have a small
+Mass-Spring-Damper Systems. Solvers for these systems have a small
 implementation overhead, which allows us to spend less effort on implementing
 FEM solvers for example. Besides, it's easy to generate arbitrarily
 simple/complex systems of this kind.
