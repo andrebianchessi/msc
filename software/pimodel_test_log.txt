@@ -1,3 +1,103 @@
+andre@home:~/repos/msc/software$ bazel run //:pimodel_test
+INFO: Analyzed target //:pimodel_test (0 packages loaded, 0 targets configured).
+INFO: Found 1 target...
+INFO: From Compiling pimodel_test.cc:
+pimodel_test.cc: In member function 'virtual void PimodelTest_PhysicsResiduesNumericalTest_Test::TestBody()':
+pimodel_test.cc:718:10: warning: variable 'd2_x2_dT2' set but not used [-Wunused-but-set-variable]
+  718 |     auto d2_x2_dT2 = [](double m2, double k1, double k2, double k3, double c1,
+      |          ^~~~~~~~~
+Target //:pimodel_test up-to-date:
+  bazel-bin/pimodel_test
+INFO: Elapsed time: 3.936s, Critical Path: 3.75s
+INFO: 3 processes: 1 internal, 2 linux-sandbox.
+INFO: Build completed successfully, 3 total actions
+INFO: Running command line: external/bazel_tools/tools/test/test-setup.sh ./pimodel_test
+exec ${PAGER:-/usr/bin/less} "$0" || exit 1
+Executing tests from //:pimodel_test
+-----------------------------------------------------------------------------
+Running main() from gmock_main.cc
+[==========] Running 24 tests from 4 test suites.
+[----------] Global test environment set-up.
+[----------] 15 tests from PimodelTest
+[ RUN      ] PimodelTest.ConstructorTest
+[       OK ] PimodelTest.ConstructorTest (1 ms)
+[ RUN      ] PimodelTest.OperatorTest
+[       OK ] PimodelTest.OperatorTest (0 ms)
+[ RUN      ] PimodelTest.nParametersTest
+[       OK ] PimodelTest.nParametersTest (0 ms)
+[ RUN      ] PimodelTest.SetParametersTest
+[       OK ] PimodelTest.SetParametersTest (1 ms)
+[ RUN      ] PimodelTest.GetParametersTest
+[       OK ] PimodelTest.GetParametersTest (1 ms)
+[ RUN      ] PimodelTest.ProblemFromTkcTest
+[       OK ] PimodelTest.ProblemFromTkcTest (1 ms)
+[ RUN      ] PimodelTest.getAccelsFromDiffEqTest
+[       OK ] PimodelTest.getAccelsFromDiffEqTest (1 ms)
+[ RUN      ] PimodelTest.getInitialXTest
+[       OK ] PimodelTest.getInitialXTest (1 ms)
+[ RUN      ] PimodelTest.InitialConditionsResiduesTkcTest
+[       OK ] PimodelTest.InitialConditionsResiduesTkcTest (1 ms)
+[ RUN      ] PimodelTest.PhysicsResiduesTkcTest
+[       OK ] PimodelTest.PhysicsResiduesTkcTest (2 ms)
+[ RUN      ] PimodelTest.InitialConditionsResiduesTest
+[       OK ] PimodelTest.InitialConditionsResiduesTest (1 ms)
+[ RUN      ] PimodelTest.InitialConditionsResiduesNumericalTest
+[       OK ] PimodelTest.InitialConditionsResiduesNumericalTest (2 ms)
+[ RUN      ] PimodelTest.PhysicsResiduesTest
+[       OK ] PimodelTest.PhysicsResiduesTest (1 ms)
+[ RUN      ] PimodelTest.PhysicsResiduesNumericalTest
+[       OK ] PimodelTest.PhysicsResiduesNumericalTest (6 ms)
+[ RUN      ] PimodelTest.nResiduesTest
+[       OK ] PimodelTest.nResiduesTest (3 ms)
+[----------] 15 tests from PimodelTest (31 ms total)
+
+[----------] 3 tests from PimodelTrainTest
+[ RUN      ] PimodelTrainTest.InitialDispTrainTest
+t,x0,x0Dot,modelX0,modelX0Dot,x1,x1Dot,modelX1,modelX1Dot
+0,0,0,0.0482807,-0.00267434,1,0,0.663854,0.00273104
+0.01,0,0,0.0482538,-0.00269832,0.999955,-0.00899537,0.66386,-0.00143099
+0.055,0,0,0.04813,-0.00280201,0.998642,-0.0493417,0.663375,-0.0200953
+0.2575,0,0,0.0475217,-0.00318234,0.970563,-0.226523,0.650899,-0.102771
+0.520742,0,0,0.0466415,-0.00346583,0.882475,-0.438324,0.610043,-0.207032
+0.796345,0,0,0.0456746,-0.00350713,0.734954,-0.625234,0.538387,-0.312296
+1,0,0,0.0449719,-0.00336972,0.596111,-0.733672,0.467089,-0.387522
+[       OK ] PimodelTrainTest.InitialDispTrainTest (214 ms)
+[ RUN      ] PimodelTrainTest.InitialVelTrainTest
+t,x0,x0Dot,modelX0,modelX0Dot,x1,x1Dot,modelX1,modelX1Dot
+0,0,0,-0.00116476,0.0172197,0,1,0.00115195,0.707479
+0.01,0,0,-0.00099179,0.0173745,0.00999485,0.998956,0.00822288,0.706699
+0.055,0,0,-0.000194818,0.0180373,0.0548241,0.993159,0.0399366,0.702654
+0.2575,0,0,0.00370947,0.0203375,0.251692,0.945394,0.179581,0.673589
+0.516316,0,0,0.00918256,0.0216518,0.483332,0.836074,0.346387,0.610563
+0.787906,0,0,0.0150294,0.0210696,0.689064,0.671303,0.499713,0.513204
+1,0,0,0.0193234,0.0192182,0.815192,0.514591,0.598484,0.414939
+[       OK ] PimodelTrainTest.InitialVelTrainTest (187 ms)
+[ RUN      ] PimodelTrainTest.InitialDispAndVelTrainTest
+t,x0,x0Dot,modelX0,modelX0Dot,x1,x1Dot,modelX1,modelX1Dot
+0,0,0,0.0470063,0.0146563,1,1,0.671413,0.70983
+0.01,0,0,0.0471535,0.0147851,1.00995,0.98996,0.678487,0.704875
+0.055,0,0,0.0478314,0.0153349,1.05347,0.943817,0.709697,0.682101
+0.2575,0,0,0.0511428,0.0172059,1.22226,0.718871,0.836739,0.570018
+0.536411,0,0,0.0561193,0.0181676,1.37554,0.375487,0.9713,0.389922
+0.815322,0,0,0.061103,0.0172575,1.43019,0.0157735,1.05148,0.180024
+1,0,0,0.064152,0.0156248,1.4113,-0.219081,1.07057,0.0246432
+[       OK ] PimodelTrainTest.InitialDispAndVelTrainTest (208 ms)
+[----------] 3 tests from PimodelTrainTest (609 ms total)
+
+[----------] 5 tests from PimodelsTest
+[ RUN      ] PimodelsTest.ConstructorTest
+[       OK ] PimodelsTest.ConstructorTest (529 ms)
+[ RUN      ] PimodelsTest.GetTimeBucketTest
+[       OK ] PimodelsTest.GetTimeBucketTest (188 ms)
+[ RUN      ] PimodelsTest.getContinuityTkcTest
+[       OK ] PimodelsTest.getContinuityTkcTest (0 ms)
+[ RUN      ] PimodelsTest.setContinuityTest
+[       OK ] PimodelsTest.setContinuityTest (263 ms)
+[ RUN      ] PimodelsTest.OperatorTest
+[       OK ] PimodelsTest.OperatorTest (0 ms)
+[----------] 5 tests from PimodelsTest (981 ms total)
+
+[----------] 1 test from PimodelsTrainingTest
 [ RUN      ] PimodelsTrainingTest.TrainTest
 ## Training model from 0 to 1 ##
 ## Training initial conditions ##
@@ -207,6 +307,9 @@ Loss: 1.72216e-09
 Loss: 6.81867e-10
 Max steps reached.
 
+Time to train models: 1985321 us
+Time to integrate: 12216 us
+Time to make inference with model: 13 us
 t,x0,x0Dot,modelX0,modelX0Dot,x1,x1Dot,modelX1,modelX1Dot
 0,0,0,1.58236e-05,-0.00333399,1,0,0.999986,0.00333417
 0.08,0,0,-0.000262174,-0.00360801,0.997123,-0.071859,0.997767,-0.058653
