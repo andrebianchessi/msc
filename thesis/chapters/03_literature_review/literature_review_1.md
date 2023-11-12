@@ -1,4 +1,8 @@
-## Discrete element method solution to CMs {#sec:dem}
+## Discrete element method {#sec:dem}
+
+In order to explicitly integrate a mechanical system with respect to time, the
+**ODE that describes the system** is necessary. The discrete element method is
+a method to obtain the ODE for [CMs](#sec:cms).
 
 ### Local Matrices
 @Fig:discreteElementSimple shows the simplest system that contains ideal masses,

@@ -1,6 +1,17 @@
 ## Explicit Time Integration (ETI) {#sec:eti}
 
-One way to find the dynamic response of as [CM](#sec:cms) is to find its Ordinary Differential Equation (ODE), i.e. a system's state vector $X$ and an expression $\dot{X}(X)$ that calculates the state vector's time derivative based on the current state, and then integrate it with an explicit method such as Forward Euler. Starting from the initial conditions, which must be pre-defined, these methods calculate the state of a system at a later time based on its state at a current time.
+The [Discrete Element Method](#sec:dem) can be use to obtain a [CM](#sec:cms)'s
+ODE, i.e. the system's state vector $X$ and an expression $\dot{X}(X)$ that
+calculates the state vector's time derivative based on the current state. The
+ODE can then be integrated with an explicit method such as Forward Euler.
+Starting with the initial conditions, which are given, these methods recursively
+calculate the state of a system at a later time based on its state at a current
+time.
+
+**The output of the integration is the time response of the system, i.e. the
+displacement, velocity and acceleration of all the masses. This way, the maximum
+acceleration that each mass will experience - which is the loss function that is
+to be minimized with the [COPs](#sec:cop) - can be obtained**.
 
 We can represent the state of the system with the state vector $X$:
 $$
