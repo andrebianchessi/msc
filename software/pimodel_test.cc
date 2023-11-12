@@ -1312,8 +1312,10 @@ TEST(PimodelsTrainingTest, TrainTest) {
 
     // Train all models
     Pimodels models = Pimodels(pd, tMax, nModels, icPoints, physPoints, order);
+    auto start = Now();
     models.Train(learningRate, learningRate / 100, minImprovementToEarlyStop,
                  maxSteps, logComplexity, logTraining);
+    std::cout << "Time to train models: " << TimeSince(start) << std::endl;
 
     // Get problem using intermediate value for k and c, and integrate it.
     // Then, compare the model's prediction with the problem's result.
@@ -1322,14 +1324,20 @@ TEST(PimodelsTrainingTest, TrainTest) {
     Maybe<Problem> mP = pd.BuildFromVector(std::vector<double>{k, c});
     ASSERT_FALSE(mP.isError);
     Problem p = mP.val;
+    start = Now();
     p.Integrate(tMax);
+    std::cout << "Time to integrate: " << TimeSince(start) << std::endl;
 
     std::vector<double> tkc = std::vector<double>{0.0, k, c};
     Maybe<std::vector<double>> X;
     Maybe<std::vector<double>> XDot;
-    std::cout << "t,x0,x0Dot,modelX0,modelX0Dot,x1,x1Dot,modelX1,modelX1Dot"
+    start = Now();
+    models(&tkc);
+    std::cout << "Time to make inference with model: " << TimeSince(start)
               << std::endl;
 
+    std::cout << "t,x0,x0Dot,modelX0,modelX0Dot,x1,x1Dot,modelX1,modelX1Dot"
+              << std::endl;
     // Plot the analytical values and the model predictions
     for (int i = 0; i < int(p.t.size()); i += 1) {
         tkc[0] = p.t[i];
