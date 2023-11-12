@@ -24,19 +24,18 @@ suffer in a crash.
 |          5|                               Occupant|
 : Legend of @Fig:crashworthiness. Source: [@Mostafa2011-kc] {#tbl:crashworthiness}
 
-In this work, we set out to analyze the cost/benefits of using MMGA vs NMMGA for
+In this work, we set out to analyze the cost/benefits of using *P-GAs* vs *E-GAs* (see @sec:objectives) for
 optimization of mechanical systems, and how that changes with respect to the
 system's complexity. In order to perform this analysis, we chose to optimize
-many systems of different complexities using both algorithms to then analyze the
-performance of each algorithm for different system's complexities.
+systems of different complexities using both algorithms to then analyze the
+performance of each algorithm.
 To summarize, the following pseudo-code illustrates our basic workflow:
-```{.python caption="Illustration of how we generated the data to compare MMGA and NMMGA"}
+```{.python caption="Illustration of how we generated the data to compare P-GA and E-GA"}
 for complexity in [1,2,3 ... ]:
-  for algorithm in ["MMGA", "NMMGA"]:
-    for random_seed in [1,2,3 ...]:
-      problem = NewRandomProblem(complexity, random_seed)
-      results = Optimize(problem, algorithm)
-      SaveResultsToAnalyzeLater(complexity, algorithm, results)
+  for algorithm in ["P-GA", "E-GA"]:
+    problem = NewRandomProblem(complexity)
+    results = Optimize(problem, algorithm)
+    SaveResultsToAnalyzeLater(complexity, algorithm, results)
 ```
 
 Inspired by crashworthiness models, we chose that **the problems we would
@@ -53,7 +52,7 @@ We chose to optimize only these kind of problems because:
 - As explained in @sec:motivation, our focus is not to study the algorithms applied to a specific problem, but to study the algorithms themselves.
 - Implementing a solver to this kind of problem is much simpler than, for example, a FEM solver.
 - The physics equations which describe these systems, which were used in the PIM metamodels, are relatively simple.
-- It's easy to create a problem with arbitrary complexity. @Fig:MsdsExamples shows examples of why that is true: to increase a system's complexity, we can always add more masses/springs/dampers. Also, for a given configuration of springs and dampers, we can easily create infinite amount of problems by picking random mass values.
-- By creating a problem with enough complexity, we can have systems which are highly non-linear.
+- It's easy to create a problem with arbitrary complexity. @Fig:MsdsExamples shows examples of why that is true: to increase a system's complexity, we can always add more masses/springs/dampers.
+- By creating a problem with enough complexity, we can have systems which are highly non-linear with respect to time.
 
 ![Examples of MSDSs of increasing complexity (from top to bottom). Source: Author](figs/MsdsExamples.png){#fig:MsdsExamples width=80% style="scale:1;"}

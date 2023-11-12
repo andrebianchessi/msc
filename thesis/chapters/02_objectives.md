@@ -1,4 +1,4 @@
-# Objectives
+# Objectives {#sec:objectives}
 This work sets out to:
 
 1. Define a few mechanical systems with different complexities that are
@@ -10,8 +10,8 @@ speed. The optimization is done twice for each system using Genetic Algorithms:
 first by performing Explicit Time Integration (ETE) of equations found with a
 Discrete Element Method (DEM) and, secondly, by using a PIM (Physics-Informed
 Machine Learning Model) metamodel that approximates the system's dynamic
-response. The first optimization method is referred to as NMMGA, and the second
-one is referred to as MMGA. 
+response. The first optimization method is referred to as *P-GA*, and the second
+one is referred to as *E-GA*. 
 3. Analyze and compare the results obtained.
 
 Some of the questions we want to answer are:
