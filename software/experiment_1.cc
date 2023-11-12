@@ -23,7 +23,7 @@ struct Results {
     double explicitIntegrationBestSolutionMaxAccel;
 };
 
-void printResults(Results r) {
+void printResults(Results r, int nMasses, int id) {
     double lowestCost = 0;
     double highestCost =
         std::max(r.timeUsecToExplicitIntegrationGa,
@@ -60,16 +60,19 @@ void printResults(Results r) {
         accelScore(r.explicitIntegrationBestSolutionMaxAccel);
     double explicitCost = costScore(r.timeUsecToExplicitIntegrationGa);
 
-    std::cout << "method,efficiency score(0 is bad and 100 is best),quality "
+    std::cout << "nMasses,id,method,efficiency score(0 is bad and 100 is "
+                 "best),quality "
                  "score(0 is bad "
                  "and 100 is best),mean score\n ";
-    std::cout << "Pimodel-based GA," << pimodelCost << "," << pimodelScore
-              << "," << (pimodelCost + pimodelScore) / 2 << "\n";
-    std::cout << "ExplicitIntegration-based GA," << explicitCost << ","
-              << explicitScore << "," << (explicitCost + explicitScore) / 2
+    std::cout << nMasses << "," << id << ",Pimodel-based GA," << pimodelCost
+              << "," << pimodelScore << "," << (pimodelCost + pimodelScore) / 2
               << "\n";
-    std::cout << "Random Guess," << randomGuessCost << "," << randomGuessScore
-              << "," << (randomGuessCost + randomGuessScore) / 2 << "\n";
+    std::cout << nMasses << "," << id << ",ExplicitIntegration-based GA,"
+              << explicitCost << "," << explicitScore << ","
+              << (explicitCost + explicitScore) / 2 << "\n";
+    std::cout << nMasses << "," << id << ",Random Guess," << randomGuessCost
+              << "," << randomGuessScore << ","
+              << (randomGuessCost + randomGuessScore) / 2 << "\n";
 }
 
 Results optimize(int nMasses) {
@@ -204,9 +207,12 @@ Results optimize(int nMasses) {
 }
 
 int main(int argc, char *argv[]) {
-    for (int i = 1; i <= 5; i++) {
-        std::cout << "### Optimize problem with " << i << " mass ###\n";
-        printResults(optimize(i));
-        std::cout << "#####################\n";
+    // run the whole analysis 3 times
+    for (int p = 0; p < 3; p++) {
+        for (int i = 1; i <= 5; i++) {
+            std::cout << "### Optimize problem with " << i << " mass ###\n";
+            printResults(optimize(i), i, p);
+            std::cout << "#####################\n";
+        }
     }
 }
