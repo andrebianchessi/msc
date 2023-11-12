@@ -24,7 +24,7 @@ solution found by the algorithm.
 
 ## Physics-Informed Machine Learning Models (PIMs) {#sec:methods_pim}
 
-### Formulation
+### Formulation {.unnumbered}
 
 ## P-GA {#sec:methods_pga}
 

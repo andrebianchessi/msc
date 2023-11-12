@@ -16,8 +16,8 @@ references the *Mass* class definition, which is under the ```software``` folder
 at the repository.
 
 References to the source code are all *hyperlinks* when this document is being
-read digitally (not on printed paper). Thus, accessing this document online is
-highly recommended.
+read digitally (not on printed paper). **Thus, accessing this document online is
+highly recommended**.
 
 ## Read online
 The thesis text is written in [pandoc](https://pandoc.org/), and is compiled
