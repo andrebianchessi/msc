@@ -7,7 +7,7 @@ implement a library that is capable of:
 
 1. Defining arbitrary COPs.
 
-2. Solving COPs with either P-GA or E-GA:
+2. Solving COPs with either [P-GA](#sec:methods_pga) or [E-GA](#sec:methods_ega):
 - E-GA evaluates candidate solutions using explicit time integration (see @sec:eti).
 - P-GA evaluates candidate solutions using [PIMs](#sec:methods_pim) which describe the position of
 each mass as a function of *time* and of the *values of the masses and springs
@@ -24,7 +24,8 @@ solution found by the algorithm.
 
 The PIMs we used in this work are based on linear regression models.
 The expression of the models is defined by the number of springs/dampers of the
-[CM](#sec:cms) we're trying to optimized, and by a parameter $h$ which defines
+[CM](#sec:cms) we're trying to optimized, and by a parameter $h$ -
+referred to as the **order** of the models - which defines
 the highest order of the monomials.
 
 The models have the following expression:
@@ -37,6 +38,7 @@ c_1^{\omega_1} c_2^{\omega_2} ... c_j^{\omega_j}\\
 &Z = \{1 <= \beta < h, (\gamma_i = 0 \text{ OR } \gamma_i = 1), (\omega_j = 0 \text{ OR } \omega_j = 1), {\textstyle(\sum \gamma_i + \sum \omega_j = 1)}\}
 \end{aligned}
 $$
+{#eq:polynomials}
 
 In plain english, that means that the polynomial is a linear combination of:
 
@@ -64,11 +66,52 @@ p_3(t, k_1, k_2, c_1) = a_0 + a_1t + a_2t^2 + a_3t^3
 +a_7tk_1 + a_8tk_2 + a_9tc_1 
 $$
 
-### Reasoning behind the models structure {.unnumbered}
-TODO
+### Reasoning behind the models' architecture {.unnumbered}
+
+The goal of this project was not to determine optimal model to represent the
+dynamic response of [CMs](#sec:cms); but rather just to analyze the
+[P-GA](#sec:methods_pga) approach as a whole.
+
+The models defined by @eq:polynomials are convenient for many reasons:
+
+- Their gradients are easy to compute since they're are linear.
+
+- For a given problem, the whole model architecture is defined by a single parameter
+(the order) of the models. This makes it super easy to increase/decrease the
+model complexity when needed.
+
+- Implementing differentiation and
+linear combinations of polynomial models is relatively easy to implement when
+compared to other models such as Neural Networks.
+
+Note that the architecture of the models have a significantly strong assumption
+behind them: the largest order of **t** is always larger than the order of the other input
+variables ($k_i$ and $c_j$). This was characteristic is very much by design,
+because we know that the dynamic response of the [CMs](#sec:cms)
+are usually not linear with respect to time. Still, the training of the
+models should be able to identify which monomials are more significant to model
+the systems.
+
+Of course, an immediate opportunity of further research is to use different
+models and analyze how that changes the performance of [P-GAs](#sec:methods_pga).
 
 ### Automatic differentiation and linear combination {.unnumbered}
-TODO
+
+As is more thoroughly described in @sec:methods_pim, differentiating the models
+with respect to time and linearly combining them are two tasks that are required
+to build the loss function used to train the models.
+
+As can be seen in [~/software/polynomial.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc), the classes implemented for representation/manipulation of
+polynomial models support automatic differentiation and the operators of
+polynomial instances [Poly and Polys (~/software/polynomial.cc)](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc) have been implemented so that they can be linearly
+combined even through matrix multiplications (see [this test](https://github.com/andrebianchessi/msc/blob/897a324b2d0e1f0b12d1c211f10f0cee64fd2f7c/software/polynomial_test.cc#L400) for example). 
+
+#### Side note {.unnumbered}
+
+On a side note, I'd recommend the reader to skim through the implementation of
+[~/software/polynomial.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc),
+as implementing these classes was one of the intermediary tasks of this project
+which I found the most challenging and interesting.
 
 ### Software {.unnumbered}
 
