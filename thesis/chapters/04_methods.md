@@ -9,9 +9,9 @@ implement a library that is capable of:
 
 2. Solving COPs with either P-GA or E-GA:
 - E-GA evaluates candidate solutions using explicit time integration (see @sec:eti).
-- P-GA evaluates candidate solutions using PIMs which describe the position of
+- P-GA evaluates candidate solutions using [PIMs](#sec:methods_pim) which describe the position of
 each mass as a function of *time* and of the *values of the masses and springs
-of the system*.
+of the system*. The PIMs used are linear regression models (see @sec:polynomials).
 
 Using this library, we performed a few COP case studies using both
 P-GA and E-GA. The performance and the result of each algorithm were
@@ -21,6 +21,63 @@ comparing the maximum acceleration the mass would experience with the optimal
 solution found by the algorithm.
 
 ## Polynomial Models {#sec:polynomials}
+
+The PIMs we used in this work are based on linear regression models.
+The expression of the models is defined by the number of springs/dampers of the
+[CM](#sec:cms) we're trying to optimized, and by a parameter $h$ which defines
+the highest order of the monomials.
+
+The models have the following expression:
+
+$$
+\begin{aligned}
+p_h(t, k_1, k_2, ... , k_i, c_1, c_2,..., c_j) = \sum_{\lambda=0}^{\lambda=h} a_\alpha t^\lambda + &\sum_{Z} a_\alpha t^\beta
+k_1^{\gamma_1} k_2^{\gamma_2} ... k_i^{\gamma_i}
+c_1^{\omega_1} c_2^{\omega_2} ... c_j^{\omega_j}\\
+&Z = \{1 <= \beta < h, (\gamma_i = 0 \text{ OR } \gamma_i = 1), (\omega_j = 0 \text{ OR } \omega_j = 1), {\textstyle(\sum \gamma_i + \sum \omega_j = 1)}\}
+\end{aligned}
+$$
+
+In plain english, that means that the polynomial is a linear combination of:
+
+- All the powers of $t$ from $0$ to $h$
+- Cross product of $[t^{h-1}, ..., t^2, t]$ and $[k_1, ..., k_i, c_1, ..., c_j]$
+
+For example, let's consider a [CM](#sec:cms) with 2 springs and 1 damper.
+Following are the expression that the models would take:
+
+$$
+p_0(t, k_1, k_2, c_1) = a_0
+$$
+
+$$
+p_1(t, k_1, k_2, c_1) = a_0 + a_1t
+$$
+
+$$
+p_2(t, k_1, k_2, c_1) = a_0 + a_1t + a_2t^2 + a_3tk_1 + a_4tk_2 + a_5tc_1 
+$$
+
+$$
+p_3(t, k_1, k_2, c_1) = a_0 + a_1t + a_2t^2 + a_3t^3
++a_4t^2k_1 + a_5t^2k_2 + a_6t^2c_1
++a_7tk_1 + a_8tk_2 + a_9tc_1 
+$$
+
+### Reasoning behind the models structure {.unnumbered}
+TODO
+
+### Automatic differentiation and linear combination {.unnumbered}
+TODO
+
+### Software {.unnumbered}
+
+[~/software/polynomial.h](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.h)
+contains all the code related to the polynomial models. The [Poly (~/software/polynomial.h)](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.h) class defines a single instance
+of a polynomial, and the [Polys (~/software/polynomial.h)](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.h) class handles the linear combination of *Poly* instances.
+
+As usual, [~/software/polynomial_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial_test.cc) contains tests which serve as documentation and usage examples.
+
 
 ## Physics-Informed Machine Learning Models (PIMs) {#sec:methods_pim}
 
