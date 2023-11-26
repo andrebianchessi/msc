@@ -124,7 +124,52 @@ As usual, [~/software/polynomial_test.cc](https://github.com/andrebianchessi/msc
 
 ## Physics-Informed Machine Learning Models (PIMs) {#sec:methods_pim}
 
+As seen in @sec:pim, *Physics-Informed Machine Learning Models* are trained so that they approximate the solution
+to a differential equation. In this work, we're dealing not with **one**, but with a **system** of differential equations that describe the [COP](@sec:cop).
+
+Consider an arbitrary [COP](@sec:cop) of $n$ masses. As seen in @sec:eti, the $n$ equations that describe the system, as obtained with the [Discrete element method](@sec:dem),
+have the following form:
+
+$$
+\begin{bmatrix}
+\ddot{x_0}\\
+\ddot{x_1}\\
+\vdots\\
+\ddot{x_n}
+\end{bmatrix}
+=
+M^{-1}
+\left(
+K
+\begin{bmatrix}
+x_0\\
+x_1\\
+\vdots\\
+x_n
+\end{bmatrix}
++
+C
+\begin{bmatrix}
+\dot{x_0}\\
+\dot{x_1}\\
+\vdots\\
+\dot{x_n}
+\end{bmatrix}
+\right)
+$$
+{#eq:methods-pim-ode}
+
+To use *Physics-Informed Machine Learning Models* for this problem, our approach was to have **one model per mass** that approximates
+the **displacement ($x_n$) of each mass as a function of time ($t$) and of the constants of the springs and dampers ($k_0, \cdots,k_i, c_0, \cdots,c_j$)**. I.e. for a system of $n$
+masses, $i$ springs and $j$ dampers, we defined the [polynomial models](#sec:polynomials) $P_0(t, k_0, \cdots,k_i, c_0, \cdots,c_j), \cdots, P_n(t, k_0, \cdots,k_i, c_0, \cdots,c_j)$ so that $P_0$ models $x_0$, $P_1$ models $x_1$, etc.
+
+The following section explains how these models were defined and trained.
+
+### Architecture of the models {.unnumbered}
+
 ### Formulation {.unnumbered}
+
+### Software {.unnumbered}
 
 ## P-GA {#sec:methods_pga}
 
