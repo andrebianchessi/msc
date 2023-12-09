@@ -167,7 +167,55 @@ The following section explains how these models were defined and trained.
 
 ### Architecture of the models {.unnumbered}
 
+As explained in @sec:polynomials, all the models used were polynomial models.
+The input of these models is the time, and the values of all the springs and dampers.
+The output is the displacement of the mass. Note that the models can easily be differentiated
+with respect to time so that we can obtain the velocity and acceleration of each mass.
+The order of the polynomials ($h$) was a hyperparameter chosen for the experiments
+(see @sec:experiments for more details).
+
+### Time discretization {.unnumbered}
+
+Given that the time responses of the [CMs](@sec:cms) are usually very non-linear with
+respect to time (see @fig:dampedOsc for example), using a model that describes
+the displacement of a mass for the whole
+duration of the impact would not be efficient. The model would need to have a very
+high order, which can make the training very slow.
+
+To solve that, the approach we took was to discretize the time into multiple "buckets".
+Let's say we want models that describe a [COP](@sec:cop) from $t=0$ to $t=T$. Instead of
+having a set of models (one for each mass) that describes the the displacement of each mass
+as a function of time from $t=0$ to $t=T$, we created a set of models (one for each mass) that describe
+the displacement of the masses from $t=0$ to $t=T_0$, then another set of models for $t=T_0$ to $t=T_1$,
+and so on until a set of models for $t=T_i$ to $t=T$. The number of "time buckets" was another
+hyperparameter chosen for the experiments
+(see @sec:experiments for more details).
+
+To train those models, we start by training the first set of models - they describe the displacement
+of the masses from $t=0$ to $t=T_0$. Let's call these the $t_0$ models. The initial conditions
+(the displacement and velocity of each mass) are given by the
+[COP](@sec:cop) statement. Then, to train the next set of models - the $t_1$ models - we used the $t_0$ models to find
+the conditions (displacement and velocity of each mass) at $t=T_0$. These conditions are considered
+initial conditions for the next set of models. This process continues until all the $t_i$ models are trained. At the end of this process,
+we have a set of models for each "time bucket". See [Pimodels::Train (~/software/pimodel.cc)](https://github.com/andrebianchessi/msc/blob/e24929a15dad217a5f2366a9544765ea25eea6f5/software/pimodel.cc#L616) for more detail.
+
+Note that the models have as input not only the time, but also the values of the springs and dampers.
+When using a "previous" set of models to determine the initial conditions to train the "next" set of models,
+we choose the intermediary values for the springs and dampers. I.e. for every spring/damper that can have
+values from $a$ to $b$, we used $(a+b)/2$ to evaluate the models.
+
+### Normalization {.unnumbered}
+
 ### Formulation {.unnumbered}
+
+#### Training {.unnumbered}
+
+Initially, all the models are created with all the coefficients equal to zero; i.e. all the
+polynomial coefficients are 0.
+
+*Training* is the name of the process used to find optimal values for the parameters of the models. It is done by minimizing, through Stochastic Gradient Descent [@MlBook], a loss function.
+
+The loss function used to train the models was:
 
 ### Software {.unnumbered}
 
@@ -315,3 +363,5 @@ Some of the values of springs and dampers of the optimal solution we found are:
 |        c5|    4957.4|
 
 ![Example solution of COP: Sum of loss function of fittest population vs Generation](figs/msdsGa.png){#fig:msdsGa width=80% style="scale:1;"}
+
+## Experiments {#sec:experiments}
