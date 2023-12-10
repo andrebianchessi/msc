@@ -35,7 +35,7 @@ of mechanical systems. To achieve this objective, we analyzed multiple
 COPs using each algorithm and compared
 the results. The following section defines the problem statement of a COP:
 
-### Problem Statement {.unnumbered}
+### Problem Statement
 
 Consider a mechanical system comprized of ideal masses,
 ideal linear springs and ideal linear dampers, such as from @fig:copSystem.
@@ -46,7 +46,8 @@ Note that $m_0$ is fixed, but all the others have **arbitrary initial displaceme
 and velocities**.
 
 The optimization problem is stated as:
-**Given the masses, the initial conditions ($x_1(t=0)$, ...,$x_n(t=0)$, $\dot{x_1}(t=0)$, ...,$\dot{x_n}(t=0)$)
+**Given the masses, the initial conditions ($x_1(t=0)$, ...,$x_n(t=0)$, $\dot{x_1}(t=0)$, ...,$\dot{x_n}(t=0)$),
+the maximum and minimum values of each $k_i$ and $c_j$,
 and an impact duration $T$, find ($k_0$, ...,$k_i$, $c_0$, ...,$c_j$) that minimize the maximum $\ddot{x_n}$ that will occur from $t=0$ to $t=T$.**
 
 ![Arbitrary COP system. Source: Author](figs/copDrawio.png){#fig:copSystem width=70% style="scale:1;"}
