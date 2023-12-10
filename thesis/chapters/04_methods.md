@@ -206,6 +206,12 @@ values from $a$ to $b$, we used $(a+b)/2$ to evaluate the models.
 
 ### Normalization {.unnumbered}
 
+Normalizing the inputs to the models can yield faster training [@MlBook, p. 365].
+Thus, the input to all models were the normalized values from `0` to `1`.
+For the springs, `0` corresponded to minimum possible value of the springs elastic constant and `1` to the maximum.
+The analogous was used for the dampers. For time, `0` corresponded to the start of the impact and `1` to the
+end of the impact (`t=T`). A linear normalization was used.
+
 ### Formulation {.unnumbered}
 
 #### Training {.unnumbered}
@@ -213,9 +219,11 @@ values from $a$ to $b$, we used $(a+b)/2$ to evaluate the models.
 Initially, all the models are created with all the coefficients equal to zero; i.e. all the
 polynomial coefficients are 0.
 
-*Training* is the name of the process used to find optimal values for the parameters of the models. It is done by minimizing, through Stochastic Gradient Descent [@MlBook], a loss function.
+*Training* is the name of the process used to find optimal values for the parameters of the models. It is done by minimizing, through Stochastic Gradient Descent [@MlBook, p. 184], a loss function.
 
 The loss function used to train the models was:
+
+### Example: Putting it all together {.unnumbered}
 
 ### Software {.unnumbered}
 
