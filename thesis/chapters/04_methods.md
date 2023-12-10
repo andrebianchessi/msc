@@ -24,11 +24,11 @@ solution found by the algorithm.
 
 The PIMs we used in this work are based on linear regression models.
 The expression of the models is defined by the number of springs/dampers of the
-[CM](#sec:cms) we're trying to optimized, and by a parameter $h$ -
-referred to as the **order** of the models - which defines
+[CM](#sec:cms) we're trying to optimized, and by the **order** of the polynomials.
+The **order** defines
 the highest order of the monomials.
 
-The models have the following expression:
+For an **order** $h$, the models have the following expression:
 
 $$
 \begin{aligned}
@@ -167,7 +167,7 @@ masses, $i$ springs and $j$ dampers, we defined the [polynomial models](#sec:pol
 
 Note that the models can easily be differentiated
 with respect to time so that we can obtain the velocity and acceleration of each mass.
-The order of the polynomials ($h$) was a hyperparameter chosen for the experiments
+The *order* of the polynomials was a hyperparameter chosen for the experiments
 (see @sec:experiments for more details).
 
 ### Time discretization {#sec:methods_pim_t_disc}
@@ -179,12 +179,13 @@ duration of the impact would not be efficient. The model would need to have a ve
 high order, which can make the training very slow.
 
 To solve that, the approach we took was to discretize the time into multiple "buckets".
+**TimeDiscretization** is defined as the number of of buckets into which the total time of interest is split.
 Let's say we want models that describe a [COP](#sec:cop) from $t=0$ to $t=T$. Instead of
 having a set of models (one for each mass) that describes the the displacement of each mass
 as a function of time from $t=0$ to $t=T$, we created a set of models (one for each mass) that describe
 the displacement of the masses from $t=0$ to $t=T_0$, then another set of models for $t=T_0$ to $t=T_1$,
-and so on until a set of models for $t=T_i$ to $t=T$. The number of "time buckets" was another
-hyperparameter chosen for the experiments
+and so on until a set of models for $t=T_i$ to $t=T$. **TimeDiscretization** is a hyperparameter 
+chosen for the experiments
 (see @sec:experiments for more details).
 
 To train those models, we start by training the first set of models - they describe the displacement
@@ -211,15 +212,12 @@ end of the impact (`t=T`). A linear normalization was used.
 
 ### Training: Minimizing the loss function {#sec:methods_pim_training}
 
-As described in @sec:methods_pim_t_disc, sets of models are progressively trained for each "time bucket".
-This section explains how each set of models is trained.
+As described in @sec:methods_pim_t_disc, the total time of the [COP](#sec:cop) is discretized and,
+progressively, one set of models is trained
+for each for each "time bucket".
 
 Initially, all the models are created with all the coefficients equal to zero; i.e. all the
-polynomial coefficients are 0.
-
-*Training* is the name of the process used to find optimal values for the parameters of the models. It is done by minimizing, through Stochastic Gradient Descent [@MlBook, p. 184], a loss function.
-
-Following the usual formulation of Physics Informed Machine learning [@Thuerey2021-ut],
+polynomial coefficients are 0. They are then trained, with Stochastic Gradient Descent [@MlBook, p. 184], to minimize a loss function. Following the usual formulation of Physics Informed Machine learning [@Thuerey2021-ut],
 the loss function is composed of 3 parts:
 
 - $L_{x}$: Initial displacement loss
@@ -250,7 +248,8 @@ parameters (the springs and the dampers). Thus, we want the minimization of the 
 to work well for multiple values of springs and dampers.
 We achieved that by computing the losses for multiple possible values of the springs and dampers as follows:
 
-Given the hyperparameter $\alpha$, we first define a random set $S$ of size $\alpha$ that contains random values of $s$ (see @eq:s):
+We start by defining a **InitialConditionsTrainingSize**. Let's call that $\alpha$ for now.
+We define a random set $S$ of size $\alpha$ that contains random values of $s$ (see @eq:s):
 
 $$
 S = \{s_1, s_2, ... , s_{\alpha} \}
@@ -275,6 +274,9 @@ L_{\dot{x}} = \sum_{i=1}^{n}\sum_{j=1}^{\alpha} (\dot{P_i}(t = 0, s_j) - \dot{x_
 $$
 {#eq:ldotx}
 
+Just note that $\dot{P_i}$ is the derivative of the model with respect to the unnormalized time.
+See @sec:methods_pim_time_derivatives for more details.
+
 @eq:methods-pim-ode is the ODE that the $\ddot{x}_i$ must satisfy. This equation provides all the accelerations as a function of the springs, dampers, and of the displacement and velocities of all masses:
 
 $$
@@ -292,8 +294,8 @@ $$
 
 represents a set of springs and dampers that define a solution to a [COP](#sec:cop) and a time from 0 to 1.
 This is basically the same definition of @eq:s, but with *time* also as an argument. Similarly to how we built the other
-losses, given the hyperparameter $\beta$,
-we first define a random set $S_{t}$ of size $\beta$ that contains random values of $s_t$ (see @eq:st):
+losses, we must define a **PhysicsTrainingSize**. Let's call that $\beta$ for now.
+We define a set $S_{t}$ of size $\beta$ that contains random values of $s_t$ (see @eq:st):
 
 $$
 S_{t} = \{{s_t}_1, ... , {s_t}_{\beta} \}
@@ -323,7 +325,7 @@ L = L_x + L_{\dot{x}} + L_{\ddot{x}}
 $$
 {#eq:loss}
 
-#### Change of variables for the time derivatives {.unnumbered}
+#### Change of variables for the time derivatives {#sec:methods_pim_time_derivatives}
 
 The first element of the residue from @eq:ldotdotx - $\ddot{P_i}({s_t}_j)$ - is a
 second derivative of the model with respect to time. As explained in @sec:methods_pim_normalization,
@@ -360,8 +362,8 @@ F_i(
     )
 $$
 
-As we use smaller "time buckets", the $dT_l/dT_g$ term increases. For example, let's say we're
-considering a total impact duration of 0.05 seconds, and using a *time discretization* of 10
+As we use a more refined *TimeDiscretization*, the $dT_l/dT_g$ term increases. For example, let's say we're
+considering a total impact duration of 0.05 seconds, and using a *TimeDiscretization* of 10
 (i.e. 10 time buckets). In this case we'll first train a set of models for $T_g=0$ to $T_g=0.005$;
 then another set of models from $T_g=0.005$ to $T_g=0.010$ and so on.
 For the first set of models, $T_l = 200*T_g$, so $dT_l/dT_g = 200$. That derivative is the same for all
@@ -411,6 +413,222 @@ The $F_i$ is basically a linear combination of models. For these reasons, the au
 and linear combination of models was necessary (see @sec:polynomials_dif).
 
 ### Example: Putting it all together {#sec:methods_pim_example}
+
+To further clarify all the @sec:methods_pim subsections, lets look at a simple example and go through
+all the steps.
+
+Let's consider a [COP](#sec:cop) comprized of two masses $m_0$ and $m_1$, both of $1$kg. $m_0$ is fixed, and $m_1$
+has an initial displacement of $9.75$ and an initial speed of $1.12$.
+There's a spring and a damper connecting the two masses. Both the
+spring and the damper can have values from $10$ to $100$. The impact duration is of 1 second. Our
+goal is to find optimal values of the spring and of the damper that will minimize the maximum acceleration
+that $m_1$ will suffer.
+
+First, we need to define the **TimeDiscretization**; Let's consider $TimeDiscretization = 2$.
+In that case, we'll have 4 models in total:
+
+- $P_{00}$: Describe the displacement of $m_0$ from $T=0$ to $T=0.5$
+- $P_{01}$: Describe the displacement of $m_1$ from $T=0$ to $T=0.5$
+- $P_{10}$: Describe the displacement of $m_0$ from $T=0.5$ to $T=1$
+- $P_{11}$: Describe the displacement of $m_1$ from $T=0.5$ to $T=1$
+
+We'll first train $P_{00}$ and $P_{01}$ using the initial conditions,
+and only then train $P_{10}$ and $P_{11}$ using $P_{00}$ and $P_{01}$ to find the "initial conditions".
+
+Now let's define the **order** of the polynomial models. For simplicity, let's use $2$.
+From @sec:methods_pim_models, we have:
+
+$$
+P_{00}(t, k, c) = a_0 + a_1t + a_2t^2 + a_3tk+a_4tc
+$$
+{#eq:p00}
+
+$$
+P_{01}(t, k, c) = a_5 + a_6t + a_7t^2 + a_8tk+a_9tc
+$$
+{#eq:p01}
+
+$t$ is the normalized time, $k$ is the normalized constant of the spring and $c$ is the normalized constant of the damper.
+
+We now need to choose the **InitialConditionsTrainingSize** and the **PhysicsTrainingSize**.
+For simplicity let's use $2$ to both of those. Now we create the random data points at which
+the loss function will be evaluated. These values should be drawn from a uniform random distribution,
+but let's assume the following values were picked:
+$S=\{\{0.1, 0.2\},\{0.3, 0.4\}\}$ and $S_t=\{\{0.5, 0.6, 0.7\},\{0.8, 0.9, 1.0\}\}$.
+Note that the're all in the $[0, 1]$ interval because the inputs to the models are all normalized.
+
+The initial condition losses are:
+
+$$
+\begin{aligned}
+L_{x} = &(P_{00}(t=0, k=0.1, c=0.2)-x_0|_{t=0})^2 + \\
+&(P_{01}(t=0, k=0.1, c=0.2)-x_1|_{t=0})^2 + \\
+&(P_{00}(t=0, k=0.3, c=0.4)-x_0|_{t=0})^2 + \\
+&(P_{01}(t=0, k=0.3, c=0.4)-x_1|_{t=0})^2
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+L_{x} = &(P_{00}(t=0, k=0.1, c=0.2)-0.0)^2 + \\
+&(P_{01}(t=0, k=0.1, c=0.2)-9.75)^2 + \\
+&(P_{00}(t=0, k=0.3, c=0.4)-0.0)^2 + \\
+&(P_{01}(t=0, k=0.3, c=0.4)-9.75)^2
+\end{aligned}
+$$
+
+By substituting @eq:p00 and @eq:p01:
+
+$$
+L_{x} = (a_0)^2 + (a_1-9.75)^2 + (a_0)^2 + (a_1-9.75)^2
+$$
+{#eq:exampleLx}
+
+To compute $L_{\dot{x}}$, we must differentiate the models from @eq:p00 and @eq:p01 with respect to time.
+The input to the models is the normalized time, so we need to apply the chain rule to correct it.
+Let $T$ be the *actual time* and $t$ be the normalized time:
+
+$$
+\begin{aligned}
+t(T) = 2T \\
+\frac{dt}{dT} = 2\\
+\frac{dT}{dt} = 1/2\\
+\end{aligned}
+$$
+{#eq:exampledT}
+
+Note that for $t(0)=0$ and $t(0.5) = 1$.
+
+$$
+\dot{P}_{00}(t, k, c) = \frac{dP_{00}}{dT}(t, k, c) =
+\frac{dt}{dT}\frac{dP_{00}}{dt}(t, k, c) =
+2 \frac{d}{dt}(a_0 + a_1t + a_2t^2 + a_3tk+a_4tc)
+$$
+
+$$
+\dot{P}_{00}(t, k, c) = 2(a_1 + 2a_2t + a_3k + a_4c)
+$$
+{#eq:p00Dot}
+
+$$
+\dot{P}_{01}(t, k, c) = 2(a_6 + 2a_7t + a_8k+a_9c)
+$$
+{#eq:p01Dot}
+
+The loss for the initial velocities then becomes:
+
+$$
+\begin{aligned}
+L_{\dot{x}} = &(\dot{P}_{00}(t=0, k=0.1, c=0.2)-\dot{x}_0|_{t=0})^2 + \\
+&(\dot{P}_{01}(t=0, k=0.1, c=0.2)-\dot{x}_1|_{t=0})^2 + \\
+&(\dot{P}_{00}(t=0, k=0.3, c=0.4)-\dot{x}_0|_{t=0})^2 + \\
+&(\dot{P}_{01}(t=0, k=0.3, c=0.4)-\dot{x}_1|_{t=0})^2
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+L_{\dot{x}} = &(\dot{P}_{00}(t=0, k=0.1, c=0.2)-0.0)^2 + \\
+&(\dot{P}_{01}(t=0, k=0.1, c=0.2)-1.12)^2 + \\
+&(\dot{P}_{00}(t=0, k=0.3, c=0.4)-0.0)^2 + \\
+&(\dot{P}_{01}(t=0, k=0.3, c=0.4)-1.12)^2
+\end{aligned}
+$$
+{#eq:exampleLxdot}
+
+Substituting @eq:p00Dot and @eq:p01Dot we obtain $L_{\dot{x}}$, which is only a function of the parameters of the models ($a_0$, $a_1$, $\cdots$).
+
+Lastly, we need to obtain the second derivatives of the displacements using the [discrete element method](#sec:dem). This is, naturally, only necessary for $m_1$ because $m_0$ is fixed; so $\ddot{x_0} = 0$. Still, it's easier to assemble the whole matrices anyway and just override $\ddot{x_0}$ to zero afterwards. For that we need the unnormalized values of $k$ and $c$:
+
+$$
+\begin{aligned}
+K(k) = 10 + 90k\\
+C(c) = 10 + 90c\\
+\end{aligned}
+$$
+
+$$
+\begin{bmatrix}
+\ddot{x_0}\\
+\ddot{x_1}
+\end{bmatrix}
+=
+\begin{bmatrix}
+1/m_0 & 1\\
+1 & 1/m_1
+\end{bmatrix}
+\left(
+\begin{bmatrix}
+-K(k) & K(k)\\
+K(k) & -K(k)
+\end{bmatrix}
+\begin{bmatrix}
+{x_0}\\
+{x_1}
+\end{bmatrix}
++
+\begin{bmatrix}
+-C(c) & C(c)\\
+C(c) & -C(c)
+\end{bmatrix}
+\begin{bmatrix}
+\dot{x_0}\\
+\dot{x_1}
+\end{bmatrix}
+\right)
+$$
+
+$$
+\ddot{x_1}(x_0, x_1, \dot{x_0}, \dot{x_1}, k, c) =
+1 / m_1 ((10 + 90k)  x_0 - (10 + 90k)  x_1 + (10 + 90c)  \dot{x_0} - (10 + 90c)  \dot{x_1})
+$$
+{#eq:exampleX1DotDot}
+
+Aside from $\ddot{x_1}$ we also need the derivative of the models with respect to $t$:
+
+$$
+\frac{d^2P_{00}}{dt^2}(t, k, c) = (2a_2)
+$$
+{#eq:exampleP00dotdot}
+
+$$
+\frac{d^2P_{01}}{dt^2}(t, k, c) = (2a_7)
+$$
+{#eq:exampleP01dotdot}
+
+Having @eq:exampledT, @eq:exampleX1DotDot, @eq:exampleP00dotdot and @eq:exampleP01dotdot, the physics loss is then defined as:
+
+$$
+\begin{aligned}
+L_{\ddot{x}} =& (\frac{d^2P_{00}}{dt^2}(0.5, 0.6, 0.7) - \left( \frac{dT}{dt} \right)^2 \cdot 0) + \\
+& \left(\frac{d^2P_{01}}{dt^2}(0.5, 0.6, 0.7) - \left( \frac{dT}{dt} \right)^2 \ddot{x_1}\left(
+    P_{00}(0.5, 0.6, 0.7),
+    P_{01}(0.5, 0.6, 0.7),
+    \frac{dT}{dt}\frac{dP_{00}}{dt}(0.5, 0.6, 0.7),
+    \frac{dT}{dt}\frac{dP_{01}}{dt}(0.5, 0.6, 0.7),
+    0.6,
+    0.7
+    \right)
+\right) + \\
+& (\frac{d^2P_{00}}{dt^2}(0.8, 0.9, 1.0) - \left( \frac{dT}{dt} \right)^2 \cdot 0) + \\
+& \left(\frac{d^2P_{01}}{dt^2}(0.8, 0.9, 1.0) - \left( \frac{dT}{dt} \right)^2 \ddot{x_1}\left(
+    P_{00}(0.8, 0.9, 1.0),
+    P_{01}(0.8, 0.9, 1.0),
+    \frac{dT}{dt}\frac{dP_{00}}{dt}(0.8, 0.9, 1.0),
+    \frac{dT}{dt}\frac{dP_{01}}{dt}(0.8, 0.9, 1.0),
+    0.8,
+    0.9
+    \right)
+\right)
+\end{aligned}
+$$
+{#eq:exampleLxdotdot}
+
+[@eq:exampleLx, @eq:exampleLxdot, @eq:exampleLxdotdot] define the loss function $L = L_x + L_{\dot{x}}+ L_{\ddot{x}}$.
+Since it's only a function of the parameters of the models ($a_i$), we can find the values of the parameters that minimize
+it using Stochastic Gradient Descent. Once that's done, we use re-do this process to train $P_{10}$ and $P_{11}$.
+The initial displacement and velocity of $m_1$ are found with
+$P_{01}(1.0, 0.5, 0.5)$ and $\dot{P_{01}}(1.0, 0.5, 0.5)$.
 
 ### Software {#sec:methods_pim_software}
 
