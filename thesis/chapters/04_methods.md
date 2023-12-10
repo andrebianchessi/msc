@@ -632,6 +632,18 @@ $P_{01}(1.0, 0.5, 0.5)$ and $\dot{P_{01}}(1.0, 0.5, 0.5)$.
 
 ### Software {#sec:methods_pim_software}
 
+[Model ~/software/model.h](https://github.com/andrebianchessi/msc/blob/cd5bb1b6498451b316377efca25e01b230db88e8/software/model.h#L7)
+defines an interface of a n arbitrary ML model that can be trained. The `Train` and `StochasticGradientDescentStep`
+methods are already implemented, so classes that implement the other methods can use those methods to train the model.
+See [~/software/model_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/model_test.cc) for examples.
+
+[Pimodel ~/software/pimodel.h](https://github.com/andrebianchessi/msc/blob/cd5bb1b6498451b316377efca25e01b230db88e8/software/pimodel.h#L10)
+is the class that implements a Physics Informed Machine Learning model as described in this section.
+This class uses *TimeDiscretization = 1* (see @sec:methods_pim_t_disc). To use larger *TimeDiscretizations*,
+the [Pimodels ~/software/pimodel.h](https://github.com/andrebianchessi/msc/blob/cd5bb1b6498451b316377efca25e01b230db88e8/software/pimodel.h#L179) class should be used.
+As usual, [~/software/pimodel_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/pimodel_test.cc) contains examples
+of usage.
+
 ## P-GA {#sec:methods_pga}
 
 ## E-GA {#sec:methods_ega}
