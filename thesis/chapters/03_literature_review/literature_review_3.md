@@ -1,4 +1,4 @@
-## Genetic Algorithm
+## Genetic Algorithm {#sec:ga}
 
 *The genetic algorithm is an optimization and search technique based on the principles of genetics and natural selection* [@Haupt2004-hj]. Some of its advantages, when compared to gradient base methods, are [@Haupt2004-hj]:
 

@@ -633,7 +633,7 @@ $P_{01}(1.0, 0.5, 0.5)$ and $\dot{P_{01}}(1.0, 0.5, 0.5)$.
 ### Software {#sec:methods_pim_software}
 
 [Model ~/software/model.h](https://github.com/andrebianchessi/msc/blob/cd5bb1b6498451b316377efca25e01b230db88e8/software/model.h#L7)
-defines an interface of a n arbitrary ML model that can be trained. The `Train` and `StochasticGradientDescentStep`
+defines an interface of an arbitrary ML model that can be trained. The `Train` and `StochasticGradientDescentStep`
 methods are already implemented, so classes that implement the other methods can use those methods to train the model.
 See [~/software/model_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/model_test.cc) for examples.
 
@@ -645,6 +645,31 @@ As usual, [~/software/pimodel_test.cc](https://github.com/andrebianchessi/msc/bl
 of usage.
 
 ## P-GA {#sec:methods_pga}
+
+**P-GA** is an approach to solve an [COP](#sec:cop) that uses
+[PIMs](#sec:methods_pim) in conjunction with a Genetic Algorithm to look for optimal solutions.
+
+The algorithm has the following basic structure:
+
+1 - Discretize the time domain, as defined by the **TimeDiscretization** hyperparameter.
+For `TimeDiscretization = n`, the [COP](#sec:cop)'s impact duration $T$ is split into `n` "buckets".
+For each bucket, a set of polynomial models is created. Each set contains one polynomial model for each mass.
+The models describe the displacement of the mass as a function of time and of the system properties
+(the constants of the springs and of the dampers). For more detail see @sec:methods_pim.
+
+2 - Train the models of each time bucket. See @sec:methods_pim_t_disc for more detail. After this step,
+we have models that describe the displacement of each mass as a function of time and of the system properties
+(the constants of the springs and of the dampers). By differentiating these models twice with respect to time,
+we can also obtain the acceleration of each mass.
+
+3 - Perform a [genetic-algorithm-based](#sec:ga) optimization to find the best solutions.
+Each candidate solution is described by a set of values of springs and dampers.
+To obtain the maximum acceleration the target mass will experience,
+we simply evaluate the models with some (10 for example) evenly separated time instants
+and get the highest acceleration. The number of time instants we check is another hyperparameter
+that must be chosen: **ModelEvalDiscretization**.
+
+See [~/software/problem_creature.cc](https://github.com/andrebianchessi/msc/blob/0523668da59e665d0ff5c0eb1866a532de06eb97/software/problem_creature.cc#L60) for the implementation.
 
 ## E-GA {#sec:methods_ega}
 
