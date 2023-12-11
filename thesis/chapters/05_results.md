@@ -98,3 +98,17 @@ than the ones obtained by the `E-GA`; but that's not always the case. In some ca
 to results which are significantly worse than the `E-GA` ones and possibly even worse than random guesses (see {`Masses=4`,`Test=0`}).
 
 ## Conclusions {#sec:conclusions}
+
+Especially given that the hyperparameters have been carefully chosen
+through trial and error (see @sec:hyperparameters), we can't make broad
+statements about the efficacy of the using `P-GA` instead of `E-GA`.
+
+Still, the results do show some very promising results because we see
+**many cases** in which the usage of Physics Informed Machine Learning Models
+in the Genetic Algorithm brought results as good as the Genetic Algorithm
+that performs numerical integration to evaluate the fitness of solutions; but in
+in a much smaller execution time.
+
+The results are not at all generalizable, but **they definitely show a great
+potential in using Physics Informed Machine Learning Models in conjunction
+with Genetic Algorithm for performance gains**.
