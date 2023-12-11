@@ -921,3 +921,8 @@ comparison between [E-GA](#sec:methods_ega) and [P-GA](#sec:methods_pga).
 An *efficiency score* of 100 means that that particular approach was the fastest among the three. A score of 0 means
 that approach was the slowest. A value in between is the result of a interpolation between the maximum and minimum
 execution time. The *quality score* is analogous. The results are shown in @sec:results_table.
+
+A **very important** note is that the hyperparameters have been carefully chosen,
+through experimentation an trial and error,
+so that the P-GA would reach good results with a execution time comparable to the E-GA.
+See @sec:discussion for more details.

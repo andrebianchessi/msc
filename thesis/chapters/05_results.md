@@ -77,3 +77,5 @@ the "id" of the experiment (3 random [COPs](#sec:cop) were solved for each numbe
 | 5      | 2    | P-GA         | 44.2273          | 15.1486       | 29.6879    |
 | 5      | 2    | E-GA         | 0                | 100           | 50         |
 | 5      | 2    | Random Guess | 100              | 0             | 50         |
+
+## Conclusions {#sec:conclusions}
