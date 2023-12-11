@@ -2,13 +2,28 @@
 
 ## PIM
 
-- Time discretized into 8 buckets
+### Simple harmonic oscillator {#sec:results_simple}
+
+@fig:pimVsEti shows the result of [TrainTest ~/software/pimodel_test.cc](https://github.com/andrebianchessi/msc/blob/2f3711488189dd3aac65c1067fb788faab5bf048/software/pimodel_test.cc#L1280), which tests how well
+[PIMs](#sec:methods_pim) can approximate a solution obtained with [Explicit Time Integration](#sec:eti).
+The [COP](#sec:cop) for which the [PIMs](#sec:methods_pim) were trained consists on a system of two masses attached by a spring and
+a damper. One of the masses is fixed and the other has an initial displacement. The models used have `order=3`, and a `TimeDiscretization=8` was used.
 
 ![Dynamic response of a mass-spring-damper oscillator: PIM vs ETI prediction. Source: Author](figs/pimVsEtiSimpleSystem.png){#fig:pimVsEti width=80% style="scale:1;"}
 
-- Time discretized into 20 buckets
+The results show that the [PIMs](#sec:methods_pim)
+**very closely approximate the solution** obtained by the [ETI](#sec:eti) method.
 
-![Dynamic response of a system of 6 masses, 9 springs and 6 dampers: PIM vs ETI prediction. Source: Author](figs/pimVsEti5Mass15LinksSystem.png){#fig:pimVsEti2 width=80% style="scale:1;"}
+### Larger system {#sec:results_larger}
+
+@fig:pimVsEti2 shows the result of [~/software/pimodel_binary_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/pimodel_binary_test.cc). This tests is very similar to @sec:results_simple, but the [COP](#sec:cop) at hand is much larger.
+It's a system of 5 masses, 9 springs and 6 dampers. One of the masses is fixed, and all the other ones start with an initial velocity.
+The models used have `order=3`, and a `TimeDiscretization=20` was used.
+
+![Dynamic response of the 5th mass of a system with 6 masses, 9 springs and 6 dampers: PIM vs ETI prediction. Source: Author](figs/pimVsEti5Mass15LinksSystem.png){#fig:pimVsEti2 width=80% style="scale:1;"}
+
+These results show once again that the [PIMs](#sec:methods_pim)
+**very closely approximate the solution** obtained by the [ETI](#sec:eti) method.
 
 ## E-GA vs P-GA vs Random {#sec:results_table}
 
@@ -77,5 +92,9 @@ the "id" of the experiment (3 random [COPs](#sec:cop) were solved for each numbe
 | 5      | 2    | P-GA         | 44.2273          | 15.1486       | 29.6879    |
 | 5      | 2    | E-GA         | 0                | 100           | 50         |
 | 5      | 2    | Random Guess | 100              | 0             | 50         |
+
+The results show that in many cases the `P-GA` can obtain solutions which are very close or even better
+than the ones obtained by the `E-GA`; but that's not always the case. In some cases, `P-GA` can even lead
+to results which are significantly worse than the `E-GA` ones and possibly even worse than random guesses (see {`Masses=4`,`Test=0`}).
 
 ## Conclusions {#sec:conclusions}
