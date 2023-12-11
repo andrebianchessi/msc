@@ -855,3 +855,69 @@ Some of the values of springs and dampers of the optimal solution we found are:
 ![Example solution of COP: Sum of loss function of fittest population vs Generation](figs/msdsGa.png){#fig:msdsGa width=80% style="scale:1;"}
 
 ## Experiments {#sec:experiments}
+
+### Problems {.unnumbered}
+
+To compare the [E-GA](#sec:methods_ega) and the [P-GA](#sec:methods_pga) approaches,
+we solved some [COPs](#sec:cop) of different complexities using each method,
+and then compared the results and the performance of each.
+The [COPs](#sec:cop) that were solved were all of fully connected systems, i.e. made up of set
+of masses that are all connected to each other with a spring and a damper. The following code
+shows how these problems were constructed:
+
+```{.cpp}
+ProblemDescription pd = ProblemDescription();
+pd.AddMass(1.0, 0.0, 0.0);  // m0 is fixed
+pd.SetFixedMass(0);
+
+for (int i = 1; i <= nMasses; i++) {
+    pd.AddMass(Random(100, 300), i, 0);
+}
+double min = 100000.0;
+double max = 300000.0;
+for (int i = 0; i < nMasses; i++) {
+    for (int j = i + 1; j <= nMasses; j++) {
+        pd.AddSpring(i, j, min, max);
+        pd.AddDamper(i, j, min, max);
+    }
+}
+for (int i = 1; i <= nMasses; i++) {
+    pd.AddInitialVel(i, Random(0.0, 200.0));
+    pd.AddInitialDisp(i, Random(0.0, 200.0));
+}
+```
+
+Note that the characteristics of the problems
+(the masses, the initial conditions and the max/min values of the springs and dampers) are randomly created,
+so for each value of `nMasses` from `1` to `5`, `3` random problems were solved with each approach (E-GA and P-GA), as shown in the pseudo-code snippet bellow:
+
+```{.cpp}
+for (int problemId = 0; problemId < 3; problemId++) {
+    for (int nMasses = 1; nMasses <= 5; nMasses++) {
+        optimizeRandomProblemWithEgaAndPga(nMasses);
+    }
+}
+```
+
+See the full code at [~/software/experiment_1.cc](https://github.com/andrebianchessi/msc/blob/main/software/experiment_1.cc)
+
+### Metrics {.unnumbered}
+
+Both approaches (E-GA and P-GA) start with an initial pool of random guesses.
+Besides both approaches, we also analyzed the
+results of the best of those initial random guesses. The best random guess was determined by simply evaluating all the initial
+guesses with [Explicit Time Integration](#sec:methods_pim), since that provides the most accurate result.
+To ensure a fair comparison between the approaches, we ensured that [E-GA](#sec:methods_ega) and [P-GA](#sec:methods_pga)
+start with the same initial random guesses.
+
+To be able to compare both performance and quality of each approach, for each problem solved
+a score from 0 to 100 was given to the
+*efficiency* and *quality* of [E-GA](#sec:methods_ega), [P-GA](#sec:methods_pga) and of the **Best Initial Random Guess**.
+The *efficiency* was simply measured by the time the algorithm took to run.
+The *quality* was measured by how small the maximum acceleration of the target mass was during the impact for each solution.
+The acceleration was determined once again with the [Explicit Time Integration](#sec:methods_pim) for a fair
+comparison between [E-GA](#sec:methods_ega) and [P-GA](#sec:methods_pga).
+
+An *efficiency score* of 100 means that that particular approach was the fastest among the three. A score of 0 means
+that approach was the slowest. A value in between is the result of a interpolation between the maximum and minimum
+execution time. The *quality score* is analogous. The results are shown in @sec:results_table.

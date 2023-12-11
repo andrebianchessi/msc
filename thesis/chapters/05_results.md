@@ -10,7 +10,11 @@
 
 ![Dynamic response of a system of 6 masses, 9 springs and 6 dampers: PIM vs ETI prediction. Source: Author](figs/pimVsEti5Mass15LinksSystem.png){#fig:pimVsEti2 width=80% style="scale:1;"}
 
-## E-GA vs P-GA
+## E-GA vs P-GA vs Random {#sec:results_table}
+
+The following table shows the *Efficiency* and *Quality* scores of the tests performed.
+The first column indicates the number of non-fixed masses of the system, and the second indicates
+the "id" of the experiment (3 random [COPs](#sec:cop) were solved for each number of non-fixed masses). See @sec:experiments for context.
 
 | Masses | Test | Method       | Efficiency score | Quality score | Mean score |
 | ------ | ---- | ------------ | ---------------- | ------------- | ---------- |
