@@ -671,7 +671,40 @@ that must be chosen: **ModelEvalDiscretization**.
 
 See [~/software/problem_creature.cc](https://github.com/andrebianchessi/msc/blob/0523668da59e665d0ff5c0eb1866a532de06eb97/software/problem_creature.cc#L60) for the implementation.
 
+### Time Complexity {.unnumbered}
+
+#### After training the models {.unnumbered}
+
+If the models have $n$ parameters (i.e. the polynomial models have $n$ coefficients), every model
+inference costs $O(n)$. Since in a [COP](#sec:cop) we're only interested in the maximum acceleration of a specific
+mass, we only need to evaluate the model $ModelEvalDiscretization$ times. Hence, the total cost to evaluate
+one candidate is $O(n \cdot ModelEvalDiscretization)$.
+
+#### Training the models {.unnumbered}
+
+For every step of the Stochastic Gradient Descent, the gradient of one term of the loss function needs to be computed.
+The longest terms of the loss functions are the physics residues, because they're a linear combination of
+multiple models (see @sec:methods_pim_time_derivatives). In the worst case, one term can contain all the models;
+hence it's total number of parameters is $m \cdot n$ for a system of $m$ masses and models with $n$ parameters.
+Since the models are linear, their derivatives with respect to each parameter are computed with $O(1)$.
+Since computing the gradient requires the computation of all the derivatives, the total cost of computing the
+gradient is $m \cdot n$.
+
+Assuming we need $s$ steps in the Stochastic Gradient Descent until convergence, the total cost to train one set of
+models is $O(m \cdot n \cdot s)$. Given that we train multiple sets (see @sec:methods_pim_t_disc), the total
+cost is $O(m \cdot n \cdot s \cdot TimeDiscretization)$.
+
 ## E-GA {#sec:methods_ega}
+
+**E-GA** is an approach to solve an [COP](#sec:cop) that uses
+[Explicit Time Integration](#sec:methods_pim) in conjunction with a Genetic Algorithm to look for optimal solutions.
+The fitness of each solution is obtained by Explicit Time Integration (see @sec:software_eti), which provides
+the timeseries of accelerations of all masses.
+
+### Time Complexity {.unnumbered}
+For a system with $m$ masses, the explicit time integration involves a multiplication 
+of an $m \times m$ matrix with a vector of size $m$ on each time step.
+Thus, for $t$ time steps the complexity of evaluation one candidate solution is $O(t \cdot m^2)$.
 
 
 ## Explicit Time Integration Software {#sec:software_eti}
