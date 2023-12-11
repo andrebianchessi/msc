@@ -107,8 +107,8 @@ Still, the results do show some very promising results because we see
 **many cases** in which the usage of Physics Informed Machine Learning Models
 in the Genetic Algorithm brought results as good as the Genetic Algorithm
 that performs numerical integration to evaluate the fitness of solutions; but in
-in a much smaller execution time.
+in a **much** smaller execution time.
 
 The results are not at all generalizable, but **they definitely show a great
-potential in using Physics Informed Machine Learning Models in conjunction
-with Genetic Algorithm for performance gains**.
+potential in using Physics Informed Machine Learning Models as solution-fitness
+estimators for performance gains**.
