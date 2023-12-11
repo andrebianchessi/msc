@@ -600,26 +600,28 @@ Having @eq:exampledT, @eq:exampleX1DotDot, @eq:exampleP00dotdot and @eq:exampleP
 
 $$
 \begin{aligned}
-L_{\ddot{x}} =& (\frac{d^2P_{00}}{dt^2}(0.5, 0.6, 0.7) - \left( \frac{dT}{dt} \right)^2 \cdot 0) + \\
-& \left(\frac{d^2P_{01}}{dt^2}(0.5, 0.6, 0.7) - \left( \frac{dT}{dt} \right)^2 \ddot{x_1}\left(
+L_{\ddot{x}} =& \bigg[\frac{d^2P_{00}}{dt^2}(0.5, 0.6, 0.7) - \left( \frac{dT}{dt} \right)^2 \cdot 0\bigg] + \\
+& \bigg[ \frac{d^2P_{01}}{dt^2}(0.5, 0.6, 0.7) - \\
+&\left( \frac{dT}{dt} \right)^2 \ddot{x_1}\bigg(
     P_{00}(0.5, 0.6, 0.7),
-    P_{01}(0.5, 0.6, 0.7),
-    \frac{dT}{dt}\frac{dP_{00}}{dt}(0.5, 0.6, 0.7),
+    P_{01}(0.5, 0.6, 0.7),\\
+    &\frac{dT}{dt}\frac{dP_{00}}{dt}(0.5, 0.6, 0.7),
     \frac{dT}{dt}\frac{dP_{01}}{dt}(0.5, 0.6, 0.7),
     0.6,
     0.7
-    \right)
-\right) + \\
-& (\frac{d^2P_{00}}{dt^2}(0.8, 0.9, 1.0) - \left( \frac{dT}{dt} \right)^2 \cdot 0) + \\
-& \left(\frac{d^2P_{01}}{dt^2}(0.8, 0.9, 1.0) - \left( \frac{dT}{dt} \right)^2 \ddot{x_1}\left(
+    \bigg)
+\bigg] + \\
+& \bigg[\frac{d^2P_{00}}{dt^2}(0.8, 0.9, 1.0) - \left( \frac{dT}{dt} \right)^2 \cdot 0\bigg] + \\
+& \bigg[ \frac{d^2P_{01}}{dt^2}(0.8, 0.9, 1.0) - \\
+&\left( \frac{dT}{dt} \right)^2 \ddot{x_1}\bigg(
     P_{00}(0.8, 0.9, 1.0),
-    P_{01}(0.8, 0.9, 1.0),
-    \frac{dT}{dt}\frac{dP_{00}}{dt}(0.8, 0.9, 1.0),
+    P_{01}(0.8, 0.9, 1.0),\\
+    &\frac{dT}{dt}\frac{dP_{00}}{dt}(0.8, 0.9, 1.0),
     \frac{dT}{dt}\frac{dP_{01}}{dt}(0.8, 0.9, 1.0),
     0.8,
     0.9
-    \right)
-\right)
+    \bigg)
+\bigg]
 \end{aligned}
 $$
 {#eq:exampleLxdotdot}
