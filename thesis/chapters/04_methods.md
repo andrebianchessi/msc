@@ -775,9 +775,16 @@ Once the *child creature* class is defined, an `Evolution` object can be instant
 
 #### COP {.unnumbered}
 
+##### E-GA {.unnumbered}
+
 The *child class* for [CMs](#sec:cms) is already defined at [ProblemCreature (~/software/problem_creature.h)](https://github.com/andrebianchessi/msc/blob/main/software/problem_creature.h). Its constructor uses an auxiliary class [ProblemDescription (~/software/problem_description.h)](https://github.com/andrebianchessi/msc/blob/main/software/problem_description.h), which allows us to easily describe a COP as described in @sec:cop. The extra two parameters from its constructor specify the mass whose maximum acceleration we want to minimize and the length of the simulation we'll perform. The creature's loss function is the maximum absolute acceleration that mass will suffer during the dynamic simulation.
 
-#### Example {.unnumbered}
+##### P-GA {.unnumbered}
+
+[This](https://github.com/andrebianchessi/msc/blob/dade71cede4e56d7db8cb1e286df1c500e79619a/software/problem_creature.cc#L19) alternative constructor receives `Pimodels` as dependencies. If this constructor is used, the Pimodels
+are used to calculate the maximum acceleration that the target mass will suffer.
+
+#### E-GA Example {.unnumbered}
 
 [EvolutionUntilConvergenceTest (~/software/problem_creature_test.cc)](https://github.com/andrebianchessi/msc/blob/d69d36a973dce9807674b023ad8bfd05b2b7a612/software/problem_creature_test.cc#L89) contains an example in which we find values for the springs and dampers of system at @fig:crashworthiness that minimize the maximum acceleration that $m_5$ would suffer if the system was moving with a constant speed from right to left and hit an immovable wall on the left. A simplified version of the code is listed below. Note that the parameters we pass to the ```Evolve``` method determine our stop condition and if the results should be printed to ```stdout```. Some values of the best solution found are listed after it, and @fig:msdsGa shows how the sum of the loss of the fittest population progresses with the generations.
 
