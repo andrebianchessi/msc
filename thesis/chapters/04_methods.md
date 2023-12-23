@@ -101,25 +101,25 @@ As is more thoroughly described in @sec:methods_pim, differentiating the models
 with respect to time and linearly combining them are two tasks that are required
 to build the loss function used to train the models.
 
-As can be seen in [~/software/polynomial.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc), the classes implemented for representation/manipulation of
+As can be seen in [/software/polynomial.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc), the classes implemented for representation/manipulation of
 polynomial models support automatic differentiation and the operators of
-polynomial instances [Poly and Polys (~/software/polynomial.cc)](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc) have been implemented so that they can be linearly
+polynomial instances [Poly and Polys (/software/polynomial.cc)](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc) have been implemented so that they can be linearly
 combined even through matrix multiplications (see [this test](https://github.com/andrebianchessi/msc/blob/897a324b2d0e1f0b12d1c211f10f0cee64fd2f7c/software/polynomial_test.cc#L400) for example). 
 
 #### Side note {.unnumbered}
 
 On a side note, I'd recommend the reader to skim through the implementation of
-[~/software/polynomial.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc),
+[/software/polynomial.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc),
 as implementing these classes was one of the intermediary tasks of this project
 which I found the most challenging and interesting.
 
 ### Software
 
-[~/software/polynomial.h](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.h)
-contains all the code related to the polynomial models. The [Poly (~/software/polynomial.h)](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.h) class defines a single instance
-of a polynomial, and the [Polys (~/software/polynomial.h)](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.h) class handles the linear combination of *Poly* instances.
+[/software/polynomial.h](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.h)
+contains all the code related to the polynomial models. The [Poly (/software/polynomial.h)](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.h) class defines a single instance
+of a polynomial, and the [Polys (/software/polynomial.h)](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.h) class handles the linear combination of *Poly* instances.
 
-As usual, [~/software/polynomial_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial_test.cc) contains tests which serve as documentation and usage examples.
+As usual, [/software/polynomial_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial_test.cc) contains tests which serve as documentation and usage examples.
 
 
 ## Physics-Informed Machine Learning Models (PIMs) {#sec:methods_pim}
@@ -194,7 +194,7 @@ of the masses from $t=0$ to $t=T_0$. Let's call these the $t_0$ models. The init
 [COP](#sec:cop) statement. Then, to train the next set of models - the $t_1$ models - we used the $t_0$ models to find
 the conditions (displacement and velocity of each mass) at $t=T_0$. These conditions are considered
 initial conditions for the next set of models. This process continues until all the $t_i$ models are trained. At the end of this process,
-we have a set of models for each "time bucket". See [Pimodels::Train (~/software/pimodel.cc)](https://github.com/andrebianchessi/msc/blob/e24929a15dad217a5f2366a9544765ea25eea6f5/software/pimodel.cc#L616) for more detail.
+we have a set of models for each "time bucket". See [Pimodels::Train (/software/pimodel.cc)](https://github.com/andrebianchessi/msc/blob/e24929a15dad217a5f2366a9544765ea25eea6f5/software/pimodel.cc#L616) for more detail.
 
 Note that the models have as input not only the time, but also the values of the springs and dampers.
 When using a "previous" set of models to determine the initial conditions to train the "next" set of models,
@@ -634,16 +634,16 @@ $P_{01}(1.0, 0.5, 0.5)$ and $\dot{P_{01}}(1.0, 0.5, 0.5)$.
 
 ### Software {#sec:methods_pim_software}
 
-[Model ~/software/model.h](https://github.com/andrebianchessi/msc/blob/cd5bb1b6498451b316377efca25e01b230db88e8/software/model.h#L7)
+[Model /software/model.h](https://github.com/andrebianchessi/msc/blob/cd5bb1b6498451b316377efca25e01b230db88e8/software/model.h#L7)
 defines an interface of an arbitrary ML model that can be trained. The `Train` and `StochasticGradientDescentStep`
 methods are already implemented, so classes that implement the other methods can use those methods to train the model.
-See [~/software/model_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/model_test.cc) for examples.
+See [/software/model_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/model_test.cc) for examples.
 
-[Pimodel ~/software/pimodel.h](https://github.com/andrebianchessi/msc/blob/cd5bb1b6498451b316377efca25e01b230db88e8/software/pimodel.h#L10)
+[Pimodel /software/pimodel.h](https://github.com/andrebianchessi/msc/blob/cd5bb1b6498451b316377efca25e01b230db88e8/software/pimodel.h#L10)
 is the class that implements a Physics Informed Machine Learning model as described in this section.
 This class uses *TimeDiscretization = 1* (see @sec:methods_pim_t_disc). To use larger *TimeDiscretizations*,
-the [Pimodels ~/software/pimodel.h](https://github.com/andrebianchessi/msc/blob/cd5bb1b6498451b316377efca25e01b230db88e8/software/pimodel.h#L179) class should be used.
-As usual, [~/software/pimodel_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/pimodel_test.cc) contains examples
+the [Pimodels /software/pimodel.h](https://github.com/andrebianchessi/msc/blob/cd5bb1b6498451b316377efca25e01b230db88e8/software/pimodel.h#L179) class should be used.
+As usual, [/software/pimodel_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/pimodel_test.cc) contains examples
 of usage.
 
 ## P-GA {#sec:methods_pga}
@@ -671,7 +671,7 @@ we simply evaluate the models with some (10 for example) evenly separated time i
 and get the highest acceleration. The number of time instants we check is another hyperparameter
 that must be chosen: **ModelEvalDiscretization**.
 
-See [~/software/problem_creature.cc](https://github.com/andrebianchessi/msc/blob/0523668da59e665d0ff5c0eb1866a532de06eb97/software/problem_creature.cc#L60) for the implementation.
+See [/software/problem_creature.cc](https://github.com/andrebianchessi/msc/blob/0523668da59e665d0ff5c0eb1866a532de06eb97/software/problem_creature.cc#L60) for the implementation.
 
 ### Time Complexity {#sec:pga-complexity}
 
@@ -734,11 +734,11 @@ to be able to properly assess the quality of each candidate solution.
 
 ### Implementation
 
-The [Problem (~/software/problem.h)](https://github.com/andrebianchessi/msc/blob/7cf80c4f85161acef1c2946262259ad1c3e8f4af/software/problem.h#L17) class, together with other classes it references, encapsulates all the logic related to the dynamic simulation of [CMs](#sec:cms) using ETI. The time integration is done using the Boost library [Boost.Numeric.Odeint](https://www.boost.org/doc/libs/1_82_0/libs/numeric/odeint/doc/html/index.html) with the `runge_kutta_dopri5` integration.
+The [Problem (/software/problem.h)](https://github.com/andrebianchessi/msc/blob/7cf80c4f85161acef1c2946262259ad1c3e8f4af/software/problem.h#L17) class, together with other classes it references, encapsulates all the logic related to the dynamic simulation of [CMs](#sec:cms) using ETI. The time integration is done using the Boost library [Boost.Numeric.Odeint](https://www.boost.org/doc/libs/1_82_0/libs/numeric/odeint/doc/html/index.html) with the `runge_kutta_dopri5` integration.
 
 ### Usage
 
-[~/software/problem_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/problem_test.cc) contains many examples of how the software we
+[/software/problem_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/problem_test.cc) contains many examples of how the software we
 implemented can be used. @Mostafa2011-kc was extensively used as reference for
 implementing test cases.
 
@@ -756,10 +756,10 @@ Some post processing methods available are:
 - `GetMassMaxAccel` returns max. value of acceleration of a specific mass.
 - `GetMassMinAccel` returns min. value of acceleration of a specific mass.
 
-For more details, see [~/software/problem.h](https://github.com/andrebianchessi/msc/blob/main/software/problem.h).
+For more details, see [/software/problem.h](https://github.com/andrebianchessi/msc/blob/main/software/problem.h).
 
 ### Example
-[DampedOscillatorPlotTest (~/software/problem_test.cc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/problem_test.cc#L684)
+[DampedOscillatorPlotTest (/software/problem_test.cc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/problem_test.cc#L684)
 
 ```{.cpp caption="Example of using Problem class to perform dynamic simulation."}
     Problem p = Problem();
@@ -784,23 +784,23 @@ For more details, see [~/software/problem.h](https://github.com/andrebianchessi/
 
 ### Implementation
 
-[Evolution (~/software/evolution.h)](https://github.com/andrebianchessi/msc/blob/main/software/evolution.h) is a template class that encapsulates the logic related to GA. Note that this template must be of a class that is a child of the [Creature (~/software/creature.h)](https://github.com/andrebianchessi/msc/blob/main/software/creature.h) abstract class (interface).
+[Evolution (/software/evolution.h)](https://github.com/andrebianchessi/msc/blob/main/software/evolution.h) is a template class that encapsulates the logic related to GA. Note that this template must be of a class that is a child of the [Creature (/software/creature.h)](https://github.com/andrebianchessi/msc/blob/main/software/creature.h) abstract class (interface).
 
 ### Usage
 
 #### Arbitrary problem {.unnumbered}
 To perform an optimization using GA, the first step is to define a child class of
-[Creature (~/software/creature.h)](https://github.com/andrebianchessi/msc/blob/main/software/creature.h).
+[Creature (/software/creature.h)](https://github.com/andrebianchessi/msc/blob/main/software/creature.h).
 The only definitions required are the ```dna``` attribute and the ```GetCost``` function.
-[C (~/software/creature_test.h)](https://github.com/andrebianchessi/msc/blob/3820ac9bd39e60e2aed403fba2227cd116772228/software/creature_test.h#L18) class is an example. The creature class, in this example, represents a candidate $\{x,y\}$ pair that minimizes $f(x,y) = x^2 + y^2 + 2x + y$.
+[C (/software/creature_test.h)](https://github.com/andrebianchessi/msc/blob/3820ac9bd39e60e2aed403fba2227cd116772228/software/creature_test.h#L18) class is an example. The creature class, in this example, represents a candidate $\{x,y\}$ pair that minimizes $f(x,y) = x^2 + y^2 + 2x + y$.
 
-Once the *child creature* class is defined, an `Evolution` object can be instantiated and used to search for optimal solutions. [EvolveTest (~/software/evolution_test.cc)](https://github.com/andrebianchessi/msc/blob/3820ac9bd39e60e2aed403fba2227cd116772228/software/evolution_test.cc#L326) contains an example of how that's done.
+Once the *child creature* class is defined, an `Evolution` object can be instantiated and used to search for optimal solutions. [EvolveTest (/software/evolution_test.cc)](https://github.com/andrebianchessi/msc/blob/3820ac9bd39e60e2aed403fba2227cd116772228/software/evolution_test.cc#L326) contains an example of how that's done.
 
 #### COP {.unnumbered}
 
 ##### E-GA {.unnumbered}
 
-The *child class* for [CMs](#sec:cms) is already defined at [ProblemCreature (~/software/problem_creature.h)](https://github.com/andrebianchessi/msc/blob/main/software/problem_creature.h). Its constructor uses an auxiliary class [ProblemDescription (~/software/problem_description.h)](https://github.com/andrebianchessi/msc/blob/main/software/problem_description.h), which allows us to easily describe a COP as described in @sec:cop. The extra two parameters from its constructor specify the mass whose maximum acceleration we want to minimize and the length of the simulation we'll perform. The creature's loss function is the maximum absolute acceleration that mass will suffer during the dynamic simulation.
+The *child class* for [CMs](#sec:cms) is already defined at [ProblemCreature (/software/problem_creature.h)](https://github.com/andrebianchessi/msc/blob/main/software/problem_creature.h). Its constructor uses an auxiliary class [ProblemDescription (/software/problem_description.h)](https://github.com/andrebianchessi/msc/blob/main/software/problem_description.h), which allows us to easily describe a COP as described in @sec:cop. The extra two parameters from its constructor specify the mass whose maximum acceleration we want to minimize and the length of the simulation we'll perform. The creature's loss function is the maximum absolute acceleration that mass will suffer during the dynamic simulation.
 
 ##### P-GA {.unnumbered}
 
@@ -809,7 +809,7 @@ are used to calculate the maximum acceleration that the target mass will suffer.
 
 #### E-GA Example {.unnumbered}
 
-[EvolutionUntilConvergenceTest (~/software/problem_creature_test.cc)](https://github.com/andrebianchessi/msc/blob/d69d36a973dce9807674b023ad8bfd05b2b7a612/software/problem_creature_test.cc#L89) contains an example in which we find values for the springs and dampers of system at @fig:crashworthiness that minimize the maximum acceleration that $m_5$ would suffer if the system was moving with a constant speed from right to left and hit an immovable wall on the left. A simplified version of the code is listed below. Note that the parameters we pass to the ```Evolve``` method determine our stop condition and if the results should be printed to ```stdout```. Some values of the best solution found are listed after it, and @fig:msdsGa shows how the sum of the loss of the fittest population progresses with the generations.
+[EvolutionUntilConvergenceTest (/software/problem_creature_test.cc)](https://github.com/andrebianchessi/msc/blob/d69d36a973dce9807674b023ad8bfd05b2b7a612/software/problem_creature_test.cc#L89) contains an example in which we find values for the springs and dampers of system at @fig:crashworthiness that minimize the maximum acceleration that $m_5$ would suffer if the system was moving with a constant speed from right to left and hit an immovable wall on the left. A simplified version of the code is listed below. Note that the parameters we pass to the ```Evolve``` method determine our stop condition and if the results should be printed to ```stdout```. Some values of the best solution found are listed after it, and @fig:msdsGa shows how the sum of the loss of the fittest population progresses with the generations.
 
 ```{.cpp caption="Example of how to use the code we wrote to solve COPs from @fig:crashworthiness"}
 ProblemDescription pd = ProblemDescription();
@@ -922,7 +922,7 @@ for (int problemId = 0; problemId < 3; problemId++) {
 }
 ```
 
-See the full code at [~/software/experiment_1.cc](https://github.com/andrebianchessi/msc/blob/main/software/experiment_1.cc)
+See the full code at [/software/experiment_1.cc](https://github.com/andrebianchessi/msc/blob/main/software/experiment_1.cc)
 
 ### Metrics
 

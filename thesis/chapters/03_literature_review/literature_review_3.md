@@ -20,7 +20,7 @@ The main sources this section is based on are [@Haupt2004-hj; @Lam2021-gp;
 
 ![GA flowchart. Source: Author](figs/ga.png){#fig:ga scale=1 style="scale:1;"}
 
-The [Evolve (~/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L203) method is the top-level-method which executes the GA optimization. It basically performs the initial sorting of the population, checks for convergence and successively calls the [step (~/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L175) method, which performs one iteration of optimization of the population.
+The [Evolve (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L203) method is the top-level-method which executes the GA optimization. It basically performs the initial sorting of the population, checks for convergence and successively calls the [step (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L175) method, which performs one iteration of optimization of the population.
 
 ### GA steps
 
@@ -65,7 +65,7 @@ We begin this step by calculating the loss function of each creature. Then, we s
 In this step, creatures which will mate to create offspring that will replace the creatures which were removed at the last stage must be selected.
 
 There are many different approaches to doing this. Some of them are highlighted at [@Lam2021-gp;
-@Lam2021-hg]. In our code, we used what's known as *Biased Roulette Wheel Selection*. In this process, two creatures are selected randomly, but the probability of a creature being selected is proportional to how low their loss function value is. For more detail on how this done, we encourage readers to look at the implementation of [getParents (~/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L110).
+@Lam2021-hg]. In our code, we used what's known as *Biased Roulette Wheel Selection*. In this process, two creatures are selected randomly, but the probability of a creature being selected is proportional to how low their loss function value is. For more detail on how this done, we encourage readers to look at the implementation of [getParents (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L110).
 
 #### Mate {.unnumbered}
 
@@ -80,7 +80,7 @@ For every valid index $i$:
 2. $\text{D}_{c0}[i] = \beta \text{D}_{p0}[i] + (1-\beta \text{D}_{p1}[i])$
 3. $\text{D}_{c1}[i] = \beta \text{D}_{p1}[i] + (1-\beta \text{D}_{p0}[i])$
 
-This logic is implemented at the [Mate (~/software/creature.cc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/creature.cc#L19) method.
+This logic is implemented at the [Mate (/software/creature.cc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/creature.cc#L19) method.
 
 The two created children fill the gaps in the population of the less fit creatures which were removed at the *Sort population and remove the less fit* step. If there's only room left in the population for one creature, one of them is just discarded.
 
@@ -102,7 +102,7 @@ The number of mutations we perform is determined by the *mutation rate* hyperpar
 
 The idea behind this is that we allow us only to mutate the children. Thus, there are $p(1-s)$ creatures that can suffer mutation. Each has $d$ DNA slots. Hence, there are $p(1-s)d$ DNA slots we can mutate. We multiply that by the *mutation rate*, which is a number between $0$ and $1$, and get the number of DNA slots we'll mutate.
 
-This logic is implemented at the [mutate (~/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L140) method.
+This logic is implemented at the [mutate (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L140) method.
 
 #### Continue? {.unnumbered}
 
@@ -172,7 +172,7 @@ $$
 
 #### Select mates {.unnumbered}
 
-In this case, since there are only 2 creatures, we have no choice but to select them as parents. However, the roulette wheel algorithm, which is implemented at the [getParents (~/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L110) method would be as follows:
+In this case, since there are only 2 creatures, we have no choice but to select them as parents. However, the roulette wheel algorithm, which is implemented at the [getParents (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L110) method would be as follows:
 
 First we transform the loss value into a fitness value. We can do that by adding $1.75$ to all the loss values, and then taking the inverse of the value:
 

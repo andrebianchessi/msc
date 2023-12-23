@@ -4,7 +4,7 @@
 
 ### Simple harmonic oscillator {#sec:results_simple}
 
-@fig:pimVsEti shows the result of [TrainTest ~/software/pimodel_test.cc](https://github.com/andrebianchessi/msc/blob/2f3711488189dd3aac65c1067fb788faab5bf048/software/pimodel_test.cc#L1280), which tests how well
+@fig:pimVsEti shows the result of [TrainTest /software/pimodel_test.cc](https://github.com/andrebianchessi/msc/blob/2f3711488189dd3aac65c1067fb788faab5bf048/software/pimodel_test.cc#L1280), which tests how well
 [PIMs](#sec:methods_pim) can approximate a solution obtained with [Explicit Time Integration](#sec:eti).
 The [COP](#sec:cop) for which the [PIMs](#sec:methods_pim) were trained consists on a system of two masses attached by a spring and
 a damper. One of the masses is fixed and the other has an initial displacement. The models used have `order=3`, and a `TimeDiscretization=8` was used.
@@ -16,7 +16,7 @@ The results show that the [PIMs](#sec:methods_pim)
 
 ### Larger system {#sec:results_larger}
 
-@fig:pimVsEti2 shows the result of [~/software/pimodel_binary_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/pimodel_binary_test.cc). This tests is very similar to @sec:results_simple, but the [COP](#sec:cop) at hand is much larger.
+@fig:pimVsEti2 shows the result of [/software/pimodel_binary_test.cc](https://github.com/andrebianchessi/msc/blob/main/software/pimodel_binary_test.cc). This tests is very similar to @sec:results_simple, but the [COP](#sec:cop) at hand is much larger.
 It's a system of 5 masses, 9 springs and 6 dampers. One of the masses is fixed, and all the other ones start with an initial velocity.
 The models used have `order=3`, and a `TimeDiscretization=20` was used.
 

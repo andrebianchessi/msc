@@ -6,12 +6,12 @@ is available at the [github.com/andrebianchessi/msc](https://github.com/andrebia
 under an MIT open source license.
 
 In this text, references to files at the repository are written as:
-*~/software/filename*. For example:
-[~/software/mass.h](https://github.com/andrebianchessi/msc/blob/main/software/mass.h)
+*/software/filename*. For example:
+[/software/mass.h](https://github.com/andrebianchessi/msc/blob/main/software/mass.h)
 references the ```mass.h``` file, which is under the ```software``` folder at
 the repository. References to specific functions/methods/classes are written as
-*function_name (~/software/filename)*. For example: [Mass
-(~/software/mass.h)](https://github.com/andrebianchessi/msc/blob/ad869fb3264d24faaee802d3c67cbf28fb2fb6c9/software/mass.h#L3)
+*function_name (/software/filename)*. For example: [Mass
+(/software/mass.h)](https://github.com/andrebianchessi/msc/blob/ad869fb3264d24faaee802d3c67cbf28fb2fb6c9/software/mass.h#L3)
 references the *Mass* class definition, which is under the ```software``` folder
 at the repository.
 
