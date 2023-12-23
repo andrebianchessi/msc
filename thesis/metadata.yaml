@@ -59,23 +59,23 @@ abstract-en: |
   English abstract will come here.
 
 
-## optional
-acknowledgements: |
-  Acknowledgements will come here
+# ## optional
+# acknowledgements: |
+#   Acknowledgements will come here
 
 
-## optional
-restrictionnote: |
-  Restriction note will come here
+# ## optional
+# restrictionnote: |
+#   Restriction note will come here
 
 ## show all bibliography
 nocite: |
   @*
 
 
-## mandatory
-declaration: |
-  Statutory declaration will come here
+# ## mandatory
+# declaration: |
+#   Statutory declaration will come here
 
 ## configurations
 linkReferences: true
