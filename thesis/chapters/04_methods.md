@@ -673,14 +673,16 @@ that must be chosen: **ModelEvalDiscretization**.
 
 See [~/software/problem_creature.cc](https://github.com/andrebianchessi/msc/blob/0523668da59e665d0ff5c0eb1866a532de06eb97/software/problem_creature.cc#L60) for the implementation.
 
-### Time Complexity {.unnumbered}
+### Time Complexity {#sec:pga-complexity}
 
 #### After training the models {.unnumbered}
 
 If the models have $n$ parameters (i.e. the polynomial models have $n$ coefficients), every model
 inference costs $O(n)$. Since in a [COP](#sec:cop) we're only interested in the maximum acceleration of a specific
-mass, we only need to evaluate the model $ModelEvalDiscretization$ times. Hence, the total cost to evaluate
-one candidate is $O(n \cdot ModelEvalDiscretization)$.
+mass, we only need to evaluate the model $ModelEvalDiscretization$ times. However, since the max acceleration
+can happen close to the start of the impact of close to the end, we need to check the model of the mass of interest in all
+"time buckets" (see @sec:methods_pim_t_disc). Hence, the total cost to evaluate
+one candidate is $O(n \cdot ModelEvalDiscretization \cdot TimeDiscretization)$.
 
 #### Training the models {.unnumbered}
 
@@ -693,8 +695,8 @@ Since computing the gradient requires the computation of all the derivatives, th
 gradient is $m \cdot n$.
 
 Assuming we need $s$ steps in the Stochastic Gradient Descent until convergence, the total cost to train one set of
-models is $O(m \cdot n \cdot s)$. Given that we train multiple sets (see @sec:methods_pim_t_disc), the total
-cost is $O(m \cdot n \cdot s \cdot TimeDiscretization)$.
+models is $O(s \cdot m \cdot n)$. Given that we train multiple sets (see @sec:methods_pim_t_disc), the total
+cost is $O(s \cdot m \cdot n \cdot TimeDiscretization)$.
 
 ## E-GA {#sec:methods_ega}
 
@@ -703,11 +705,30 @@ cost is $O(m \cdot n \cdot s \cdot TimeDiscretization)$.
 The fitness of each solution is obtained by Explicit Time Integration (see @sec:software_eti), which provides
 the timeseries of accelerations of all masses.
 
-### Time Complexity {.unnumbered}
+### Time Complexity {#sec:ega-complexity}
 For a system with $m$ masses, the explicit time integration involves a multiplication 
 of an $m \times m$ matrix with a vector of size $m$ on each time step.
 Thus, for $t$ time steps the complexity of evaluation one candidate solution is $O(t \cdot m^2)$.
 
+## E-GA vs P-GA Time Complexity {#sec:compare-complexity}
+
+As seen in @sec:pga-complexity, for P-GA training the models has $O(s \cdot m \cdot n \cdot TimeDiscretization)$
+time complexity. Then, evaluating each candidate solution in the Genetic Algorithm has
+$O(n \cdot ModelEvalDiscretization \cdot TimeDiscretization)$ time complexity.
+
+As seen in @sec:ega-complexity, for E-GA evaluating each candidate solution in the Genetic Algorithm
+has a complexity of $O(t \cdot m^2)$.
+
+Thus, we see that the models can easily be much faster to evaluate that the explicit time integration
+(so long as $n \cdot ModelEvalDiscretization \cdot TimeDiscretization < t \cdot m^2$),
+but the cost of their training ($O(s \cdot m \cdot n \cdot TimeDiscretization)$) is definitely non-trivial
+and might not be worth that speed of evaluating each candidate solution.
+The speed of the training phase will depend on the hyperparameters used, one the models, and on the
+shape of the Loss Function, so we can't easily predict which conditions cause P-GA to be more efficient.
+
+It's important to keep in mind that we can reduce the training time by "early stopping" before the models are
+very fine-tuned. This will reduce the training time, but at that point the models might not be well enough trained
+to be able to properly assess the quality of each candidate solution.
 
 ## Explicit Time Integration Software {#sec:software_eti}
 
