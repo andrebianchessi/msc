@@ -10,7 +10,7 @@ implement a library that is capable of:
 2. Solving COPs with either [P-GA](#sec:methods_pga) or [E-GA](#sec:methods_ega):
 - E-GA evaluates candidate solutions using explicit time integration (see @sec:eti).
 - P-GA evaluates candidate solutions using [PIMs](#sec:methods_pim) which describe the position of
-each mass as a function of *time* and of the *values of the masses and springs
+each mass as a function of *time* and of the *values of the springs and dampers
 of the system*. The PIMs used are linear regression models (see @sec:polynomials).
 
 Using this library, we performed a few COP case studies using both
@@ -35,7 +35,9 @@ $$
 p_h(t, k_1, k_2, ... , k_i, c_1, c_2,..., c_j) = \sum_{\lambda=0}^{\lambda=h} a_\alpha t^\lambda + &\sum_{Z} a_\alpha t^\beta
 k_1^{\gamma_1} k_2^{\gamma_2} ... k_i^{\gamma_i}
 c_1^{\omega_1} c_2^{\omega_2} ... c_j^{\omega_j}\\
-&Z = \{1 <= \beta < h, (\gamma_i = 0 \text{ OR } \gamma_i = 1), (\omega_j = 0 \text{ OR } \omega_j = 1), {\textstyle(\sum \gamma_i + \sum \omega_j = 1)}\}
+&Z = \{1 <= \beta < h, (\gamma_i = 0 \text{ OR } \gamma_i = 1),\\
+&(\omega_j = 0 \text{ OR } \omega_j = 1),\\
+&{\textstyle(\sum \gamma_i + \sum \omega_j = 1)}\}
 \end{aligned}
 $$
 {#eq:polynomials}
@@ -722,7 +724,7 @@ has a complexity of $O(t \cdot m^2)$.
 Thus, we see that the models can easily be much faster to evaluate that the explicit time integration
 (so long as $n \cdot ModelEvalDiscretization \cdot TimeDiscretization < t \cdot m^2$),
 but the cost of their training ($O(s \cdot m \cdot n \cdot TimeDiscretization)$) is definitely non-trivial
-and might not be worth that speed of evaluating each candidate solution.
+and might not be worth the faster speed in evaluating each candidate solution.
 The speed of the training phase will depend on the hyperparameters used, one the models, and on the
 shape of the Loss Function, so we can't easily predict which conditions cause P-GA to be more efficient.
 
@@ -922,7 +924,7 @@ for (int problemId = 0; problemId < 3; problemId++) {
 }
 ```
 
-See the full code at [/software/experiment_1.cc](https://github.com/andrebianchessi/msc/blob/main/software/experiment_1.cc)
+See the full code and the values of all the hyperparameters at [/software/experiment_1.cc](https://github.com/andrebianchessi/msc/blob/main/software/experiment_1.cc)
 
 ### Metrics
 

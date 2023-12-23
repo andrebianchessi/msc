@@ -38,9 +38,9 @@ We can choose, for example, that the DNA that represents a creature is the vecto
 
 Note that when defining a DNA, we must also define what our domain is, i.e. in what range each DNA member must be in.
 
-#### Choose loss function {.unnumbered}
+#### Choose fitness function {.unnumbered}
 
-In this step, we need to define a function we want to minimize. This function takes a creature - or more specifically its DNA - as input, and returns a real value, i.e. a scalar.
+In this step, we need to define a function that measures how *good* each creature is, so that we can sort the population by *goodness*. This function takes a creature - or more specifically its DNA - as input, and returns a real value, i.e. a scalar.
 
 #### Choose hyperparameters {.unnumbered}
 
@@ -58,14 +58,14 @@ At this step, we initialize a population of random creatures.
 
 #### Sort population and remove the less fit {.unnumbered}
 
-We begin this step by calculating the loss function of each creature. Then, we sort the population by ascending loss function value. A portion, determined by the *population survival rate* hyperparameter, of the less fit population (the creatures with the highest loss function values) is then removed from the population. This stage is equivalent to the survival of the fittest in the evolutionary process.
+We begin this step by calculating the fitness function of each creature. Then, we sort the population by descending fitness function value. A portion, determined by the *population survival rate* hyperparameter, of the less fit population (the creatures with the lowest fitness function values) is then removed from the population. This stage is equivalent to the survival of the fittest in the evolutionary process.
 
 #### Select mates {.unnumbered}
 
 In this step, creatures which will mate to create offspring that will replace the creatures which were removed at the last stage must be selected.
 
 There are many different approaches to doing this. Some of them are highlighted at [@Lam2021-gp;
-@Lam2021-hg]. In our code, we used what's known as *Biased Roulette Wheel Selection*. In this process, two creatures are selected randomly, but the probability of a creature being selected is proportional to how low their loss function value is. For more detail on how this done, we encourage readers to look at the implementation of [getParents (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L110).
+@Lam2021-hg]. In our code, we used what's known as *Biased Roulette Wheel Selection*. In this process, two creatures are selected randomly, but the probability of a creature being selected is proportional to how high their fitness function value is. For more detail on how this done, we encourage readers to look at the implementation of [getParents (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L110).
 
 #### Mate {.unnumbered}
 
@@ -107,7 +107,7 @@ This logic is implemented at the [mutate (/software/evolution.tcc)](https://gith
 #### Continue? {.unnumbered}
 
 Whenever we reach this stage, we consider to have finished *a generation*. We
-now choose to stop if the algorithm has converged, i.e. the value of the loss
+now choose to stop if the algorithm has converged, i.e. the value of the fitness
 function of the fittest creatures is practically the same it was on the previous
 generation, or if too many generations have been tried but the algorithm still
 hasn't converged.
@@ -124,13 +124,15 @@ $$
 
 The creatures of this problem are pairs $\{x,y\}$, so we can choose the DNA of each creature to be the vector $[x,y]$
 
-#### Choose loss function {.unnumbered}
+#### Choose fitness function {.unnumbered}
 
-Since we want to minimize $f$, the loss function for a creature with DNA $[x_c,y_c]$ can simply be:
+Since we want to minimize $f$, the fitness function for a creature with DNA $[x_c,y_c]$ can simply be:
 
 $$
-f(x_c,y_c) = x_c^2 + y_c^2 + 2x_c + y_c
+fit(x_c,y_c) = x_c^2 + y_c^2 + 2x_c + y_c
 $$
+
+The lowest the value of `fit`, the better the candidate solution is.
 
 #### Choose hyperparameters {.unnumbered}
 
@@ -154,7 +156,7 @@ $$
 
 #### Sort population and remove the less fit {.unnumbered}
 
-The loss function calculated for each creature at @eq:gaInitialRandomPop has the following values:
+The fitness function calculated for each creature at @eq:gaInitialRandomPop has the following values:
 
 $$
 [1.1456,-0.75,-0.12,0.12]
@@ -174,7 +176,7 @@ $$
 
 In this case, since there are only 2 creatures, we have no choice but to select them as parents. However, the roulette wheel algorithm, which is implemented at the [getParents (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L110) method would be as follows:
 
-First we transform the loss value into a fitness value. We can do that by adding $1.75$ to all the loss values, and then taking the inverse of the value:
+First we transform the fitness value so that it's strictly positive and high values indicate goodness. We can do that by adding $1.75$ to all the values, and then taking the inverse of the value:
 
 $$
 [-0.75,-0.12] \rightarrow [1,1.63] \rightarrow [1,0.61]

@@ -16,5 +16,3 @@ Are they good approximators of the system's time response?
 - How big was the added cost of training the models for P-GA? Is the added cost
 of training the models worth the faster evaluation time that they provide?
 - How good are the solutions found with P-GA when compared to E-GA?
-- How does the system complexity impact the efficiency of using PIMs? I.e. do
-  they provide a bigger efficiency gain when the system complexity is larger?
