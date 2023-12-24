@@ -56,8 +56,29 @@ abstract-pt: |
 
 ## optional
 abstract-en: |
-  English abstract will come here.
-
+  The usage of genetic algorithms in engineering
+  hinges on their ability to efficiently navigate complex design spaces
+  towards optimal solutions. However, their success relies heavily on the
+  chosen fitness function, which evaluates each candidate solution. When
+  computationally expensive, these evaluations can significantly hamper
+  the algorithm's speed. This thesis investigates the novel application of
+  Physics-Informed Machine Learning models as fitness evaluators within
+  genetic algorithms for optimizing dynamic mechanical systems. They're not
+  trivially inexpensive to train but, once trained,
+  these models provide rapid evaluation of candidate solutions.
+  Training the models quickly enough so that the rapid evaluation
+  is worth the cost of the training is challenging because a careful
+  selection of hyperparameters is necessary.
+  To investigate this technique, we optimized multiple mechanical systems
+  with genetic algorithm with two approaches to evaluate the fitness of each
+  candidate solution: Explicit Time Integration and Physics Informed Machine
+  Learning Models.
+  Our findings demonstrate that - with appropriate hyperparameters - using the models
+  within the Genetic Algorithm can lead to significantly faster convergence
+  and solutions of comparable or even superior quality compared to traditional methods.
+  All the optimizations were performed with a software (developed by the author)
+  that automatically creates and
+  trains the models for arbitrary problems. All the source code is available in a public repository.
 
 # ## optional
 # acknowledgements: |
