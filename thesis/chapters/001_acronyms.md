@@ -1,4 +1,4 @@
-# Acronyms
+# Acronyms {.unnumbered}
 
 - **CMs** Crashworthiness models. See @sec:cms.
 

@@ -1,6 +1,6 @@
-# How to read this document
+# How to read this document {.unnumbered}
 
-## Source Code
+## Source Code {.unnumbered}
 All of this work's source code (including all images, text and code)
 is available at the [github.com/andrebianchessi/msc](https://github.com/andrebianchessi/msc) repository
 under an MIT open source license.
@@ -19,7 +19,7 @@ References to the source code are all *hyperlinks* when this document is being
 read digitally (not on printed paper). **Thus, accessing this document online is
 highly recommended**.
 
-## Read online
+## Read online {.unnumbered}
 The thesis text is written in [pandoc](https://pandoc.org/), and is compiled
 into *pdf* format and also a website.
 The website can be accessed online at [andre.how](https://andre.how/),
