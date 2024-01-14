@@ -9,7 +9,7 @@ describe the time response of the system as a function of *time* and of the
 system's properties. 
 2. Compare the performance and the results obtained by each method.
 
-Some of the questions we want to answer are:
+Some of the questions we seek to answer are:
 
 - How well do the PIMs perform when compared to ETI (Explicit time integration)?
 Are they good approximators of the system's time response?

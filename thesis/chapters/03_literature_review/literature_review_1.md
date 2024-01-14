@@ -10,8 +10,11 @@ springs and dampers. The spring has its natural/relaxed length when $x_0=x_1=0$.
 
 ![CM of 2 masses, 1 spring and 1 damper. Source: Author](figs/discreteElementSimple.png){#fig:discreteElementSimple width=80% style="scale:1;"}
 
-From Newton's second law, we obtain @eq:demLocalEq, in which $\dot{x_i}$ and $\ddot{x_i}$
-represent $x_i$'s first and second time derivative - speed and acceleration - respectively.
+Considering that the elastic force $F_k$ is linear with respect to the displacement ($F_k = k \cdot x$) and that
+the damping force $F_c$ is linear with respect to the speed ($F_x = c \cdot \dot{x}$),
+from Newton's second law we obtain @eq:demLocalEq, in which $\dot{x_i}$ and $\ddot{x_i}$
+represent the first and second time derivative
+of the displacement (with respect to the springs' relaxed position) of the mass $i$.
 
 $$
 \begin{bmatrix}
@@ -73,7 +76,7 @@ By adding another mass, spring and damper to @fig:discreteElementSimple, we can 
 
 ![CM of 2 masses, 2 spring and 2 dampers. Source: Author](figs/discreteElementSimple2.png){#fig:discreteElementSimple2 width=80% style="scale:1;"}
 
-Equations of motion of system illustrated at @fig:discreteElementSimple2, also obtained by Neuton's second law, are:
+Equations of motion of system illustrated at @fig:discreteElementSimple2, also obtained by Newton's second law, are:
 
 $$
 \begin{aligned}
@@ -223,5 +226,5 @@ each element, shown at @eq:demLocalEq. The local matrices that are being added
 are highlighted in $\textcolor{blue}{\text{blue}}$.
 
 This is the same process done at the Finite Element Method (FEM) to assemble the
-global matrices from the elements' local matrices. The reader can read in more
+global matrices from the elements' local matrices. The reader can find in more
 detail at [@Logan2007-bq; @Alves2020-gz].
