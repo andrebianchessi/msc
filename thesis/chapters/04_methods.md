@@ -99,7 +99,7 @@ models and analyze how that changes the performance of [P-GAs](#sec:methods_pga)
 
 ### Automatic differentiation and linear combination {#sec:polynomials_dif}
 
-As is more thoroughly described in @sec:methods_pim, differentiating the models
+As it is thoroughly described in @sec:methods_pim, differentiating the models
 with respect to time and linearly combining them are two tasks that are required
 to build the loss function used to train the models.
 
@@ -110,10 +110,8 @@ combined even through matrix multiplications (see [this test](https://github.com
 
 #### Side note {.unnumbered}
 
-On a side note, I'd recommend the reader to skim through the implementation of
-[/software/polynomial.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc),
-as implementing these classes was one of the intermediary tasks of this project
-which I found the most challenging and interesting.
+The [/software/polynomial.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc)implementation is one of the intermediary tasks of this project
+the author found the most challenging and interesting.
 
 ### Software
 
@@ -181,9 +179,9 @@ duration of the impact would not be efficient. The model would need to have a ve
 high order, which can make the training very slow.
 
 To solve that, the approach we took was to discretize the time into multiple "buckets".
-**TimeDiscretization** is defined as the number of of buckets into which the total time of interest is split.
+**TimeDiscretization** is defined as the number of buckets into which the total time of interest is split.
 Let's say we want models that describe a [COP](#sec:cop) from $t=0$ to $t=T$. Instead of
-having a set of models (one for each mass) that describes the the displacement of each mass
+having a set of models (one for each mass) that describes the displacement of each mass
 as a function of time from $t=0$ to $t=T$, we created a set of models (one for each mass) that describe
 the displacement of the masses from $t=0$ to $t=T_0$, then another set of models for $t=T_0$ to $t=T_1$,
 and so on until a set of models for $t=T_i$ to $t=T$. **TimeDiscretization** is a hyperparameter 
