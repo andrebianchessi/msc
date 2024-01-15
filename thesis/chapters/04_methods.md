@@ -110,7 +110,7 @@ combined even through matrix multiplications (see [this test](https://github.com
 
 #### Side note {.unnumbered}
 
-The [/software/polynomial.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc)implementation is one of the intermediary tasks of this project
+The [/software/polynomial.cc](https://github.com/andrebianchessi/msc/blob/main/software/polynomial.cc) implementation is one of the intermediary tasks of this project
 the author found the most challenging and interesting.
 
 ### Software
