@@ -32,10 +32,10 @@ For an **order** $h$, the models have the following expression:
 
 $$
 \begin{aligned}
-p_h(t, k_1, k_2, ... , k_i, c_1, c_2,..., c_j) = \sum_{\lambda=0}^{\lambda=h} a_\alpha t^\lambda + &\sum_{Z} a_\alpha t^\beta
+p_h(t, k_1, k_2, ... , k_i, c_1, c_2,..., c_j) = \sum_{\lambda=0}^{\lambda=h} a_\mu t^\lambda + &\sum_{Z} a_\mu t^\eta
 k_1^{\gamma_1} k_2^{\gamma_2} ... k_i^{\gamma_i}
 c_1^{\omega_1} c_2^{\omega_2} ... c_j^{\omega_j}\\
-&Z = \{1 <= \beta < h, (\gamma_i = 0 \text{ OR } \gamma_i = 1),\\
+&Z = \{1 <= \eta < h, (\gamma_i = 0 \text{ OR } \gamma_i = 1),\\
 &(\omega_j = 0 \text{ OR } \omega_j = 1),\\
 &{\textstyle(\sum \gamma_i + \sum \omega_j = 1)}\}
 \end{aligned}
@@ -294,17 +294,17 @@ $$
 
 represents a set of springs and dampers that define a solution to a [COP](#sec:cop) and a time from 0 to 1.
 This is basically the same definition of @eq:s, but with *time* also as an argument. Similarly to how we built the other
-losses, we must define a **PhysicsTrainingSize**. Let's call that $\beta$ for now.
-We define a set $S_{t}$ of size $\beta$ that contains random values of $s_t$ (see @eq:st):
+losses, we must define a **PhysicsTrainingSize**. Let's call that $\zeta$ for now.
+We define a set $S_{t}$ of size $\zeta$ that contains random values of $s_t$ (see @eq:st):
 
 $$
-S_{t} = \{{s_t}_1, ... , {s_t}_{\beta} \}
+S_{t} = \{{s_t}_1, ... , {s_t}_{\zeta} \}
 $$
 
 The physics loss function is then defined as:
 
 $$
-L_{\ddot{x}} = \sum_{i=1}^{n}\sum_{j=1}^{\beta} (\ddot{P_i}({s_t}_j) -
+L_{\ddot{x}} = \sum_{i=1}^{n}\sum_{j=1}^{\zeta} (\ddot{P_i}({s_t}_j) -
 F_i(
     P_0({s_t}_j), P_1({s_t}_j), \cdots,
     \dot{P_0}({s_t}_j), \dot{P_1}({s_t}_j), \cdots,
@@ -334,32 +334,32 @@ To clearly distinguish those two, in this section $T_g$ represents the *global* 
 the *local* time, which is normalized from $0$ to $1$. Using that notation, @eq:ldotdotx becomes:
 
 $$
-L_{\ddot{x}} = \sum_{i=1}^{n}\sum_{j=1}^{\beta} (\frac{d^2P_i}{dT_g^2}({s_t}_j) -
-F_i(
+L_{\ddot{x}} = \sum_{i=1}^{n}\sum_{j=1}^{\zeta} \left(\frac{d^2P_i}{dT_g^2}({s_t}_j) -
+F_i\big(
     P_0({s_t}_j), P_1({s_t}_j), \cdots,
     \frac{dP_0}{dT_g}({s_t}_j), \frac{dP_1}{dT_g}({s_t}_j), \cdots,
     {s_t}_j
-    ))^2
+    \big)\right)^2
 $$
 
 For more clarity, let's turn our attention to the residue that is being summed:
 $$
 \frac{d^2P_i}{dT_g^2}({s_t}_j) -
-F_i(
+F_i\big(
     P_0({s_t}_j), P_1({s_t}_j), \cdots,
     \frac{dP_0}{dT_g}({s_t}_j), \frac{dP_1}{dT_g}({s_t}_j), \cdots,
     {s_t}_j
-    )
+    \big)
 $$
 
 With the chain rule, that becomes:
 $$
 \left( \frac{dT_l}{dT_g} \right)^2\frac{d^2P_i}{dT_l^2}({s_t}_j) -
-F_i(
+F_i\big(
     P_0({s_t}_j), P_1({s_t}_j), \cdots,
     \frac{dT_l}{dT_g}\frac{dP_0}{dT_l}({s_t}_j), \frac{dT_l}{dT_g}\frac{dP_1}{dT_l}({s_t}_j), \cdots,
     {s_t}_j
-    )
+    \big)
 $$
 
 As we use a more refined *TimeDiscretization*, the $dT_l/dT_g$ term increases. For example, let's say we're
@@ -375,14 +375,16 @@ This causes the values and gradients of $L_{\ddot{x}}$ to "blow up", which makes
 Therefore, it's convenient to rewrite the residue as follows:
 
 $$
-\left( \frac{dT_l}{dT_g} \right)^2 \left( \frac{d^2P_i}{dT_l^2}({s_t}_j)
+\begin{aligned}
+\left( \frac{dT_l}{dT_g} \right)^2 \bigg( \frac{d^2P_i}{dT_l^2}({s_t}_j)
 - \left(\frac{dT_g}{dT_l} \right)^2
-F_i(
-    P_0({s_t}_j), P_1({s_t}_j), \cdots,
-    \frac{dT_l}{dT_g}\frac{dP_0}{dT_l}({s_t}_j), \frac{dT_l}{dT_g}\frac{dP_1}{dT_l}({s_t}_j), \cdots,
+F_i\big(
+    &P_0({s_t}_j), P_1({s_t}_j), \cdots,\\
+    &\frac{dT_l}{dT_g}\frac{dP_0}{dT_l}({s_t}_j), \frac{dT_l}{dT_g}\frac{dP_1}{dT_l}({s_t}_j), \cdots,
     {s_t}_j
-    )
-\right)
+    \big)
+\bigg)
+\end{aligned}
 $$
 
 In Stochastic Gradient Descent, only one of the loss terms is evaluated at a time; and the gradient of that
@@ -396,14 +398,16 @@ behaves much better numerically than the former one.
 To summarize, the physics loss can be expressed as:
 
 $$
-L_{\ddot{x}} = \sum_{i=1}^{n}\sum_{j=1}^{\beta}
+\begin{aligned}
+L_{\ddot{x}} = \sum_{i=1}^{n}\sum_{j=1}^{\zeta}
 \frac{d^2P_i}{dT_l^2}({s_t}_j)
 - \left(\frac{dT_g}{dT_l} \right)^2
-F_i(
-    P_0({s_t}_j), P_1({s_t}_j), \cdots,
-    \frac{dT_l}{dT_g}\frac{dP_0}{dT_l}({s_t}_j), \frac{dT_l}{dT_g}\frac{dP_1}{dT_l}({s_t}_j), \cdots,
+F_i\big(
+    &P_0({s_t}_j), P_1({s_t}_j), \cdots,\\
+    &\frac{dT_l}{dT_g}\frac{dP_0}{dT_l}({s_t}_j), \frac{dT_l}{dT_g}\frac{dP_1}{dT_l}({s_t}_j), \cdots,
     {s_t}_j
-    )
+    \big)
+\end{aligned}
 $$
 {#eq:ldotdotxDiff}
 
