@@ -18,7 +18,7 @@ example involving all the steps is presented.
 The main sources this section is based on are [@Haupt2004-hj; @Lam2021-gp;
 @Lam2021-hg].
 
-![GA flowchart. Source: Author](figs/ga.png){#fig:ga scale=1 style="scale:1;"}
+![GA flowchart. Source: Author](figs/ga.png){#fig:ga scale=1 style="width:30%;"}
 
 The [Evolve (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L203) method is the top-level-method which executes the GA optimization. It basically performs the initial sorting of the population, checks for convergence and successively calls the [step (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L175) method, which performs one iteration of optimization of the population.
 
@@ -32,7 +32,7 @@ $\{x,y\}$ pairs, such as $\{0,0\}$, $\{1,0\}$, can be thought of as *creatures*.
 In GA, we must define what the DNA of our problem's creatures is.
 For *real-encoded* - also known as *continuous* - GA, which is the one we're interested in, the DNA is simply a vector of real numbers. So for the problem we mentioned above in which creatures are described by pairs of $x$ and $y$, we could choose that the creatures' DNA is simply a vector in which the first element is the value of $x$ and the second is the value of $y$. Note that we could also choose the other order. Thus, it's up to the user to choose how to model the problem.
 
-Another example: let's say the problem at hand is that of finding values for the springs and dampers of the system illustrated at @fig:discreteElementSimple4 which minimize the maximum acceleration $m_3$ suffers if the whole system is traveling with a constant speed towards the left and hits an immovable object.
+Another example: let's say the problem at hand is that of finding values for the springs and dampers of the system illustrated at @fig:discreteElementSimple4 which minimize the maximum acceleration $m_3$ experiences if the whole system is traveling with a constant speed towards the left and hits an immovable object.
 A *creature* in this problem is a set of values of springs' and dampers' constants.
 We can choose, for example, that the DNA that represents a creature is the vector $[k_{01},c_{01},k_{12},c_{12},k_{13},c_{13},k_{03},c_{03}]$.
 
@@ -65,7 +65,7 @@ We begin this step by calculating the fitness function of each creature. Then, w
 In this step, creatures which will mate to create offspring that will replace the creatures which were removed at the last stage must be selected.
 
 There are many different approaches to doing this. Some of them are highlighted at [@Lam2021-gp;
-@Lam2021-hg]. In our code, we used what's known as *Biased Roulette Wheel Selection*. In this process, two creatures are selected randomly, but the probability of a creature being selected is proportional to how high their fitness function value is. For more detail on how this done, we encourage readers to look at the implementation of [getParents (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L110).
+@Lam2021-hg]. In our code, we used what's known as *Biased Roulette Wheel Selection*. In this process, two creatures are selected randomly, but the probability of a creature being selected is proportional to how high their fitness function value is. For more detail on how this done, we suggest one to see [getParents (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L110) implementation.
 
 #### Mate {.unnumbered}
 
@@ -90,7 +90,7 @@ If the current population size is still smaller than the *population size* hyper
 
 #### Mutate {.unnumbered}
 
-At this stage, we apply random mutations to only the children which were created (which is called *elitism*). *Elitism* his guarantees that the fittest creatures from one iteration of the algorithm are either just as fit or less fit than the fittest ones from the next iteration of the algorithm.
+At this stage, we apply random mutations to only the children which were created (which is called *elitism*). *Elitism* guarantees that the fittest creatures from one iteration of the algorithm are either just as fit or less fit than the fittest ones from the next iteration of the algorithm.
 
 We implemented uniform random mutation, which means that to perform a mutation we do the following:
 
