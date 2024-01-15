@@ -12,5 +12,5 @@ Build timestamp as int: 1702313509
 ## Run tests
 - `bazel test //:all`
 
-To view the dynamic response values of the tests:
+To view the outputs:
 `bazel test --test_output=all //:all`
