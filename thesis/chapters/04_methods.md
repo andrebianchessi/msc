@@ -782,7 +782,7 @@ For more details, see [/software/problem.h](https://github.com/andrebianchessi/m
     p.PrintMassTimeHistory(1);
 ```
 
-![Plot of output of damped oscillator simulation example. Created with gnuplot](figs/dampedOsc.png){#fig:dampedOsc width=100% style="scale:1;"}
+![Plot of output of damped oscillator simulation example. Source: Author](figs/dampedOsc.png){#fig:dampedOsc width=100% style="scale:1;"}
 
 ## Genetic Algorithm Software {#sec:software_ga}
 
@@ -879,7 +879,7 @@ Some of the values of springs and dampers of the optimal solution we found are:
 |        k5|   21287.2|
 |        c5|    4957.4|
 
-![Example solution of COP: Sum of loss function of fittest population vs Generation](figs/msdsGa.png){#fig:msdsGa width=80% style="scale:1;"}
+![Example solution of COP with E-GA: Sum of loss function of fittest population vs Generation. Source: Author](figs/msdsGa.png){#fig:msdsGa width=80% style="scale:1;"}
 
 ## Experiments {#sec:experiments}
 
