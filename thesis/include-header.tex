@@ -27,4 +27,14 @@
 %% tries to read the local cleanthesis.sty.
 \usepackage{cleanthesis}
 \newcommand{\passthrough}[1]{\lstset{mathescape=false}#1\lstset{mathescape=true}}
+
+% \raggedbottom
+\usepackage{float}
+\let\origfigure\figure
+\let\endorigfigure\endfigure
+\renewenvironment{figure}[1][2] {
+    \expandafter\origfigure\expandafter[H]
+} {
+    \endorigfigure
+}
 %------------------------------------- Include Clean Thesis Style ------------------

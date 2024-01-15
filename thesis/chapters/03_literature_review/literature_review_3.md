@@ -18,11 +18,11 @@ example involving all the steps is presented.
 The main sources this section is based on are [@Haupt2004-hj; @Lam2021-gp;
 @Lam2021-hg].
 
-![GA flowchart. Source: Author](figs/ga.png){#fig:ga scale=1 style="width:30%;"}
-
 The [Evolve (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L203) method is the top-level-method which executes the GA optimization. It basically performs the initial sorting of the population, checks for convergence and successively calls the [step (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L175) method, which performs one iteration of optimization of the population.
 
+\newpage
 ### GA steps
+![GA flowchart. Source: Author](figs/ga.png){#fig:ga height=90% style="width:30%;"}
 
 #### Choose DNA that represents creature {.unnumbered}
 
