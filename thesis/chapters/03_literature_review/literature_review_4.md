@@ -1,7 +1,7 @@
 ## ML-Model-Based-Genetic-Algorithm for Mechanical Optimization
 
 [@Gu2018-uk; @Gu2018-tf; @Lee2022-uz] are among the main sources of inspiration
-for this work. They all studied the usage of metamodels in conjunction with
+for this work. They all studied the use of metamodels in conjunction with
 Genetic Algorithm for optimization of materials/solid structures in a vast
 design space, and were very successful. The metamodels used provided a very
 significant improvement in performance, and the solutions that were obtained

@@ -25,7 +25,7 @@ than the ones we have in our dataset. Note that the model we choose is
 arbitrary. We could pick any other much more complicated model of higher order,
 but we'll stick to this linear one because the principles are the same.
 
-For example, a possible model would be $\bar{y}(t) = 2t + 5$. That would, however, be terrible to model our data, as the difference between the model and the real values are very big. Hence, we want to find values of $a$ and $b$ that make our model make predictions close to the real values. Ideally, we'd want $\bar{y}(t_i) = y_i$ for all $t_i$ from @tbl:mlExample.
+For example, a possible model would be $\bar{y}(t) = 2t + 5$. That would, however, be terrible to model our data, as the difference between the model and the real values are very big. Hence, we want to find values of $a$ and $b$ that cause our model to make predictions close to the real values. Ideally, we'd want $\bar{y}(t_i) = y_i$ for all $t_i$ from @tbl:mlExample.
 An expression that we can use to measure how well our model fits to the data is to calculate the sum of the square of the residues:
 
 $$
