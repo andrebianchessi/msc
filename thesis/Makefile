@@ -136,6 +136,9 @@ $(TMP): %.filled.tex: %.tex $(META)
 pdf: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
 	pandoc ${OPTIONS} -o thesis.pdf $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
 
+latex: $(SRC) $(REFERENCES) $(APPENDIX) $(META) $(BIBFILE) $(TMP)
+	pandoc ${OPTIONS} -o thesis.tex $(SRC) $(REFERENCES) --csl $(CSL_FILE) $(APPENDIX)
+
 website: pdf template.html
 	cp -r figs/ website/ && pandoc $(WEBSITE_OPTIONS) -o website/index.html $(SRC) $(REFERENCES) --csl $(CSL_FILE)
 

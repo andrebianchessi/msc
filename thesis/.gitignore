@@ -285,6 +285,9 @@ eisvogel.tex
 # Generated PDF artifact
 thesis.pdf
 
+# Generated tex artifact
+thesis.tex
+
 # Generated HTML artifact
 index.html
 website/figs/
