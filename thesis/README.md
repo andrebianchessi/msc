@@ -7,6 +7,7 @@
 - pdflatex
     - `brew install texlive`
 - Firebase cli configured (only required to deploy website)
+    - `brew install firebase-cli`
 
 ## Build pdf
 - `make`
