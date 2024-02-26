@@ -22,7 +22,7 @@
 
 
 ---
-version: "1.1"
+version: "1.2"
 ## mandatory (subtitle and header-left are optional)
 title: "Leveraging Physics-Informed Machine Learning to Empower Genetic Algorithms for Mechanical Systems"
 #subtitle: "From Markdown to LaTeX to PDF"
