@@ -22,7 +22,7 @@
 
 
 ---
-version: "1.0"
+version: "1.1"
 ## mandatory (subtitle and header-left are optional)
 title: "Leveraging Physics-Informed Machine Learning to Empower Genetic Algorithms for Mechanical Systems"
 #subtitle: "From Markdown to LaTeX to PDF"
@@ -45,13 +45,13 @@ headeralternative: true
 studentnumber: "9345450"
 date: "2023/12/23"
 
-reviewer1:  "Revisor 1"
-reviewer2:  "Revisor 2"
+reviewer1:  "Flavio Soares Correa da Silva"
+reviewer2:  "Marco Lúcio Bittencourt"
 
 
 ## optional (mandatory, if english abstract enabled)
 abstract-pt: |
-  A utilização de algoritmos genéticos na engenharia depende da sua capacidade de navegar de forma eficiente por espaços de projeto complexos em direção a soluções ótimas.O seu sucesso depende fortemente da função de avaliadora escolhida, que avalia cada solução possível. Quando computacionalmente caras, essas avaliações podem atrapalhar significativamente a velocidade do algoritmo. Esta tese investiga a aplicação inovadora de modelos de Machine Learning Informado por Física como funções avaliadoras dentro de algoritmos genéticos para otimizar sistemas mecânicos dinâmicos. Embora o treinamento não seja trivialmente barato, esses modelos, uma vez treinados, fornecem uma avaliação rápida de cada solução. Treinar os modelos com rapidez suficiente para que a avaliação rápida valha o custo do treinamento é um desafio porque uma cuidadosa seleção de hiperparâmetros é necessária. Para investigar esta técnica, otimizamos vários sistemas mecânicos com algoritmo genético com duas abordagens para avaliar a qualidade de cada solução: Integração Explícita no Tempo e Modelos de Machine Learning Informados por Física. Nossos resultados demonstram que - com hiperparâmetros apropriados - usar os modelos dentro do Algoritmo Genético pode levar a uma convergência significativamente mais rápida e soluções de qualidade comparável ou mesmo superior em comparação com métodos tradicionais. Todas as otimizações foram realizadas com um software (desenvolvido pelo autor) que cria e treina automaticamente os modelos para problemas arbitrários. Todo o código fonte está disponível em um repositório público.
+  A utilização de algoritmos genéticos na engenharia depende da sua capacidade de navegar de forma eficiente por espaços de projeto complexos em direção a soluções ótimas.O seu sucesso depende fortemente da função avaliadora escolhida, que avalia cada solução possível. Quando computacionalmente caras, essas avaliações podem atrapalhar significativamente a velocidade do algoritmo. Esta tese investiga a aplicação inovadora de modelos de Machine Learning Informado por Física como funções avaliadoras dentro de algoritmos genéticos para otimizar sistemas mecânicos dinâmicos. Embora o treinamento não seja trivialmente barato, esses modelos, uma vez treinados, fornecem uma avaliação rápida de cada solução. Treinar os modelos com rapidez suficiente para que a avaliação rápida valha o custo do treinamento é um desafio porque uma cuidadosa seleção de hiperparâmetros é necessária. Para investigar esta técnica, otimizamos vários sistemas mecânicos com algoritmo genético com duas abordagens para avaliar a qualidade de cada solução: Integração Explícita no Tempo e Modelos de Machine Learning Informados por Física. Nossos resultados demonstram que - com hiperparâmetros apropriados - usar os modelos dentro do Algoritmo Genético pode levar a uma convergência significativamente mais rápida e soluções de qualidade comparável ou mesmo superior em comparação com métodos tradicionais. Todas as otimizações foram realizadas com um software (desenvolvido pelo autor) que cria e treina automaticamente os modelos para problemas arbitrários. Todo o código fonte está disponível em um repositório público.
 
 
 ## optional

@@ -88,7 +88,7 @@ compared to other models such as Neural Networks.
 
 Note that the architecture of the models have a significantly strong assumption
 behind them: the largest order of **t** is always larger than the order of the other input
-variables ($k_i$ and $c_j$). This was characteristic is very much by design,
+variables ($k_i$ and $c_j$). This characteristic is very much by design,
 because we know that the dynamic response of the [CMs](#sec:cms)
 are usually not linear with respect to time. Still, the training of the
 models should be able to identify which monomials are more significant to model
@@ -214,7 +214,7 @@ end of the impact (`t=T`). A linear normalization was used.
 
 As described in @sec:methods_pim_t_disc, the total time of the [COP](#sec:cop) is discretized and,
 progressively, one set of models is trained
-for each for each "time bucket".
+for each "time bucket".
 
 Initially, all the models are created with all the coefficients equal to zero; i.e. all the
 polynomial coefficients are 0. They are then trained, with Stochastic Gradient Descent [@MlBook, p. 184], to minimize a loss function. Following the usual formulation of Physics Informed Machine learning [@Thuerey2021-ut],
@@ -243,7 +243,7 @@ As an example, let's consider a
 [COP](#sec:cop) comprized of two masses connected by a spring of elastic constant $k_0$ and a damper with damping coefficient $c_0$. The spring can have values from $10$ to $20$,
 and the damper can have values from $50$ to $100$. $s=\{0, 0.5\}$ represents a system with $k_0 = 10$ and $c_0 = 75$.
 
-In our chosen approach, we wan the models to not only be a function of time, but also of the system's
+In our chosen approach, we want the models to not only be a function of time, but also of the system's
 parameters (the springs and the dampers). Thus, we want the minimization of the losses to force the models
 to work well for multiple values of springs and dampers.
 We achieved that by computing the losses for multiple possible values of the springs and dampers as follows:
@@ -366,7 +366,7 @@ As we use a more refined *TimeDiscretization*, the $dT_l/dT_g$ term increases. F
 considering a total impact duration of 0.05 seconds, and using a *TimeDiscretization* of 10
 (i.e. 10 time buckets). In this case we'll first train a set of models for $T_g=0$ to $T_g=0.005$;
 then another set of models from $T_g=0.005$ to $T_g=0.010$ and so on.
-For the first set of models, $T_l = 200*T_g$, so $dT_l/dT_g = 200$. That derivative is the same for all
+For the first set of models, $T_l = 200 \cdot T_g$, so $dT_l/dT_g = 200$. That derivative is the same for all
 other set of models.
 
 Thus, it's easy to see that $(dT_l/dT_g)^2$ rapidly increases as we discretize the time.
@@ -459,7 +459,7 @@ For simplicity let's use $2$ to both of those. Now we create the random data poi
 the loss function will be evaluated. These values should be drawn from a uniform random distribution,
 but let's assume the following values were picked:
 $S=\{\{0.1, 0.2\},\{0.3, 0.4\}\}$ and $S_t=\{\{0.5, 0.6, 0.7\},\{0.8, 0.9, 1.0\}\}$.
-Note that the're all in the $[0, 1]$ interval because the inputs to the models are all normalized.
+Note that they're all in the $[0, 1]$ interval because the inputs to the models are all normalized.
 
 The initial condition losses are:
 
@@ -652,7 +652,7 @@ of usage.
 
 ## P-GA {#sec:methods_pga}
 
-**P-GA** is an approach to solve an [COP](#sec:cop) that uses
+**P-GA** is an approach to solve a [COP](#sec:cop) that uses
 [PIMs](#sec:methods_pim) in conjunction with a Genetic Algorithm to look for optimal solutions.
 
 The algorithm has the following basic structure:
@@ -683,7 +683,7 @@ See [/software/problem_creature.cc](https://github.com/andrebianchessi/msc/blob/
 
 If the models have $n$ parameters (i.e. the polynomial models have $n$ coefficients), every model
 inference costs $O(n)$. Since in a [COP](#sec:cop) we're only interested in the maximum acceleration of a specific
-mass, we only need to evaluate the model $ModelEvalDiscretization$ times. However, since the max acceleration
+mass, we only need to evaluate the model $ModelEvalDiscretization$ times. However, since the maximum acceleration
 can happen close to the start of the impact of close to the end, we need to check the model of the mass of interest in all
 "time buckets" (see @sec:methods_pim_t_disc). Hence, the total cost to evaluate
 one candidate is $O(n \cdot ModelEvalDiscretization \cdot TimeDiscretization)$.
@@ -723,7 +723,7 @@ $O(n \cdot ModelEvalDiscretization \cdot TimeDiscretization)$ time complexity.
 As seen in @sec:ega-complexity, for E-GA evaluating each candidate solution in the Genetic Algorithm
 has a complexity of $O(t \cdot m^2)$.
 
-Thus, we see that the models can easily be much faster to evaluate that the explicit time integration
+Thus, we see that the models can easily be much faster to evaluate than the explicit time integration
 (so long as $n \cdot ModelEvalDiscretization \cdot TimeDiscretization < t \cdot m^2$),
 but the cost of their training ($O(s \cdot m \cdot n \cdot TimeDiscretization)$) is definitely non-trivial
 and might not be worth the faster speed in evaluating each candidate solution.
@@ -815,7 +815,7 @@ are used to calculate the maximum acceleration that the target mass will suffer.
 
 [EvolutionUntilConvergenceTest (/software/problem_creature_test.cc)](https://github.com/andrebianchessi/msc/blob/d69d36a973dce9807674b023ad8bfd05b2b7a612/software/problem_creature_test.cc#L89) contains an example in which we find values for the springs and dampers of system at @fig:crashworthiness that minimize the maximum acceleration that $m_5$ would suffer if the system was moving with a constant speed from right to left and hit an immovable wall on the left. A simplified version of the code is listed below. Note that the parameters we pass to the ```Evolve``` method determine our stop condition and if the results should be printed to ```stdout```. Some values of the best solution found are listed after it, and @fig:msdsGa shows how the sum of the loss of the fittest population progresses with the generations.
 
-```{.cpp caption="Example of how to use the code we wrote to solve COPs from @fig:crashworthiness"}
+```{.cpp caption="Example of how to use the code we wrote to solve COPs"}
 ProblemDescription pd = ProblemDescription();
 pd.AddMass(1.0, 0.0, 0.0);  // m0
 pd.AddMass(300, 1.0, 1.0);  // m1
@@ -945,8 +945,8 @@ The *quality* was measured by how small the maximum acceleration of the target m
 The acceleration was determined once again with the [Explicit Time Integration](#sec:methods_pim) for a fair
 comparison between [E-GA](#sec:methods_ega) and [P-GA](#sec:methods_pga).
 
-An *efficiency score* of 100 means that that particular approach was the fastest among the three. A score of 0 means
-that approach was the slowest. A value in between is the result of a interpolation between the maximum and minimum
+An *efficiency score* of 100 means that *that* particular approach was the fastest among the three. A score of 0 means
+that approach was the slowest. A value in between is the result of an interpolation between the maximum and minimum
 execution time. The *quality score* is analogous. The results are shown in @sec:results_table.
 
 ### Hyperparameters {#sec:hyperparameters}

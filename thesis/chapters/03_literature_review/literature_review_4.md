@@ -4,7 +4,7 @@
 for this work. They all studied the use of metamodels in conjunction with
 Genetic Algorithm for optimization of materials/solid structures in a vast
 design space, and were very successful. The metamodels used provided a very
-significant improvement in performance, and the solutions that were obtained
+significant improvement in performance, and the obtained solutions
 were very efficient. [@Driemeier_undated-za] studied using metamodels to predict
 the behavior of highly non-linear 3D lattice structure.
 

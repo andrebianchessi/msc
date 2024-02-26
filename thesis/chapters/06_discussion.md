@@ -1,6 +1,6 @@
 # Discussion {#sec:discussion}
 
-In this work, we explored the potential of Physics-Informed Machine Learning Models (PIMs) to bolster the efficiency of Genetic Algorithms (GAs)
+In this work, we explored the potential of Physics-Informed Machine Learning Models (PIMs) to increase the efficiency of Genetic Algorithms (GAs)
 for the optimization of mechanical systems. Traditionally, these GAs use numerical simulations
 (such as Explicit Time Integration or the Finite Element Method) to measure the fitness of each candidate solution. These numerical
 simulations can be quite expensive and become computational bottlenecks, but - once trained - PIMs can rapidly estimate the fitness

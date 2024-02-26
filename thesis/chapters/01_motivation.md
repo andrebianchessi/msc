@@ -1,12 +1,12 @@
 # Motivation {#sec:motivation}
 
-Optimization algorithms are widely spread in all areas of modern Engineering
+Optimization algorithms are widely spread in all areas of modern engineering
 industry. They allow for reduction of costs and increase of the efficiency and
 effectiveness of solutions. The exponential growth in computational power in
 recent years has made it feasible for engineers to optimize problems they could
 not optimize before. Still, the complexity of the problems we tackle increases
 even faster than the available computational power. Thus, advancements in
-optimization techniques are also mandated. In this work, we turn our attention
+optimization techniques are also required. In this work, we turn our attention
 to optimization by Genetic Algorithms (GAs) applied to mechanical systems. These
 algorithms are based on principles of genetics and evolution, and are well
 suited for the optimization of problems dealing with a large amount of

@@ -133,7 +133,7 @@ $$
 
 Note that inverting $M$ is trivial, since it's diagonal.
 
-The boundary conditions can then be applied directly at the $\dot{X}$ vector. For fixed masses, for example, we just need to replace the appropriate element of $\dot{X}$ with zero.
+The initial conditions can then be applied directly at the $\dot{X}$ vector. For fixed masses, for example, we just need to replace the appropriate element of $\dot{X}$ with zero.
 
 #### Example {.unnumbered}
 Taking the system of @fig:discreteElementSimple. Considering that the mass on

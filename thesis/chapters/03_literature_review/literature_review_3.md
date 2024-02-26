@@ -128,13 +128,16 @@ The creatures of this problem are pairs $\{x,y\}$, so we can choose the DNA of e
 
 #### Choose fitness function {.unnumbered}
 
-Since we want to minimize $f$, the fitness function for a creature with DNA $[x_c,y_c]$ can simply be:
+Instead of defining a fitness function, in this case we'll define a `loss` function for simplicity.
+The only difference between the two is that low values of `loss` indicate good solutions, whereas high values of `fitness` indicate good solutions.
+
+Since we want to minimize $f$, the loss function for a creature with DNA $[x_c,y_c]$ can simply be:
 
 $$
-fit(x_c,y_c) = x_c^2 + y_c^2 + 2x_c + y_c
+loss(x_c,y_c) = x_c^2 + y_c^2 + 2x_c + y_c
 $$
 
-The lowest the value of `fit`, the better the candidate solution is.
+The lowest the value of `loss`, the better the candidate solution is.
 
 #### Choose hyperparameters {.unnumbered}
 
@@ -158,13 +161,13 @@ $$
 
 #### Sort population and remove the less fit {.unnumbered}
 
-The fitness function calculated for each creature at @eq:gaInitialRandomPop has the following values:
+The loss function calculated for each creature at @eq:gaInitialRandomPop has the following values:
 
 $$
 [1.1456,-0.75,-0.12,0.12]
 $$
 
-Thus, the sorted population becomes:
+Thus, the sorted population (from smallest to largest loss) becomes:
 $$
 [[-0.9, 0.2], [-0.2, 0.2], [0.1, -0.1], [0.4, 0.16]]
 $$
@@ -178,7 +181,7 @@ $$
 
 In this case, since there are only 2 creatures, we have no choice but to select them as parents. However, the roulette wheel algorithm, which is implemented at the [getParents (/software/evolution.tcc)](https://github.com/andrebianchessi/msc/blob/e7e048d554f82161702b1f90b3878957dbb0538b/software/evolution.tcc#L110) method would be as follows:
 
-First we transform the fitness value so that it's strictly positive and high values indicate goodness. We can do that by adding $1.75$ to all the values, and then taking the inverse of the value:
+First we transform the loss value so that they're strictly positive and high values indicate goodness. We can do that by adding $1.75$ to all the values, and then taking the inverse of the value:
 
 $$
 [-0.75,-0.12] \rightarrow [1,1.63] \rightarrow [1,0.61]

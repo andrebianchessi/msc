@@ -5,6 +5,7 @@
 - pandoc-crossref
     - `brew install pandoc-crossref`
 - pdflatex
+    - `brew install texlive`
 - Firebase cli configured (only required to deploy website)
 
 ## Build pdf

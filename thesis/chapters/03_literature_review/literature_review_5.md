@@ -4,7 +4,7 @@ We start by explaining the basic concepts of Machine Learning, and then show how
 the same ideas, with some small modifications, are applied to solve problems
 which are described by partial differential equations.
 
-The problems we choose to solve are very simple, but they great for illustrating
+The problems we choose to solve are very simple, but they're great for illustrating
 the basic principles.
 
 ### Introduction to Machine Learning
